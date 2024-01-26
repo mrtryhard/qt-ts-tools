@@ -13,6 +13,10 @@ struct TSNode {
     contexts: Option<Vec<ContextNode>>,
     messages: Option<Vec<MessageNode>>,
     dependencies: Option<DependenciesNode>,
+    comment: Option<String>,
+    oldcomment: Option<String>,
+    extracomment: Option<String>,
+    translatorcomment: Option<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -20,10 +24,14 @@ struct ContextNode {
     name: Option<String>,
     #[serde(rename = "message")]
     messages: Vec<MessageNode>,
+    comment: Option<String>,
+    #[serde(rename = "@encoding")]
+    encoding: Option<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
 struct DependenciesNode {
+    #[serde(rename = "dependency")]
     dependencies: Vec<Dependency>,
 }
 
@@ -34,11 +42,19 @@ struct Dependency {
 
 #[derive(Debug, Deserialize, PartialEq)]
 struct MessageNode {
-    source: String,
-    translation: TranslationNode,
+    source: Option<String>,
+    oldsource: Option<String>, // Result of merge
+    translation: Option<TranslationNode>,
     location: Option<Vec<LocationNode>>,
     comment: Option<String>,
+    oldcomment: Option<String>,
+    extracomment: Option<String>,
+    translatorcomment: Option<String>,
+    #[serde(rename = "@numerus")]
     numerus: Option<String>, // todo: boolean/enum? ("yes", "no", None/Default)
+    id: Option<String>,
+    userdata: Option<String>,
+    // todo: extra-something
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -48,9 +64,12 @@ struct TranslationNode {
     #[serde(rename = "$text")]
     translation_simple: Option<String>,
     #[serde(rename = "numerusform")]
-    numerus_forms: Option<Vec<String>>,
+    numerus_forms: Option<Vec<NumerusFormNode>>,
+    // TODO: lengthvariants ?
     #[serde(rename = "@type")]
-    translation_type: Option<String>, // e.g. "unfinished", "obsolete"
+    translation_type: Option<String>, // e.g. "unfinished", "obsolete", "vanished"
+    variants: Option<String>, // "yes", "no"
+    userdata: Option<String>, // deprecated
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -59,6 +78,14 @@ struct LocationNode {
     line: Option<u32>,
     #[serde(rename = "@filename")]
     filename: Option<String>,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+struct NumerusFormNode {
+    #[serde(rename = "$value")]
+    text: Option<String>,
+    #[serde(rename = "@variants")]
+    filename: Option<String>, // "yes", "no"
 }
 
 #[cfg(test)]
@@ -83,10 +110,12 @@ mod test {
 
         let message_c1_2 = &context1.messages[1];
         assert_eq!(message_c1_2.comment.as_ref().unwrap(), "Navigation part");
-        assert_eq!(message_c1_2.source, "vztnewsletter");
+        assert_eq!(message_c1_2.source.as_ref().unwrap(), "vztnewsletter");
         assert_eq!(
             message_c1_2
                 .translation
+                .as_ref()
+                .unwrap()
                 .translation_simple
                 .as_ref()
                 .unwrap(),
@@ -96,18 +125,31 @@ mod test {
         let message_c1_3 = &context1.messages[2];
         assert_eq!(message_c1_3.comment, None);
         assert_eq!(
-            message_c1_3.source,
+            message_c1_3.source.as_ref().unwrap(),
             "%1 takes at most %n argument(s). %2 is therefore invalid."
         );
-        assert_eq!(message_c1_3.translation.translation_simple, None);
-        let numerus_forms = message_c1_3.translation.numerus_forms.as_ref().unwrap();
+        assert_eq!(
+            message_c1_3
+                .translation
+                .as_ref()
+                .unwrap()
+                .translation_simple,
+            None
+        );
+        let numerus_forms = message_c1_3
+            .translation
+            .as_ref()
+            .unwrap()
+            .numerus_forms
+            .as_ref()
+            .unwrap();
         assert_eq!(numerus_forms.len(), 2);
         assert_eq!(
-            numerus_forms[0],
+            numerus_forms[0].text.as_ref().unwrap(),
             "%1 prend au maximum %n argument. %2 est donc invalide."
         );
         assert_eq!(
-            numerus_forms[1],
+            numerus_forms[1].text.as_ref().unwrap(),
             "%1 prend au maximum %n arguments. %2 est donc invalide."
         );
     }
@@ -139,7 +181,7 @@ mod test {
             "tst_qkeysequence.cpp"
         );
         assert_eq!(locations[1].line.as_ref().unwrap(), &371u32);
-        let translation = &message_c1_2.translation;
+        let translation = &message_c1_2.translation.as_ref().unwrap();
         assert_eq!(translation.translation_simple.as_ref().unwrap(), "Alt+K");
         assert_eq!(translation.translation_type.as_ref().unwrap(), "obsolete");
     }
