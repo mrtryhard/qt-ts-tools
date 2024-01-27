@@ -1,90 +1,114 @@
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct TSNode {
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct TSNode {
     #[serde(rename = "@version")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     version: Option<String>,
     #[serde(rename = "@sourcelanguage")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     source_language: Option<String>,
     #[serde(rename = "@language")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     language: Option<String>,
     #[serde(rename = "context")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     contexts: Option<Vec<ContextNode>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     messages: Option<Vec<MessageNode>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     dependencies: Option<DependenciesNode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     oldcomment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     extracomment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct ContextNode {
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct ContextNode {
+    #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
     #[serde(rename = "message")]
     messages: Vec<MessageNode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
-    #[serde(rename = "@encoding")]
+    #[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
     encoding: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct DependenciesNode {
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct DependenciesNode {
     #[serde(rename = "dependency")]
     dependencies: Vec<Dependency>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct Dependency {
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct Dependency {
     catalog: String,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct MessageNode {
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct MessageNode {
+    #[serde(skip_serializing_if = "Option::is_none")]
     source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     oldsource: Option<String>, // Result of merge
+    #[serde(skip_serializing_if = "Option::is_none")]
     translation: Option<TranslationNode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     location: Option<Vec<LocationNode>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     oldcomment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     extracomment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
-    #[serde(rename = "@numerus")]
+    #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
     numerus: Option<String>, // todo: boolean/enum? ("yes", "no", None/Default)
+    #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     userdata: Option<String>,
     // todo: extra-something
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct TranslationNode {
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct TranslationNode {
     // Did not find a way to make it an enum
     // Therefore: either you have a `translation_simple` or a `numerus_forms`, but not both.
-    #[serde(rename = "$text")]
+    #[serde(rename = "$text", skip_serializing_if = "Option::is_none")]
     translation_simple: Option<String>,
-    #[serde(rename = "numerusform")]
+    #[serde(rename = "numerusform", skip_serializing_if = "Option::is_none")]
     numerus_forms: Option<Vec<NumerusFormNode>>,
     // TODO: lengthvariants ?
-    #[serde(rename = "@type")]
+    #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
     translation_type: Option<String>, // e.g. "unfinished", "obsolete", "vanished"
+    #[serde(skip_serializing_if = "Option::is_none")]
     variants: Option<String>, // "yes", "no"
+    #[serde(skip_serializing_if = "Option::is_none")]
     userdata: Option<String>, // deprecated
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct LocationNode {
-    #[serde(rename = "@line")]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct LocationNode {
+    #[serde(rename = "@line", skip_serializing_if = "Option::is_none")]
     line: Option<u32>,
-    #[serde(rename = "@filename")]
+    #[serde(rename = "@filename", skip_serializing_if = "Option::is_none")]
     filename: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-struct NumerusFormNode {
-    #[serde(rename = "$value")]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct NumerusFormNode {
+    #[serde(rename = "$value", skip_serializing_if = "Option::is_none")]
     text: Option<String>,
-    #[serde(rename = "@variants")]
+    #[serde(rename = "@variants", skip_serializing_if = "Option::is_none")]
     filename: Option<String>, // "yes", "no"
 }
 
@@ -95,7 +119,7 @@ mod test {
 
     #[test]
     fn parse_with_numerus_forms() {
-        let mut f =
+        let f =
             quick_xml::Reader::from_file("example1.xml").expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
@@ -156,7 +180,7 @@ mod test {
 
     #[test]
     fn parse_with_locations() {
-        let mut f = quick_xml::Reader::from_file("example_key_de.xml")
+        let f = quick_xml::Reader::from_file("example_key_de.xml")
             .expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");

@@ -2,7 +2,7 @@ mod sort;
 mod ts_definition;
 
 use crate::sort::{sort_main, SortArgs};
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -23,5 +23,8 @@ fn main() {
         Commands::Sort(args) => sort_main(&args),
     };
 
-    println!("Hello, world!");
+    if let Err(e) = result {
+        println!("{e}");
+        std::process::exit(1);
+    }
 }
