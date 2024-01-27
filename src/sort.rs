@@ -1,5 +1,6 @@
 use crate::ts_definition::*;
 use clap::Args;
+use serde::Serialize;
 use std::io::{BufWriter, Write};
 
 #[derive(Args)]
@@ -57,9 +58,13 @@ fn write_ts_file(args: &SortArgs, node: &TSNode) -> Result<(), String> {
         },
     };
 
-    match quick_xml::se::to_string(node) {
-        Ok(output) => {
-            let res = inner_writer.write_all(output.as_bytes());
+    let mut output_buffer = String::from("<!DOCTYPE TS>\n");
+    let mut ser = quick_xml::se::Serializer::new(&mut output_buffer);
+    ser.indent(' ', 2).expand_empty_elements(true);
+
+    match node.serialize(ser) {
+        Ok(_) => {
+            let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
                 Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),

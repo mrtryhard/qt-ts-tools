@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename = "TS")]
 pub struct TSNode {
     #[serde(rename = "@version")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -106,8 +107,8 @@ pub struct LocationNode {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct NumerusFormNode {
-    #[serde(rename = "$value", skip_serializing_if = "Option::is_none")]
-    text: Option<String>,
+    #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
+    text: String,
     #[serde(rename = "@variants", skip_serializing_if = "Option::is_none")]
     filename: Option<String>, // "yes", "no"
 }
@@ -169,11 +170,11 @@ mod test {
             .unwrap();
         assert_eq!(numerus_forms.len(), 2);
         assert_eq!(
-            numerus_forms[0].text.as_ref().unwrap(),
+            numerus_forms[0].text,
             "%1 prend au maximum %n argument. %2 est donc invalide."
         );
         assert_eq!(
-            numerus_forms[1].text.as_ref().unwrap(),
+            numerus_forms[1].text,
             "%1 prend au maximum %n arguments. %2 est donc invalide."
         );
     }
