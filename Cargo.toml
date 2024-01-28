@@ -1,6 +1,9 @@
 [package]
 name = "qt-ts-tools"
-author = "Alexandre Leblanc"
+authors = ["Alexandre Leblanc <a.leblanc+qttools@kitai.dev>"]
+repository = "https://github.com/mrtryhard/qt-ts-tools"
+keywords = ["qt", "translation"]
+homepage = "https://github.com/mrtryhard/qt-ts-tools"
 license = "Apache-2.0"
 version = "0.1.0"
 edition = "2021"

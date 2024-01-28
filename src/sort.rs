@@ -6,6 +6,7 @@ use std::io::{BufWriter, Write};
 #[derive(Args)]
 pub struct SortArgs {
     pub input_path: String,
+    #[arg(short, long)]
     pub output_path: Option<String>,
 }
 
