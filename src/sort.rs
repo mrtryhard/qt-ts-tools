@@ -90,5 +90,11 @@ mod write_file_test {
             output_path: Some("test_result_write_to_ts.xml".to_owned()),
         };
         write_ts_file(&args, &data).expect("Output");
+
+        let f = quick_xml::Reader::from_file("test_result_write_to_ts.xml")
+            .expect("Couldn't open output test file");
+
+        let output_data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
+        assert_eq!(data, output_data);
     }
 }
