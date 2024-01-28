@@ -4,17 +4,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename = "TS")]
 pub struct TSNode {
-    #[serde(rename = "@version")]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "@version", skip_serializing_if = "Option::is_none")]
     version: Option<String>,
-    #[serde(rename = "@sourcelanguage")]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "@sourcelanguage", skip_serializing_if = "Option::is_none")]
     source_language: Option<String>,
-    #[serde(rename = "@language")]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "@language", skip_serializing_if = "Option::is_none")]
     language: Option<String>,
-    #[serde(rename = "context")]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "context", skip_serializing_if = "Option::is_none")]
     contexts: Option<Vec<ContextNode>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     messages: Option<Vec<MessageNode>>,
@@ -88,7 +84,6 @@ pub struct TranslationNode {
     translation_simple: Option<String>,
     #[serde(rename = "numerusform", skip_serializing_if = "Option::is_none")]
     numerus_forms: Option<Vec<NumerusFormNode>>,
-    // TODO: lengthvariants ?
     #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
     translation_type: Option<String>, // e.g. "unfinished", "obsolete", "vanished"
     #[serde(skip_serializing_if = "Option::is_none")]
