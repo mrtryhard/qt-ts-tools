@@ -98,7 +98,7 @@ mod sort_test {
 
     #[test]
     fn sort_ts_node_ts() {
-        let reader_nosort = quick_xml::Reader::from_file("example_unfinished.xml")
+        let reader_nosort = quick_xml::Reader::from_file("./test_data/example_unfinished.xml")
             .expect("Couldn't open example_unfinished test file");
         let mut data_nosort: TSNode =
             quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable");
@@ -157,21 +157,23 @@ mod write_file_test {
 
     #[test]
     fn write_ts_file_test() {
+        const OUTPUT_TEST_FILE: &str = "./test_data/test_result_write_to_ts.xml";
+
         let reader =
-            quick_xml::Reader::from_file("example1.xml").expect("Couldn't open example1 test file");
+            quick_xml::Reader::from_file("./test_data/example1.xml").expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(reader.into_inner()).expect("Parsable");
         let args = SortArgs {
             input_path: "whatever".to_owned(),
-            output_path: Some("test_result_write_to_ts.xml".to_owned()),
+            output_path: Some(OUTPUT_TEST_FILE.to_owned()),
         };
         write_ts_to_output(&args, &data).expect("Output");
 
-        let f = quick_xml::Reader::from_file("test_result_write_to_ts.xml")
+        let f = quick_xml::Reader::from_file(OUTPUT_TEST_FILE)
             .expect("Couldn't open output test file");
 
         let output_data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
-        std::fs::remove_file("test_result_write_to_ts.xml").expect("Test should clean test file.");
+        std::fs::remove_file(OUTPUT_TEST_FILE).expect("Test should clean test file.");
         assert_eq!(data, output_data);
     }
 }

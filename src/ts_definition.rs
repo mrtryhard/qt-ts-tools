@@ -204,7 +204,7 @@ mod test {
     #[test]
     fn parse_with_numerus_forms() {
         let f =
-            quick_xml::Reader::from_file("example1.xml").expect("Couldn't open example1 test file");
+            quick_xml::Reader::from_file("./test_data/example1.xml").expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
         assert_eq!(data.contexts.len(), 2);
@@ -264,7 +264,7 @@ mod test {
 
     #[test]
     fn parse_with_locations() {
-        let f = quick_xml::Reader::from_file("example_key_de.xml")
+        let f = quick_xml::Reader::from_file("./test_data/example_key_de.xml")
             .expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
