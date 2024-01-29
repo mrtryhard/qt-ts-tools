@@ -159,8 +159,8 @@ mod write_file_test {
     fn write_ts_file_test() {
         const OUTPUT_TEST_FILE: &str = "./test_data/test_result_write_to_ts.xml";
 
-        let reader =
-            quick_xml::Reader::from_file("./test_data/example1.xml").expect("Couldn't open example1 test file");
+        let reader = quick_xml::Reader::from_file("./test_data/example1.xml")
+            .expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(reader.into_inner()).expect("Parsable");
         let args = SortArgs {
@@ -169,8 +169,8 @@ mod write_file_test {
         };
         write_ts_to_output(&args, &data).expect("Output");
 
-        let f = quick_xml::Reader::from_file(OUTPUT_TEST_FILE)
-            .expect("Couldn't open output test file");
+        let f =
+            quick_xml::Reader::from_file(OUTPUT_TEST_FILE).expect("Couldn't open output test file");
 
         let output_data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
         std::fs::remove_file(OUTPUT_TEST_FILE).expect("Test should clean test file.");

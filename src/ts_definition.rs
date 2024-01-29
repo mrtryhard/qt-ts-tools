@@ -87,8 +87,8 @@ pub struct TranslationNode {
     // Therefore: either you have a `translation_simple` or a `numerus_forms`, but not both.
     #[serde(rename = "$text", skip_serializing_if = "Option::is_none")]
     translation_simple: Option<String>,
-    #[serde(rename = "numerusform", skip_serializing_if = "Option::is_none")]
-    numerus_forms: Option<Vec<NumerusFormNode>>,
+    #[serde(rename = "numerusform", skip_serializing_if = "Vec::is_empty", default)]
+    numerus_forms: Vec<NumerusFormNode>,
     #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
     translation_type: Option<String>, // e.g. "unfinished", "obsolete", "vanished"
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -203,8 +203,8 @@ mod test {
     // TODO: Data set. https://github.com/qt/qttranslations/
     #[test]
     fn parse_with_numerus_forms() {
-        let f =
-            quick_xml::Reader::from_file("./test_data/example1.xml").expect("Couldn't open example1 test file");
+        let f = quick_xml::Reader::from_file("./test_data/example1.xml")
+            .expect("Couldn't open example1 test file");
 
         let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
         assert_eq!(data.contexts.len(), 2);
@@ -244,13 +244,7 @@ mod test {
                 .translation_simple,
             None
         );
-        let numerus_forms = message_c1_3
-            .translation
-            .as_ref()
-            .unwrap()
-            .numerus_forms
-            .as_ref()
-            .unwrap();
+        let numerus_forms = &message_c1_3.translation.as_ref().unwrap().numerus_forms;
         assert_eq!(numerus_forms.len(), 2);
         assert_eq!(
             numerus_forms[0].text,
