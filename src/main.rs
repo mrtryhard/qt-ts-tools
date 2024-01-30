@@ -1,6 +1,8 @@
+mod extract;
 mod sort;
 mod ts_definition;
 
+use crate::extract::ExtractArgs;
 use crate::sort::{sort_main, SortArgs};
 use clap::{Parser, Subcommand};
 
@@ -14,16 +16,18 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Sort(SortArgs),
+    Extract(ExtractArgs),
+}
+
+fn get_cli_result(cli: Cli) -> Result<(), String> {
+    match &cli.command {
+        Commands::Sort(args) => sort_main(&args),
+        Commands::Extract(_args) => Ok(()),
+    }
 }
 
 fn main() {
-    let cli = Cli::parse();
-
-    let result = match &cli.command {
-        Commands::Sort(args) => sort_main(&args),
-    };
-
-    if let Err(e) = result {
+    if let Err(e) = get_cli_result(Cli::parse()) {
         println!("{e}");
         std::process::exit(1);
     }
