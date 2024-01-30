@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Reduced release binary size [#19](https://github.com/mrtryhard/qt-ts-tools/issues/19)
+- Updated Serde and Clap dependencies [#20](https://github.com/mrtryhard/qt-ts-tools/issues/20)
 
 ### Fixed
 
