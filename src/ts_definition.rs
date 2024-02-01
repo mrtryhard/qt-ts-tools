@@ -125,7 +125,7 @@ pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
     text: String,
     #[serde(rename = "@variants", skip_serializing_if = "Option::is_none")]
-    variants: Option<YesNo>, // todo! doubt
+    variants: Option<YesNo>,
 }
 
 impl PartialOrd<Self> for MessageNode {
