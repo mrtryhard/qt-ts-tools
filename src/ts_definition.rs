@@ -6,6 +6,21 @@ use std::cmp::Ordering;
 // For now they can't handle Qt's semi-weird XSD.
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
 
+#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum TranslationType {
+    Unfinished,
+    Obsolete,
+    Vanished
+}
+
+#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum YesNo {
+    Yes,
+    No
+}
+
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename = "TS")]
 pub struct TSNode {
@@ -73,7 +88,7 @@ pub struct MessageNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
-    numerus: Option<String>, // todo: boolean/enum? ("yes", "no", None/Default)
+    numerus: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -90,9 +105,9 @@ pub struct TranslationNode {
     #[serde(rename = "numerusform", skip_serializing_if = "Vec::is_empty", default)]
     numerus_forms: Vec<NumerusFormNode>,
     #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
-    translation_type: Option<String>, // e.g. "unfinished", "obsolete", "vanished"
+    translation_type: Option<TranslationType>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    variants: Option<String>, // "yes", "no"
+    variants: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     userdata: Option<String>, // deprecated
 }
@@ -110,7 +125,7 @@ pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
     text: String,
     #[serde(rename = "@variants", skip_serializing_if = "Option::is_none")]
-    filename: Option<String>, // "yes", "no"
+    variants: Option<YesNo>, // todo! doubt
 }
 
 impl PartialOrd<Self> for MessageNode {
@@ -285,6 +300,6 @@ mod test {
         assert_eq!(locations[1].line.as_ref().unwrap(), &371u32);
         let translation = &message_c1_2.translation.as_ref().unwrap();
         assert_eq!(translation.translation_simple.as_ref().unwrap(), "Alt+K");
-        assert_eq!(translation.translation_type.as_ref().unwrap(), "obsolete");
+        assert_eq!(translation.translation_type, Some(TranslationType::Obsolete));
     }
 }
