@@ -1,10 +1,26 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::io::{BufWriter, Write};
 
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
 // For now they can't handle Qt's semi-weird XSD.
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
+
+#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum TranslationType {
+    Unfinished,
+    Obsolete,
+    Vanished,
+}
+
+#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum YesNo {
+    Yes,
+    No,
+}
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename = "TS")]
@@ -61,7 +77,7 @@ pub struct MessageNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     oldsource: Option<String>, // Result of merge
     #[serde(skip_serializing_if = "Option::is_none")]
-    translation: Option<TranslationNode>,
+    pub translation: Option<TranslationNode>,
     #[serde(skip_serializing_if = "Vec::is_empty", rename = "location", default)]
     pub locations: Vec<LocationNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -73,7 +89,7 @@ pub struct MessageNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
-    numerus: Option<String>, // todo: boolean/enum? ("yes", "no", None/Default)
+    numerus: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -90,9 +106,9 @@ pub struct TranslationNode {
     #[serde(rename = "numerusform", skip_serializing_if = "Vec::is_empty", default)]
     numerus_forms: Vec<NumerusFormNode>,
     #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
-    translation_type: Option<String>, // e.g. "unfinished", "obsolete", "vanished"
+    pub translation_type: Option<TranslationType>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    variants: Option<String>, // "yes", "no"
+    variants: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     userdata: Option<String>, // deprecated
 }
@@ -110,7 +126,7 @@ pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
     text: String,
     #[serde(rename = "@variants", skip_serializing_if = "Option::is_none")]
-    filename: Option<String>, // "yes", "no"
+    variants: Option<YesNo>,
 }
 
 impl PartialOrd<Self> for MessageNode {
@@ -196,13 +212,76 @@ impl Ord for ContextNode {
     }
 }
 
+/// Writes the output TS file to the specified output (file or stdout).
+/// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
+/// `<name></name>` instead of `<name/>`.
+pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<(), String> {
+    let mut inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
+        None => BufWriter::new(Box::new(std::io::stdout().lock())),
+        Some(output_path) => match std::fs::File::options()
+            .create(true)
+            .write(true)
+            .open(output_path)
+        {
+            Ok(file) => BufWriter::new(Box::new(file)),
+            Err(e) => {
+                return Err(format!(
+                    "Error occured while opening output file \"{output_path}\": {e:?}"
+                ))
+            }
+        },
+    };
+
+    let mut output_buffer =
+        String::from("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE TS>\n");
+    let mut ser = quick_xml::se::Serializer::new(&mut output_buffer);
+    ser.indent(' ', 2).expand_empty_elements(true);
+
+    match node.serialize(ser) {
+        Ok(_) => {
+            let res = inner_writer.write_all(output_buffer.as_bytes());
+            match res {
+                Ok(_) => Ok(()),
+                Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),
+            }
+        }
+        Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),
+    }
+}
+
+#[cfg(test)]
+mod write_file_test {
+    use super::*;
+    use crate::ts;
+    use quick_xml;
+
+    #[test]
+    fn test_write_to_output_file() {
+        const OUTPUT_TEST_FILE: &str = "./test_data/test_result_write_to_ts.xml";
+
+        let reader = quick_xml::Reader::from_file("./test_data/example1.xml")
+            .expect("Couldn't open example1 test file");
+
+        let data: TSNode = quick_xml::de::from_reader(reader.into_inner()).expect("Parsable");
+
+        ts::write_to_output(&Some(OUTPUT_TEST_FILE.to_owned()), &data).expect("Output");
+
+        let f =
+            quick_xml::Reader::from_file(OUTPUT_TEST_FILE).expect("Couldn't open output test file");
+
+        let output_data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
+        std::fs::remove_file(OUTPUT_TEST_FILE).expect("Test should clean test file.");
+        assert_eq!(data, output_data);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use quick_xml;
     // TODO: Data set. https://github.com/qt/qttranslations/
     #[test]
-    fn parse_with_numerus_forms() {
+    fn test_parse_with_numerus_forms() {
         let f = quick_xml::Reader::from_file("./test_data/example1.xml")
             .expect("Couldn't open example1 test file");
 
@@ -257,7 +336,7 @@ mod test {
     }
 
     #[test]
-    fn parse_with_locations() {
+    fn test_parse_with_locations() {
         let f = quick_xml::Reader::from_file("./test_data/example_key_de.xml")
             .expect("Couldn't open example1 test file");
 
@@ -285,6 +364,9 @@ mod test {
         assert_eq!(locations[1].line.as_ref().unwrap(), &371u32);
         let translation = &message_c1_2.translation.as_ref().unwrap();
         assert_eq!(translation.translation_simple.as_ref().unwrap(), "Alt+K");
-        assert_eq!(translation.translation_type.as_ref().unwrap(), "obsolete");
+        assert_eq!(
+            translation.translation_type,
+            Some(TranslationType::Obsolete)
+        );
     }
 }
