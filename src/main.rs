@@ -1,8 +1,8 @@
 mod extract;
 mod sort;
-mod ts_definition;
+mod ts;
 
-use crate::extract::ExtractArgs;
+use crate::extract::{extract_main, ExtractArgs};
 use crate::sort::{sort_main, SortArgs};
 use clap::{Parser, Subcommand};
 
@@ -22,7 +22,7 @@ enum Commands {
 fn get_cli_result(cli: Cli) -> Result<(), String> {
     match &cli.command {
         Commands::Sort(args) => sort_main(&args),
-        Commands::Extract(_args) => Ok(()),
+        Commands::Extract(args) => extract_main(&args),
     }
 }
 
