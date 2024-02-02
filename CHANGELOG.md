@@ -6,10 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-[https://github.com/mrtryhard/qt-ts-tools/milestone/2](https://github.com/mrtryhard/qt-ts-tools/milestone/1?closed=1)
+## Added
+
+## Changed
+
+## Fixed
+
+## [0.2.0] - 2024-01-01
+
+Completion of the [second milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/2). This introduces the `extract` and lighter binary.
 
 ### Added
 
+- Extraction mechanism to extract only relevant translation types. [#16](https://github.com/mrtryhard/qt-ts-tools/issues/16)
 
 ### Changed
 
