@@ -18,7 +18,7 @@ In no particular order:
 - [x] `sort`: outputs a sorted version of the provided file. 
 - [ ] `diff`: outputs the differences between 2 translation files.
 - [ ] `merge`: merge 2 translation files into a single output.
-- [ ] `extract`: copy some specific elements via a filter (i.e. `unfinished` translations) to a new translation file.
+- [x] `extract`: copy some specific elements via a filter (i.e. `unfinished` translations) to a new translation file.
 - [ ] `strip`: remove some specific elements via a filter (i.e. `oldcomment` nodes) from the provided file.
 
 ## Philosophy
