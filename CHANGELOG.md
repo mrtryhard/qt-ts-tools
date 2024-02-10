@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Changed
 
-- Improved command line documentation. [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25)
+- Improved command line documentation [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25)
+- Updated Clap dependencies [#26](https://github.com/mrtryhard/qt-ts-tools/issues/26)
 
 ## Fixed
 
@@ -21,7 +22,7 @@ Completion of the [second milestone](https://github.com/mrtryhard/qt-ts-tools/mi
 
 ### Added
 
-- Extraction mechanism to extract only relevant translation types. [#16](https://github.com/mrtryhard/qt-ts-tools/issues/16)
+- Extraction mechanism to extract only relevant translation types [#16](https://github.com/mrtryhard/qt-ts-tools/issues/16)
 
 ### Changed
 
@@ -36,4 +37,4 @@ Introduction of `qt-ts-tools`. This completes the first [milestone](https://gith
 
 ### Added
 
-- Sort mechanism to sort translation files by location and contexts. [#3](https://github.com/mrtryhard/qt-ts-tools/issues/3)
+- Sort mechanism to sort translation files by location and contexts [#3](https://github.com/mrtryhard/qt-ts-tools/issues/3)
