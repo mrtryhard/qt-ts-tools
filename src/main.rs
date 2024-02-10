@@ -1,4 +1,5 @@
 mod extract;
+mod merge;
 mod sort;
 mod ts;
 
