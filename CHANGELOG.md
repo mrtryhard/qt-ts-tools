@@ -5,10 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+[Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.
 
 ## Added
 
 ## Changed
+
+- Improved command line documentation. [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25)
 
 ## Fixed
 
