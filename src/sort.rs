@@ -2,9 +2,12 @@ use crate::ts;
 use crate::ts::TSNode;
 use clap::Args;
 
+/// Sorts the input translation file by context, then by messages.
 #[derive(Args)]
 pub struct SortArgs {
+    /// File path to sort translations from.
     pub input_path: String,
+    /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long)]
     pub output_path: Option<String>,
 }

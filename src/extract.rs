@@ -2,11 +2,15 @@ use crate::ts;
 use crate::ts::{TSNode, TranslationType};
 use clap::Args;
 
+/// Extracts a translation type messages and contexts from the input translation file.
 #[derive(Args)]
 pub struct ExtractArgs {
+    /// File path to extract translations from.
     pub input_path: String,
+    /// Translation type list to extract into a single, valid translation output.
     #[arg(short('t'), long, value_enum, num_args = 1..)]
     pub translation_type: Vec<TranslationTypeArg>,
+    /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long)]
     pub output_path: Option<String>,
 }
