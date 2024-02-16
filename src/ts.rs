@@ -7,9 +7,13 @@ use std::io::{BufWriter, Write};
 // For now they can't handle Qt's semi-weird XSD.
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
 
-#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+/// If no type is set, a message is "finished".
+#[derive(Debug, Default, Eq, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TranslationType {
+    #[default]
+    #[serde(skip)]
+    Finished,
     Unfinished,
     Obsolete,
     Vanished,
@@ -45,6 +49,25 @@ pub struct TSNode {
     extracomment: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
+    /*
+        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
+        > extra elements may appear in TS and message elements. Each element may appear
+        > only once within each scope. The contents are preserved verbatim; any
+        > attributes are dropped.
+     */
+    #[serde(rename = "extra-po-msgid_plural", skip_serializing_if = "Option::is_none")]
+    pub po_msg_id_plural: Option<String>,
+    #[serde(rename = "extra-po-old_msgid_plural", skip_serializing_if = "Option::is_none")]
+    pub po_old_msg_id_plural: Option<String>,
+    /// Comma separated list
+    #[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
+    pub loc_flags: Option<String>,
+    #[serde(rename = "extra-loc-layout_id", skip_serializing_if = "Option::is_none")]
+    pub loc_layout_id: Option<String>,
+    #[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
+    pub loc_feature: Option<String>,
+    #[serde(rename = "extra-loc-blank", skip_serializing_if = "Option::is_none")]
+    pub loc_blank: Option<String>,
 }
 
 #[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
@@ -74,18 +97,23 @@ pub struct Dependency {
 pub struct MessageNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
+    /// Result of a merge
     #[serde(skip_serializing_if = "Option::is_none")]
-    oldsource: Option<String>, // Result of merge
+    oldsource: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub translation: Option<TranslationNode>,
     #[serde(skip_serializing_if = "Vec::is_empty", rename = "location", default)]
     pub locations: Vec<LocationNode>,
+    /// This is "disambiguation" in the (new) API, or "msgctxt" in gettext speak
     #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
+    /// Previous content of comment (result of merge)
     #[serde(skip_serializing_if = "Option::is_none")]
     oldcomment: Option<String>,
+    /// The real comment (added by developer/designer)
     #[serde(skip_serializing_if = "Option::is_none")]
     extracomment: Option<String>,
+    /// Comment added by translator
     #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
@@ -94,7 +122,25 @@ pub struct MessageNode {
     id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     userdata: Option<String>,
-    // todo: extra-something
+    /*
+        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
+        > extra elements may appear in TS and message elements. Each element may appear
+        > only once within each scope. The contents are preserved verbatim; any
+        > attributes are dropped.
+     */
+    #[serde(rename = "extra-po-msgid_plural", skip_serializing_if = "Option::is_none")]
+    pub po_msg_id_plural: Option<String>,
+    #[serde(rename = "extra-po-old_msgid_plural", skip_serializing_if = "Option::is_none")]
+    pub po_old_msg_id_plural: Option<String>,
+    /// Comma separated list
+    #[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
+    pub loc_flags: Option<String>,
+    #[serde(rename = "extra-loc-layout_id", skip_serializing_if = "Option::is_none")]
+    pub loc_layout_id: Option<String>,
+    #[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
+    pub loc_feature: Option<String>,
+    #[serde(rename = "extra-loc-blank", skip_serializing_if = "Option::is_none")]
+    pub loc_blank: Option<String>,
 }
 
 #[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
@@ -252,7 +298,6 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
 #[cfg(test)]
 mod write_file_test {
     use super::*;
-    use crate::ts;
     use quick_xml;
 
     #[test]
@@ -264,7 +309,7 @@ mod write_file_test {
 
         let data: TSNode = quick_xml::de::from_reader(reader.into_inner()).expect("Parsable");
 
-        ts::write_to_output(&Some(OUTPUT_TEST_FILE.to_owned()), &data).expect("Output");
+        write_to_output(&Some(OUTPUT_TEST_FILE.to_owned()), &data).expect("Output");
 
         let f =
             quick_xml::Reader::from_file(OUTPUT_TEST_FILE).expect("Couldn't open output test file");
