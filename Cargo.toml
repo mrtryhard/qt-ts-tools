@@ -7,6 +7,7 @@ homepage = "https://github.com/mrtryhard/qt-ts-tools"
 license = "MIT OR Apache-2.0"
 version = "0.3.0"
 edition = "2021"
+description = "Small command line utility to manipulate Qt's translation files with diverse operations."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
