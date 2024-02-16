@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Added
 
+- `extra-*` fields support in `TS` and `message` nodes [#4](https://github.com/mrtryhard/qt-ts-tools/issues/4)
+
 ## Changed
 
-- Improved command line documentation [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25)
+- Improved command line documentation [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25), [#27](https://github.com/mrtryhard/qt-ts-tools/issues/27)
 - Updated Clap dependencies [#26](https://github.com/mrtryhard/qt-ts-tools/issues/26)
 
 ## Fixed
