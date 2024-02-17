@@ -37,8 +37,8 @@ pub struct TSNode {
     language: Option<String>,
     #[serde(rename = "context", skip_serializing_if = "Vec::is_empty", default)]
     pub contexts: Vec<ContextNode>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    messages: Option<Vec<MessageNode>>,
+    #[serde(rename = "message", skip_serializing_if = "Vec::is_empty", default)]
+    pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     dependencies: Option<DependenciesNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -95,6 +95,7 @@ pub struct Dependency {
 
 #[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
 pub struct MessageNode {
+    /// Original string to translate
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
     /// Result of a merge
