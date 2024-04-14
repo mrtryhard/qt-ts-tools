@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="de">
+    <message>
+        <source>Name</source>
+        <location line="456" filename="ui_main.cpp"/>
+        <location line="10" filename="ui_potato_viewer.cpp"/>
+        <location line="321" filename="ui_main.cpp"/>
+        <location line="11" filename="ui_potato_viewer.cpp"/>
+        <comment>An example entry for Name</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="10" filename="ui_potato_viewer.cpp"/>
+        <location line="144" filename="ui_main.cpp"/>
+        <source>This is just a Sample</source>
+        <translation>Dies ist nur ein Beispiel</translation>
+    </message>
+    <message>
+        <source>Practice more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>I am a message in which was written in Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+</TS>
