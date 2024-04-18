@@ -81,8 +81,7 @@ pub struct TSNode {
 
 #[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
 pub struct ContextNode {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    pub name: String,
     #[serde(rename = "message")]
     pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -263,10 +262,8 @@ impl PartialOrd<Self> for ContextNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
         self.name
-            .as_ref()
-            .unwrap_or(&"".to_owned())
             .to_lowercase()
-            .partial_cmp(&other.name.as_ref().unwrap_or(&"".to_owned()).to_lowercase())
+            .partial_cmp(&other.name.to_lowercase())
     }
 }
 

@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="de">
+    <context>
+        <name>kernel/in_merge</name>
+        <message>
+            <source>Newsletter</source>
+            <translation>Nyhetsbrev - Left</translation>
+        </message>
+        <message>
+            <source>Only In Left Message</source>
+            <comment>Left message</comment>
+            <translation>Only in Left translation</translation>
+        </message>
+        <message numerus="yes">
+            <source>%1 takes at most %n argument(s). %2 is therefore invalid.</source>
+            <translation>
+                <numerusform>%1 prend au maximum %n argument. %2 est donc invalide.</numerusform>
+                <numerusform>%1 prend au maximum %n arguments. %2 est donc invalide.</numerusform>
+            </translation>
+        </message>
+    </context>
+    <context>
+        <name>kernel/not_in_merge</name>
+        <message>
+            <source>Newsletter</source>
+            <translation>Nyhetsbrev - Left</translation>
+        </message>
+    </context>
     <message>
         <source>Name</source>
         <location line="456" filename="ui_main.cpp"/>

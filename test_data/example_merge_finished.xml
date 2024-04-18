@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="de">
+    <context>
+        <name>kernel/in_merge</name>
+        <message>
+            <source>Newsletter</source>
+            <translation>Nyhetsbrev - Right</translation>
+        </message>
+        <message numerus="yes">
+            <source>%1 takes at most %n argument(s). %2 is therefore invalid.</source>
+            <translation>
+                <numerusform>%1 prend au maximum %n argument. %2 est donc invalide.</numerusform>
+                <numerusform>%1 prend au maximum %n arguments. %2 est donc invalide.</numerusform>
+            </translation>
+            <comment>Coming from right.</comment>
+        </message>
+    </context>
+    <context>
+        <name>kernel/in_merge_from_right</name>
+        <message>
+            <source>Extra Context</source>
+            <translation>Context Extra Right</translation>
+        </message>
+    </context>
     <message>
         <location line="10" filename="ui_potato_viewer.cpp"/>
         <location line="144" filename="ui_main.cpp"/>

@@ -63,8 +63,24 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let mut left = left.unwrap();
 
     left.messages = merge_messages(&mut left.messages, &mut right.messages);
+    merge_contexts(right, &mut left);
 
     ts::write_to_output(&args.output_path, &left)
+}
+
+fn merge_contexts(right: TSNode, left: &mut TSNode) {
+    right.contexts.into_iter().for_each(|mut right_context| {
+        let left_context_opt = left
+            .contexts
+            .iter_mut()
+            .find(|left_context| left_context.name == right_context.name);
+
+        if let Some(left_context) = left_context_opt {
+            left_context.messages = merge_messages(&mut left_context.messages, &mut right_context.messages);
+        } else {
+            left.contexts.push(right_context);
+        }
+    });
 }
 
 /// Merges two messages collections
