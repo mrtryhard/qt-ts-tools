@@ -5,10 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+[Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.
 
 ## Added
 
+- Merge mechanism to merge two translation files [#24](https://github.com/mrtryhard/qt-ts-tools/issues/24)
+- `extra-*` fields support in `TS` and `message` nodes [#4](https://github.com/mrtryhard/qt-ts-tools/issues/4)
+
 ## Changed
+
+- Improved command line documentation [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25), [#27](https://github.com/mrtryhard/qt-ts-tools/issues/27)
+- Updated Clap dependencies [#26](https://github.com/mrtryhard/qt-ts-tools/issues/26)
 
 ## Fixed
 
@@ -18,7 +25,7 @@ Completion of the [second milestone](https://github.com/mrtryhard/qt-ts-tools/mi
 
 ### Added
 
-- Extraction mechanism to extract only relevant translation types. [#16](https://github.com/mrtryhard/qt-ts-tools/issues/16)
+- Extraction mechanism to extract only relevant translation types [#16](https://github.com/mrtryhard/qt-ts-tools/issues/16)
 
 ### Changed
 
@@ -33,4 +40,4 @@ Introduction of `qt-ts-tools`. This completes the first [milestone](https://gith
 
 ### Added
 
-- Sort mechanism to sort translation files by location and contexts. [#3](https://github.com/mrtryhard/qt-ts-tools/issues/3)
+- Sort mechanism to sort translation files by location and contexts [#3](https://github.com/mrtryhard/qt-ts-tools/issues/3)

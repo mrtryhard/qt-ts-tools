@@ -2,9 +2,12 @@ use crate::ts;
 use crate::ts::TSNode;
 use clap::Args;
 
+/// Sorts the input translation file by context, then by messages.
 #[derive(Args)]
 pub struct SortArgs {
+    /// File path to sort translations from.
     pub input_path: String,
+    /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long)]
     pub output_path: Option<String>,
 }
@@ -68,8 +71,8 @@ mod sort_test {
         sort_ts_node(&mut data_nosort);
 
         // Validate context ordering
-        assert_eq!(data_nosort.contexts[0].name, Some("CodeContext".to_owned()));
-        assert_eq!(data_nosort.contexts[1].name, Some("UiContext".to_owned()));
+        assert_eq!(data_nosort.contexts[0].name, "CodeContext".to_owned());
+        assert_eq!(data_nosort.contexts[1].name, "UiContext".to_owned());
 
         // Validate message ordering
         let messages = &data_nosort.contexts[1].messages;
