@@ -1,8 +1,10 @@
-use crate::ts;
-use crate::ts::{MessageNode, TSNode};
+use std::hash::{Hash, Hasher};
+
 use clap::Args;
 use itertools::Itertools;
-use std::hash::{Hash, Hasher};
+
+use crate::ts;
+use crate::ts::{MessageNode, TSNode};
 
 /// Merges two translation file contexts and messages into a single output.
 #[derive(Args)]
@@ -59,13 +61,15 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
         ));
     }
 
-    let mut right = right.unwrap();
-    let mut left = left.unwrap();
+    let result = merge_ts_nodes(left.unwrap(), right.unwrap());
 
+    ts::write_to_output(&args.output_path, &result)
+}
+
+fn merge_ts_nodes(mut left: TSNode, mut right: TSNode) -> TSNode {
     left.messages = merge_messages(&mut left.messages, &mut right.messages);
     merge_contexts(right, &mut left);
-
-    ts::write_to_output(&args.output_path, &left)
+    left
 }
 
 fn merge_contexts(right: TSNode, left: &mut TSNode) {
@@ -76,7 +80,8 @@ fn merge_contexts(right: TSNode, left: &mut TSNode) {
             .find(|left_context| left_context.name == right_context.name);
 
         if let Some(left_context) = left_context_opt {
-            left_context.messages = merge_messages(&mut left_context.messages, &mut right_context.messages);
+            left_context.messages =
+                merge_messages(&mut left_context.messages, &mut right_context.messages);
         } else {
             left.contexts.push(right_context);
         }
@@ -116,5 +121,24 @@ fn load_file(path: &String) -> Result<TSNode, String> {
             }
         }
         Err(err) => Err(err.to_string()),
+    }
+}
+
+#[cfg(test)]
+mod merge_test {
+    use super::*;
+
+    #[test]
+    fn test_merge_two_files() {
+        let left = load_file(&"./test_data/example_merge_left.xml".to_string())
+            .expect("Test data could not be loaded for left file.");
+        let right = load_file(&"./test_data/example_merge_right.xml".to_string())
+            .expect("Test data could not be loaded for right file.");
+        let expected_result = load_file(&"./test_data/example_merge_result.xml".to_string())
+            .expect("Test data could not be loaded for right file.");
+
+        let result = merge_ts_nodes(left, right);
+
+        assert_eq!(result, expected_result);
     }
 }

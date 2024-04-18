@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::io::{BufWriter, Write};
+
+use serde::{Deserialize, Serialize};
 
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
@@ -313,8 +314,9 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
 
 #[cfg(test)]
 mod write_file_test {
-    use super::*;
     use quick_xml;
+
+    use super::*;
 
     #[test]
     fn test_write_to_output_file() {
@@ -338,8 +340,10 @@ mod write_file_test {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use quick_xml;
+
+    use super::*;
+
     // TODO: Data set. https://github.com/qt/qttranslations/
     #[test]
     fn test_parse_with_numerus_forms() {
@@ -353,7 +357,7 @@ mod test {
         assert_eq!(data.language.unwrap(), "sv");
 
         let context1 = &data.contexts[0];
-        assert_eq!(context1.name.as_ref().unwrap(), "kernel/navigationpart");
+        assert_eq!(context1.name, "kernel/navigationpart");
         assert_eq!(context1.messages.len(), 3);
 
         let message_c1_2 = &context1.messages[1];
@@ -408,7 +412,7 @@ mod test {
         assert_eq!(data.language.unwrap(), "de");
 
         let context1 = &data.contexts[0];
-        assert_eq!(context1.name.as_ref().unwrap(), "tst_QKeySequence");
+        assert_eq!(context1.name, "tst_QKeySequence");
         assert_eq!(context1.messages.len(), 11);
         let message_c1_2 = &context1.messages[2];
         let locations = &message_c1_2.locations;
