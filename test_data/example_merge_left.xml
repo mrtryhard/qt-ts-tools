@@ -4,6 +4,11 @@
     <context>
         <name>kernel/in_merge</name>
         <message>
+            <id>idBasedLeft</id>
+            <source>Source string Left should be in oldsource</source>
+            <translation></translation>
+        </message>
+        <message>
             <source>Newsletter</source>
             <translation>Nyhetsbrev - Left</translation>
         </message>
@@ -18,6 +23,7 @@
                 <numerusform>%1 prend au maximum %n argument. %2 est donc invalide.</numerusform>
                 <numerusform>%1 prend au maximum %n arguments. %2 est donc invalide.</numerusform>
             </translation>
+            <comment>This is a old comment from Left. Should be in oldcomment.</comment>
         </message>
     </context>
     <context>

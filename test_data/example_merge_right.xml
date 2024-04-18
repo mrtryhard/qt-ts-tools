@@ -4,6 +4,11 @@
     <context>
         <name>kernel/in_merge</name>
         <message>
+            <id>idBasedLeft</id>
+            <source>Now Right Source</source>
+            <translation>Also, translated.</translation>
+        </message>
+        <message>
             <source>Newsletter</source>
             <translation>Nyhetsbrev - Right</translation>
         </message>
@@ -34,7 +39,7 @@
     </message>
     <message>
         <source>I am a message in which was written in Code</source>
-        <translation></translation>
+        <translation/>
     </message>
     <message>
         <location line="10" filename="ui_test_viewer.cpp"/>

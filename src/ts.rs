@@ -86,9 +86,9 @@ pub struct ContextNode {
     #[serde(rename = "message")]
     pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     #[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
-    encoding: Option<String>,
+    pub encoding: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -109,17 +109,17 @@ pub struct MessageNode {
     pub source: Option<String>,
     /// Result of a merge
     #[serde(skip_serializing_if = "Option::is_none")]
-    oldsource: Option<String>,
+    pub oldsource: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub translation: Option<TranslationNode>,
     #[serde(skip_serializing_if = "Vec::is_empty", rename = "location", default)]
     pub locations: Vec<LocationNode>,
     /// This is "disambiguation" in the (new) API, or "msgctxt" in gettext speak
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     /// Previous content of comment (result of merge)
     #[serde(skip_serializing_if = "Option::is_none")]
-    oldcomment: Option<String>,
+    pub oldcomment: Option<String>,
     /// The real comment (added by developer/designer)
     #[serde(skip_serializing_if = "Option::is_none")]
     extracomment: Option<String>,

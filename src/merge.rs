@@ -18,18 +18,26 @@ pub struct MergeArgs {
     pub output_path: Option<String>,
 }
 
+/// MessageNode that can be `eq(...)`.
 #[derive(Eq, PartialOrd, Clone)]
-struct NodeGroup {
+struct EquatableMessageNode {
     pub node: MessageNode,
 }
 
-impl PartialEq for NodeGroup {
+/// The rule for equality is if the message id or source match.
+impl PartialEq for EquatableMessageNode {
     fn eq(&self, other: &Self) -> bool {
+        if let Some(this_id) = &self.node.id {
+            if let Some(other_id) = &other.node.id {
+                return this_id == other_id;
+            }
+        }
+
         self.node.source == other.node.source && self.node.locations == other.node.locations
     }
 }
 
-impl Hash for NodeGroup {
+impl Hash for EquatableMessageNode {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.node.source.hash(state);
         self.node.locations.iter().for_each(|loc| {
@@ -39,7 +47,7 @@ impl Hash for NodeGroup {
     }
 }
 
-// This works by depending on cmp looking up only source and location on messages nodes
+// This wortks by depending on cmp looking up only source and location on messages nodes
 // and on context by comparing the names only
 pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let left = load_file(&args.input_left);
@@ -68,11 +76,11 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
 
 fn merge_ts_nodes(mut left: TSNode, mut right: TSNode) -> TSNode {
     left.messages = merge_messages(&mut left.messages, &mut right.messages);
-    merge_contexts(right, &mut left);
+    merge_contexts(&mut left, right);
     left
 }
 
-fn merge_contexts(right: TSNode, left: &mut TSNode) {
+fn merge_contexts(left: &mut TSNode, right: TSNode) {
     right.contexts.into_iter().for_each(|mut right_context| {
         let left_context_opt = left
             .contexts
@@ -80,6 +88,9 @@ fn merge_contexts(right: TSNode, left: &mut TSNode) {
             .find(|left_context| left_context.name == right_context.name);
 
         if let Some(left_context) = left_context_opt {
+            left_context.comment = right_context.comment;
+            left_context.encoding = right_context.encoding;
+
             left_context.messages =
                 merge_messages(&mut left_context.messages, &mut right_context.messages);
         } else {
@@ -95,13 +106,30 @@ fn merge_messages(
 ) -> Vec<MessageNode> {
     let mut unique_messages_left: Vec<_> = left_messages
         .drain(0..)
-        .map(|node| NodeGroup { node })
+        .map(|node| EquatableMessageNode { node })
         .collect();
 
-    let unique_messages_right: Vec<_> = right_messages
+    let mut unique_messages_right: Vec<_> = right_messages
         .drain(0..)
-        .map(|node| NodeGroup { node })
+        .map(|node| EquatableMessageNode { node })
         .collect();
+
+    // Update oldcomment, oldsource.
+    unique_messages_right.iter_mut().for_each(|right_message| {
+        let left_message = unique_messages_left
+            .iter()
+            .find(|&msg| msg == right_message);
+
+        if let Some(left_message) = left_message {
+            if right_message.node.source != left_message.node.source {
+                right_message.node.oldsource = left_message.node.source.clone();
+            }
+
+            if right_message.node.comment != left_message.node.comment {
+                right_message.node.oldcomment = left_message.node.comment.clone();
+            }
+        }
+    });
 
     unique_messages_left
         .drain(0..)
