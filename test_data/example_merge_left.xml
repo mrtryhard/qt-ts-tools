@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="de">
+    <context>
+        <name>kernel/in_merge</name>
+        <message>
+            <id>idBasedLeft</id>
+            <source>Source string Left should be in oldsource</source>
+            <translation></translation>
+        </message>
+        <message>
+            <source>Newsletter</source>
+            <translation>Nyhetsbrev - Left</translation>
+        </message>
+        <message>
+            <source>Only In Left Message</source>
+            <comment>Left message</comment>
+            <translation>Only in Left translation</translation>
+        </message>
+        <message numerus="yes">
+            <source>%1 takes at most %n argument(s). %2 is therefore invalid.</source>
+            <translation>
+                <numerusform>%1 prend au maximum %n argument. %2 est donc invalide.</numerusform>
+                <numerusform>%1 prend au maximum %n arguments. %2 est donc invalide.</numerusform>
+            </translation>
+            <comment>This is a old comment from Left. Should be in oldcomment.</comment>
+        </message>
+    </context>
+    <context>
+        <name>kernel/not_in_merge</name>
+        <message>
+            <source>Newsletter</source>
+            <translation>Nyhetsbrev - Left</translation>
+        </message>
+    </context>
+    <message>
+        <source>Name</source>
+        <location line="456" filename="ui_main.cpp"/>
+        <location line="10" filename="ui_potato_viewer.cpp"/>
+        <location line="321" filename="ui_main.cpp"/>
+        <location line="11" filename="ui_potato_viewer.cpp"/>
+        <comment>An example entry for Name</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="10" filename="ui_potato_viewer.cpp"/>
+        <location line="144" filename="ui_main.cpp"/>
+        <source>This is just a Sample</source>
+        <translation>Dies ist nur ein Beispiel</translation>
+    </message>
+    <message>
+        <source>Practice more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>I am a message in which was written in Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+</TS>

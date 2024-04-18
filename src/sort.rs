@@ -71,8 +71,8 @@ mod sort_test {
         sort_ts_node(&mut data_nosort);
 
         // Validate context ordering
-        assert_eq!(data_nosort.contexts[0].name, Some("CodeContext".to_owned()));
-        assert_eq!(data_nosort.contexts[1].name, Some("UiContext".to_owned()));
+        assert_eq!(data_nosort.contexts[0].name, "CodeContext".to_owned());
+        assert_eq!(data_nosort.contexts[1].name, "UiContext".to_owned());
 
         // Validate message ordering
         let messages = &data_nosort.contexts[1].messages;

@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::io::{BufWriter, Write};
+
+use serde::{Deserialize, Serialize};
 
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
@@ -8,7 +9,7 @@ use std::io::{BufWriter, Write};
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
 
 /// If no type is set, a message is "finished".
-#[derive(Debug, Default, Eq, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TranslationType {
     #[default]
@@ -19,7 +20,7 @@ pub enum TranslationType {
     Vanished,
 }
 
-#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum YesNo {
     Yes,
@@ -37,8 +38,8 @@ pub struct TSNode {
     language: Option<String>,
     #[serde(rename = "context", skip_serializing_if = "Vec::is_empty", default)]
     pub contexts: Vec<ContextNode>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    messages: Option<Vec<MessageNode>>,
+    #[serde(rename = "message", skip_serializing_if = "Vec::is_empty", default)]
+    pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     dependencies: Option<DependenciesNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -50,19 +51,28 @@ pub struct TSNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     translatorcomment: Option<String>,
     /*
-        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
-        > extra elements may appear in TS and message elements. Each element may appear
-        > only once within each scope. The contents are preserved verbatim; any
-        > attributes are dropped.
-     */
-    #[serde(rename = "extra-po-msgid_plural", skip_serializing_if = "Option::is_none")]
+       Following section corresponds to `extra-something` in Qt's XSD. From documentation:
+       > extra elements may appear in TS and message elements. Each element may appear
+       > only once within each scope. The contents are preserved verbatim; any
+       > attributes are dropped.
+    */
+    #[serde(
+        rename = "extra-po-msgid_plural",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub po_msg_id_plural: Option<String>,
-    #[serde(rename = "extra-po-old_msgid_plural", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "extra-po-old_msgid_plural",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub po_old_msg_id_plural: Option<String>,
     /// Comma separated list
     #[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
     pub loc_flags: Option<String>,
-    #[serde(rename = "extra-loc-layout_id", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "extra-loc-layout_id",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub loc_layout_id: Option<String>,
     #[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
     pub loc_feature: Option<String>,
@@ -72,14 +82,13 @@ pub struct TSNode {
 
 #[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
 pub struct ContextNode {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    pub name: String,
     #[serde(rename = "message")]
     pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     #[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
-    encoding: Option<String>,
+    pub encoding: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -93,23 +102,24 @@ pub struct Dependency {
     catalog: String,
 }
 
-#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct MessageNode {
+    /// Original string to translate
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
     /// Result of a merge
     #[serde(skip_serializing_if = "Option::is_none")]
-    oldsource: Option<String>,
+    pub oldsource: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub translation: Option<TranslationNode>,
     #[serde(skip_serializing_if = "Vec::is_empty", rename = "location", default)]
     pub locations: Vec<LocationNode>,
     /// This is "disambiguation" in the (new) API, or "msgctxt" in gettext speak
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     /// Previous content of comment (result of merge)
     #[serde(skip_serializing_if = "Option::is_none")]
-    oldcomment: Option<String>,
+    pub oldcomment: Option<String>,
     /// The real comment (added by developer/designer)
     #[serde(skip_serializing_if = "Option::is_none")]
     extracomment: Option<String>,
@@ -119,23 +129,32 @@ pub struct MessageNode {
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
     numerus: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    id: Option<String>,
+    pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     userdata: Option<String>,
     /*
-        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
-        > extra elements may appear in TS and message elements. Each element may appear
-        > only once within each scope. The contents are preserved verbatim; any
-        > attributes are dropped.
-     */
-    #[serde(rename = "extra-po-msgid_plural", skip_serializing_if = "Option::is_none")]
+       Following section corresponds to `extra-something` in Qt's XSD. From documentation:
+       > extra elements may appear in TS and message elements. Each element may appear
+       > only once within each scope. The contents are preserved verbatim; any
+       > attributes are dropped.
+    */
+    #[serde(
+        rename = "extra-po-msgid_plural",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub po_msg_id_plural: Option<String>,
-    #[serde(rename = "extra-po-old_msgid_plural", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "extra-po-old_msgid_plural",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub po_old_msg_id_plural: Option<String>,
     /// Comma separated list
     #[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
     pub loc_flags: Option<String>,
-    #[serde(rename = "extra-loc-layout_id", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "extra-loc-layout_id",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub loc_layout_id: Option<String>,
     #[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
     pub loc_feature: Option<String>,
@@ -143,7 +162,7 @@ pub struct MessageNode {
     pub loc_blank: Option<String>,
 }
 
-#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TranslationNode {
     // Did not find a way to make it an enum
     // Therefore: either you have a `translation_simple` or a `numerus_forms`, but not both.
@@ -159,7 +178,7 @@ pub struct TranslationNode {
     userdata: Option<String>, // deprecated
 }
 
-#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct LocationNode {
     #[serde(rename = "@filename", skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
@@ -167,7 +186,7 @@ pub struct LocationNode {
     pub line: Option<u32>,
 }
 
-#[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
     text: String,
@@ -244,10 +263,8 @@ impl PartialOrd<Self> for ContextNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
         self.name
-            .as_ref()
-            .unwrap_or(&"".to_owned())
             .to_lowercase()
-            .partial_cmp(&other.name.as_ref().unwrap_or(&"".to_owned()).to_lowercase())
+            .partial_cmp(&other.name.to_lowercase())
     }
 }
 
@@ -297,8 +314,9 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
 
 #[cfg(test)]
 mod write_file_test {
-    use super::*;
     use quick_xml;
+
+    use super::*;
 
     #[test]
     fn test_write_to_output_file() {
@@ -322,8 +340,10 @@ mod write_file_test {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use quick_xml;
+
+    use super::*;
+
     // TODO: Data set. https://github.com/qt/qttranslations/
     #[test]
     fn test_parse_with_numerus_forms() {
@@ -337,7 +357,7 @@ mod test {
         assert_eq!(data.language.unwrap(), "sv");
 
         let context1 = &data.contexts[0];
-        assert_eq!(context1.name.as_ref().unwrap(), "kernel/navigationpart");
+        assert_eq!(context1.name, "kernel/navigationpart");
         assert_eq!(context1.messages.len(), 3);
 
         let message_c1_2 = &context1.messages[1];
@@ -392,7 +412,7 @@ mod test {
         assert_eq!(data.language.unwrap(), "de");
 
         let context1 = &data.contexts[0];
-        assert_eq!(context1.name.as_ref().unwrap(), "tst_QKeySequence");
+        assert_eq!(context1.name, "tst_QKeySequence");
         assert_eq!(context1.messages.len(), 11);
         let message_c1_2 = &context1.messages[2];
         let locations = &message_c1_2.locations;
