@@ -14,7 +14,7 @@ description = "Small command line utility to manipulate Qt's translation files w
 [dependencies]
 clap = { version = "4.5.0", features = ["derive"] }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
-serde = { version = "1.0.196", features = ["derive"] }
+serde = { version = "1.0.198", features = ["derive"] }
 itertools = "0.12.1"
 
 [profile.release]
