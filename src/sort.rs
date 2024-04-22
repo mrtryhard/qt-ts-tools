@@ -1,6 +1,7 @@
+use clap::Args;
+
 use crate::ts;
 use crate::ts::TSNode;
-use clap::Args;
 
 /// Sorts the input translation file by context, then by messages.
 #[derive(Args)]
@@ -58,8 +59,9 @@ fn sort_ts_node(ts_node: &mut TSNode) {
 
 #[cfg(test)]
 mod sort_test {
-    use super::*;
     use quick_xml;
+
+    use super::*;
 
     #[test]
     fn test_sort_ts_node() {
