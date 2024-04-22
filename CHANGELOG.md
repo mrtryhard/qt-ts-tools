@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.3.0] - 2024-04-22
 [Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.
 
 ## Added
@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Improved command line documentation [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25), [#27](https://github.com/mrtryhard/qt-ts-tools/issues/27)
 - Updated Clap dependencies [#26](https://github.com/mrtryhard/qt-ts-tools/issues/26)
+- Updated Serde dependencies
 
 ## Fixed
 
