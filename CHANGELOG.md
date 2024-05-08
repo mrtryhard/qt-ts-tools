@@ -4,21 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.4.0] - Unreleased
+[Fourth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/4). 
+
+### Added
+
+- Shell auto-completion scripts can now be auto-generated when using `shell-completion <shell name>` command line option. [#32](https://github.com/mrtryhard/qt-ts-tools/issues/32)
+
+### Changed
+
+### Fixed 
+
 ## [0.3.0] - 2024-04-22
 [Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.
 
-## Added
+### Added
 
 - Merge mechanism to merge two translation files [#24](https://github.com/mrtryhard/qt-ts-tools/issues/24)
 - `extra-*` fields support in `TS` and `message` nodes [#4](https://github.com/mrtryhard/qt-ts-tools/issues/4)
 
-## Changed
+### Changed
 
 - Improved command line documentation [#25](https://github.com/mrtryhard/qt-ts-tools/issues/25), [#27](https://github.com/mrtryhard/qt-ts-tools/issues/27)
 - Updated Clap dependencies [#26](https://github.com/mrtryhard/qt-ts-tools/issues/26)
 - Updated Serde dependencies
 
-## Fixed
+### Fixed
 
 ## [0.2.0] - 2024-01-01
 
