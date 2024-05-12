@@ -77,8 +77,6 @@ fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
 
 #[cfg(test)]
 mod extract_test {
-    use quick_xml;
-
     use super::*;
 
     #[test]

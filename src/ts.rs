@@ -314,8 +314,6 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
 
 #[cfg(test)]
 mod write_file_test {
-    use quick_xml;
-
     use super::*;
 
     #[test]
@@ -340,8 +338,6 @@ mod write_file_test {
 
 #[cfg(test)]
 mod test {
-    use quick_xml;
-
     use super::*;
 
     // TODO: Data set. https://github.com/qt/qttranslations/
