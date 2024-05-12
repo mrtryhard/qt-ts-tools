@@ -31,25 +31,25 @@ pub enum YesNo {
 #[serde(rename = "TS")]
 pub struct TSNode {
     #[serde(rename = "@version", skip_serializing_if = "Option::is_none")]
-    version: Option<String>,
+    pub version: Option<String>,
     #[serde(rename = "@sourcelanguage", skip_serializing_if = "Option::is_none")]
-    source_language: Option<String>,
+    pub source_language: Option<String>,
     #[serde(rename = "@language", skip_serializing_if = "Option::is_none")]
-    language: Option<String>,
+    pub language: Option<String>,
     #[serde(rename = "context", skip_serializing_if = "Vec::is_empty", default)]
     pub contexts: Vec<ContextNode>,
     #[serde(rename = "message", skip_serializing_if = "Vec::is_empty", default)]
     pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    dependencies: Option<DependenciesNode>,
+    pub dependencies: Option<DependenciesNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    oldcomment: Option<String>,
+    pub oldcomment: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    extracomment: Option<String>,
+    pub extracomment: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    translatorcomment: Option<String>,
+    pub translatorcomment: Option<String>,
     /*
        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
        > extra elements may appear in TS and message elements. Each element may appear
@@ -94,12 +94,12 @@ pub struct ContextNode {
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct DependenciesNode {
     #[serde(rename = "dependency")]
-    dependencies: Vec<Dependency>,
+    pub dependencies: Vec<Dependency>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct Dependency {
-    catalog: String,
+    pub catalog: String,
 }
 
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
@@ -122,16 +122,16 @@ pub struct MessageNode {
     pub oldcomment: Option<String>,
     /// The real comment (added by developer/designer)
     #[serde(skip_serializing_if = "Option::is_none")]
-    extracomment: Option<String>,
+    pub extracomment: Option<String>,
     /// Comment added by translator
     #[serde(skip_serializing_if = "Option::is_none")]
-    translatorcomment: Option<String>,
+    pub translatorcomment: Option<String>,
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
-    numerus: Option<YesNo>,
+    pub numerus: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    userdata: Option<String>,
+    pub userdata: Option<String>,
     /*
        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
        > extra elements may appear in TS and message elements. Each element may appear
@@ -167,15 +167,15 @@ pub struct TranslationNode {
     // Did not find a way to make it an enum
     // Therefore: either you have a `translation_simple` or a `numerus_forms`, but not both.
     #[serde(rename = "$text", skip_serializing_if = "Option::is_none")]
-    translation_simple: Option<String>,
+    pub translation_simple: Option<String>,
     #[serde(rename = "numerusform", skip_serializing_if = "Vec::is_empty", default)]
-    numerus_forms: Vec<NumerusFormNode>,
+    pub numerus_forms: Vec<NumerusFormNode>,
     #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
     pub translation_type: Option<TranslationType>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    variants: Option<YesNo>,
+    pub variants: Option<YesNo>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    userdata: Option<String>, // deprecated
+    pub userdata: Option<String>, // deprecated
 }
 
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
@@ -189,13 +189,19 @@ pub struct LocationNode {
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
-    text: String,
+    pub text: String,
     #[serde(rename = "@variants", skip_serializing_if = "Option::is_none")]
-    variants: Option<YesNo>,
+    pub variants: Option<YesNo>,
 }
 
 impl PartialOrd<Self> for MessageNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let id_cmp = other.id.cmp(&self.id);
+
+        if id_cmp != Ordering::Equal {
+            return Some(id_cmp);
+        }
+
         let min_self = self
             .locations
             .iter()

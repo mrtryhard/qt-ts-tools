@@ -4,19 +4,23 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ '**' ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
+      - name: Required tools
+        run: cargo install cargo-deny && rustup component add clippy
+      - name: Clippy
+        run:  cargo clippy --all-targets --all-features -- -D warnings
       - name: Build
         run: cargo build --verbose
+      - name: License check
+        run: cargo deny -L debug --all-features --locked check
       - name: Run tests
         run: cargo test --verbose

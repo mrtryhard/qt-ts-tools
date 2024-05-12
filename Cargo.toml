@@ -17,7 +17,7 @@ clap_complete = "4.5.2"
 clap_complete_nushell = "4.5.1"
 clap_complete_command = "0.5.1"
 quick-xml = { version = "0.31.0", features = ["serialize"] }
-serde = { version = "1.0.199", features = ["derive"] }
+serde = { version = "1.0.200", features = ["derive"] }
 itertools = "0.12.1"
 
 [build-dependencies]

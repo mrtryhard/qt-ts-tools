@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed 
 
+## [0.3.1] - 2024-05-12
+[Fourth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/5). Contains minor fixes to the command line tool.
+
+## Fixed
+
+- Sorting now consider messages' id. [#42](https://github.com/mrtryhard/qt-ts-tools/issues/42)
+
 ## [0.3.0] - 2024-04-22
 [Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.
 
