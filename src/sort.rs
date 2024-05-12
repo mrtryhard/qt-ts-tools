@@ -59,8 +59,6 @@ fn sort_ts_node(ts_node: &mut TSNode) {
 
 #[cfg(test)]
 mod sort_test {
-    use quick_xml;
-
     use super::*;
 
     #[test]

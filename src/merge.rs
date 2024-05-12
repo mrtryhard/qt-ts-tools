@@ -56,16 +56,14 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     if let Err(e) = left {
         return Err(format!(
             "Could not process left file '{}'. Error: {}",
-            &args.input_left,
-            e.to_string()
+            &args.input_left, e
         ));
     }
 
     if let Err(e) = right {
         return Err(format!(
             "Could not process right file '{}'. Error: {}",
-            &args.input_right,
-            e.to_string()
+            &args.input_right, e
         ));
     }
 
@@ -122,25 +120,31 @@ fn merge_messages(
 
         if let Some(left_message) = left_message {
             if right_message.node.source != left_message.node.source {
-                right_message.node.oldsource = left_message.node.source.clone();
+                right_message
+                    .node
+                    .oldsource
+                    .clone_from(&left_message.node.source);
             }
 
             if right_message.node.comment != left_message.node.comment {
-                right_message.node.oldcomment = left_message.node.comment.clone();
+                right_message
+                    .node
+                    .oldcomment
+                    .clone_from(&left_message.node.comment);
             }
         }
     });
 
     unique_messages_left
         .drain(0..)
-        .filter(|a| !unique_messages_right.contains(&a))
+        .filter(|message| !unique_messages_right.contains(message))
         .merge(unique_messages_right.iter().cloned())
         .map(|node| node.node)
         .collect()
 }
 
 fn load_file(path: &String) -> Result<TSNode, String> {
-    match quick_xml::Reader::from_file(&path) {
+    match quick_xml::Reader::from_file(path) {
         Ok(reader) => {
             let nodes: Result<TSNode, _> = quick_xml::de::from_reader(reader.into_inner());
             match nodes {

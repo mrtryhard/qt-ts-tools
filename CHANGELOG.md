@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Fixed a lot of clippy errors, simplified the sorting algorithm for messages [#60](https://github.com/mrtryhard/qt-ts-tools/issues/60)
+
 ### Fixed 
 
 ## [0.3.1] - 2024-05-12
@@ -20,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Fixed
 
-- Sorting now consider messages' id. [#42](https://github.com/mrtryhard/qt-ts-tools/issues/42)
+- Sorting now consider messages' id [#42](https://github.com/mrtryhard/qt-ts-tools/issues/42)
 
 ## [0.3.0] - 2024-04-22
 [Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.

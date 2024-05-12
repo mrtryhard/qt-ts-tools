@@ -1,6 +1,7 @@
+use clap::Args;
+
 use crate::ts;
 use crate::ts::{TSNode, TranslationType};
-use clap::Args;
 
 /// Extracts a translation type messages and contexts from the input translation file.
 #[derive(Args)]
@@ -33,7 +34,7 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
                         .translation_type
                         .iter()
                         .map(to_translation_type)
-                        .collect();
+                        .collect::<Vec<TranslationType>>();
                     retain_ts_node(&mut ts_node, &wanted_types);
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
@@ -59,25 +60,24 @@ fn to_translation_type(value: &TranslationTypeArg) -> TranslationType {
 }
 
 /// Keep only the desired translation type from the node (if it matches one in `wanted_types`).
-fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &Vec<TranslationType>) {
+fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
     ts_node.contexts.retain_mut(|context| {
         context.messages.retain(|message| {
             message.translation.as_ref().is_some_and(|translation| {
                 translation
                     .translation_type
                     .as_ref()
-                    .is_some_and(|translation_type| wanted_types.contains(&translation_type))
+                    .is_some_and(|translation_type| wanted_types.contains(translation_type))
             })
         });
 
-        context.messages.len() > 0
+        !context.messages.is_empty()
     });
 }
 
 #[cfg(test)]
 mod extract_test {
     use super::*;
-    use quick_xml;
 
     #[test]
     fn test_extract_ts_node() {
