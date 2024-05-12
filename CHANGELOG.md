@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.3.1] - Unreleased
+Contains minor fixes to the command line tool.
+
+## Fixed
+
+- Sorting now consider messages' id. [#42](https://github.com/mrtryhard/qt-ts-tools/issues/42)
+
 ## [0.3.0] - 2024-04-22
 [Third milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/3). This introduces the `merge` command and improved documentation.
 
