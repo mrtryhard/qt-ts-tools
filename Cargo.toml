@@ -16,9 +16,13 @@ clap = { version = "4.5.4", features = ["derive"] }
 clap_complete = "4.5.2"
 clap_complete_nushell = "4.5.1"
 clap_complete_command = "0.5.1"
+fluent = "0.16.1"
+fluent-templates = "0.9.4"
+itertools = "0.12.1"
+lazy_static = "1.4.0"
 quick-xml = { version = "0.31.0", features = ["serialize"] }
 serde = { version = "1.0.200", features = ["derive"] }
-itertools = "0.12.1"
+sys-locale = "0.3.1"
 
 [profile.release]
 strip = true

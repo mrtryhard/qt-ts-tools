@@ -3,6 +3,7 @@ use std::hash::{Hash, Hasher};
 use clap::Args;
 use itertools::Itertools;
 
+use crate::locale::tr_args;
 use crate::ts;
 use crate::ts::{MessageNode, TSNode};
 
@@ -54,16 +55,24 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let right = load_file(&args.input_right);
 
     if let Err(e) = left {
-        return Err(format!(
-            "Could not process left file '{}'. Error: {}",
-            &args.input_left, e
+        return Err(tr_args(
+            "open-or-parse-error",
+            [
+                ("file", args.input_left.as_str().into()),
+                ("error", e.to_string().as_str().into()),
+            ]
+            .into(),
         ));
     }
 
     if let Err(e) = right {
-        return Err(format!(
-            "Could not process right file '{}'. Error: {}",
-            &args.input_right, e
+        return Err(tr_args(
+            "open-or-parse-error",
+            [
+                ("file", args.input_right.as_str().into()),
+                ("error", e.to_string().as_str().into()),
+            ]
+            .into(),
         ));
     }
 
