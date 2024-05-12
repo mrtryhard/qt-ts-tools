@@ -1,5 +1,6 @@
 use clap::Args;
 
+use crate::locale::tr_args;
 use crate::ts;
 use crate::ts::{TSNode, TranslationType};
 
@@ -38,15 +39,23 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
                     retain_ts_node(&mut ts_node, &wanted_types);
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
-                Err(e) => Err(format!(
-                    "Could not parse input file \"{}\". Error: {e:?}.",
-                    args.input_path
+                Err(e) => Err(tr_args(
+                    "open-or-parse-error",
+                    [
+                        ("file", args.input_path.as_str().into()),
+                        ("error", e.to_string().into()),
+                    ]
+                    .into(),
                 )),
             }
         }
-        Err(e) => Err(format!(
-            "Could not open or parse input file \"{}\". Error: {e:?}",
-            args.input_path
+        Err(e) => Err(tr_args(
+            "open-or-parse-error",
+            [
+                ("file", args.input_path.as_str().into()),
+                ("error", e.to_string().into()),
+            ]
+            .into(),
         )),
     }
 }

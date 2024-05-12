@@ -3,6 +3,8 @@ use std::io::{BufWriter, Write};
 
 use serde::{Deserialize, Serialize};
 
+use crate::locale::tr_args;
+
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
 // For now they can't handle Qt's semi-weird XSD.
@@ -239,18 +241,15 @@ impl Ord for LocationNode {
             .as_ref()
             .unwrap_or(&"".to_owned())
             .to_lowercase()
-            .partial_cmp(
+            .cmp(
                 &other
                     .filename
                     .as_ref()
                     .unwrap_or(&"".to_owned())
                     .to_lowercase(),
-            )
-            .expect("LocationNode::filename should have an ordering")
-        {
-            Ordering::Less => Ordering::Less,
-            Ordering::Greater => Ordering::Greater,
+            ) {
             Ordering::Equal => self.line.cmp(&other.line),
+            ordering => ordering,
         }
     }
 }
@@ -288,8 +287,13 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
         {
             Ok(file) => BufWriter::new(Box::new(file)),
             Err(e) => {
-                return Err(format!(
-                    "Error occured while opening output file \"{output_path}\": {e:?}"
+                return Err(tr_args(
+                    "ts-error-write-output-open",
+                    [
+                        ("output_path", output_path.into()),
+                        ("error", e.to_string().into()),
+                    ]
+                    .into(),
                 ))
             }
         },
@@ -305,10 +309,16 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
-                Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),
+                Err(e) => Err(tr_args(
+                    "ts-error-write-serialize",
+                    [("error", e.to_string().into())].into(),
+                )),
             }
         }
-        Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),
+        Err(e) => Err(tr_args(
+            "ts-error-write-serialize",
+            [("error", e.to_string().into())].into(),
+        )),
     }
 }
 

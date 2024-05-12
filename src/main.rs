@@ -1,10 +1,11 @@
+use crate::cli::get_cli_result;
+
 mod cli;
 mod extract;
+mod locale;
 mod merge;
 mod sort;
 mod ts;
-
-use crate::cli::get_cli_result;
 
 fn main() {
     if let Err(e) = get_cli_result() {

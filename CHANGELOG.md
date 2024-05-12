@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Shell auto-completion scripts can now be auto-generated when using `shell-completion <shell name>` command line option. [#32](https://github.com/mrtryhard/qt-ts-tools/issues/32)
+- Localization is now supported. French and English are supported [#28](https://github.com/mrtryhard/qt-ts-tools/issues/28)
 
 ### Changed
 
