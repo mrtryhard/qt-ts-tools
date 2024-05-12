@@ -158,8 +158,6 @@ fn load_file(path: &String) -> Result<TSNode, String> {
 
 #[cfg(test)]
 mod merge_test {
-    use crate::ts::write_to_output;
-
     use super::*;
 
     #[test]
@@ -172,7 +170,7 @@ mod merge_test {
             .expect("Test data could not be loaded for right file.");
 
         let result = merge_ts_nodes(left, right);
-        let _ = write_to_output(&Some("test_data/result.xml".to_string()), &result);
+
         assert_eq!(result, expected_result);
     }
 }
