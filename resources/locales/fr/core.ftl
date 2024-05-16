@@ -1,3 +1,15 @@
+cli-about = Petit utilitaire de ligne de commands pour manipuler les fichiers de traduction TS de Qt.
+cli-extract-desc = Extrait les messages et contextes correspondants au type de tranduction spécifié
+cli-extract-input = Chemin d'accès du fichier de traduction à extraire.
+cli-extract-translation-type = Liste des types de traductions à extraire.
+cli-extract-output = Si spécifié, chemin d'accès du fichier de sortie.
+cli-merge-desc = Fusionne les contextes et message des deux fichiers de traductions spécifié en un seul.
+cli-merge-input-left = Fichier qui reçoit les changements.
+cli-merge-input-right = Fichier qui possède les changements.
+cli-merge-output = Si spécificé, chemin d'accès du fichier de sortie.
+cli-sort-desc = Trie le fichier de traduction par contextes, puis messages.
+cli-sort-input = Chemin d'accès du fichier de traduction à trier.
+cli-sort-output = Si spécifié, chemin d'accès du fichier de sortie.
 open-or-parse-error = Échec de lecture ou décodage du fichier "{ $file }". Raison: { $error },
 sort-parse-error = Échec de lecture du fichier "{ $file }". Raison: { $error }
 ts-error-write-output-open = Erreur lors de l'ouverture en écriture du fichier "{ $file }". Raison: { $error }
