@@ -1,28 +1,44 @@
-use crate::extract::{extract_main, ExtractArgs};
-use crate::merge::{merge_main, MergeArgs};
-use crate::sort::{sort_main, SortArgs};
-use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
+use clap::{ArgAction, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::{Generator, Shell};
 use clap_complete_nushell::Nushell;
 
+use crate::extract::{extract_main, ExtractArgs};
+use crate::locale::tr;
+use crate::merge::{merge_main, MergeArgs};
+use crate::sort::{sort_main, SortArgs};
+
 #[derive(Parser)]
-#[command(author, version, about)]
+#[command(author,
+    version,
+    about = tr("cli-about"),
+    disable_help_flag = true,
+    disable_help_subcommand = true,
+    disable_version_flag = true)]
 pub struct Cli {
     #[command(subcommand)]
     command: Commands,
+    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    pub help: bool,
+    #[arg(short, long, short_alias = 'v', action = ArgAction::Version, help = tr("cli-version"))]
+    version: bool,
 }
 
 #[derive(Subcommand)]
-#[command(name = env!("CARGO_PKG_NAME"), about, version)]
+#[command(subcommand_help_heading = tr("cli-headers-commands"),
+    next_help_heading = tr("cli-headers-options"))]
 enum Commands {
+    #[command(about = tr("cli-sort-desc"))]
     Sort(SortArgs),
+    #[command(about = tr("cli-extract-desc"))]
     Extract(ExtractArgs),
+    #[command(about = tr("cli-merge-desc"))]
     Merge(MergeArgs),
-    /// Print a shell completion for supported shells
-    #[command(name = "shell-completion")]
+    #[command(name = "shell-completion", about = tr("cli-shell-completion-desc"), disable_help_flag = true)]
     ShellCompletion {
         #[arg(value_enum)]
         shell: clap_complete_command::Shell,
+        #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+        help: bool,
     },
 }
 
@@ -74,7 +90,7 @@ pub fn get_cli_result() -> Result<(), String> {
         Commands::Sort(args) => sort_main(&args),
         Commands::Extract(args) => extract_main(&args),
         Commands::Merge(args) => merge_main(&args),
-        Commands::ShellCompletion { shell } => {
+        Commands::ShellCompletion { shell, help: _ } => {
             shell.generate(&mut Cli::command(), &mut std::io::stdout());
             Ok(())
         }
