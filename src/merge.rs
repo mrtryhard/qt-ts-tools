@@ -1,21 +1,27 @@
 use std::hash::{Hash, Hasher};
 
-use clap::Args;
+use clap::{ArgAction, Args};
 use itertools::Itertools;
 
+use crate::locale::{tr, tr_args};
 use crate::ts;
 use crate::ts::{MessageNode, TSNode};
 
 /// Merges two translation file contexts and messages into a single output.
 #[derive(Args)]
+#[command(disable_help_flag = true)]
 pub struct MergeArgs {
     /// File to receive the merge
+    #[arg(help = tr("cli-merge-input-left"), help_heading = tr("cli-headers-arguments"))]
     pub input_left: String,
     /// File to include changes from
+    #[arg(help = tr("cli-merge-input-right"), help_heading = tr("cli-headers-arguments"))]
     pub input_right: String,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long)]
+    #[arg(short, long, help = tr("cli-merge-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
+    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    pub help: bool,
 }
 
 /// MessageNode that can be `eq(...)`.
@@ -54,18 +60,24 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let right = load_file(&args.input_right);
 
     if let Err(e) = left {
-        return Err(format!(
-            "Could not process left file '{}'. Error: {}",
-            &args.input_left,
-            e.to_string()
+        return Err(tr_args(
+            "open-or-parse-error",
+            [
+                ("file", args.input_left.as_str().into()),
+                ("error", e.to_string().as_str().into()),
+            ]
+            .into(),
         ));
     }
 
     if let Err(e) = right {
-        return Err(format!(
-            "Could not process right file '{}'. Error: {}",
-            &args.input_right,
-            e.to_string()
+        return Err(tr_args(
+            "open-or-parse-error",
+            [
+                ("file", args.input_right.as_str().into()),
+                ("error", e.to_string().as_str().into()),
+            ]
+            .into(),
         ));
     }
 
@@ -122,25 +134,31 @@ fn merge_messages(
 
         if let Some(left_message) = left_message {
             if right_message.node.source != left_message.node.source {
-                right_message.node.oldsource = left_message.node.source.clone();
+                right_message
+                    .node
+                    .oldsource
+                    .clone_from(&left_message.node.source);
             }
 
             if right_message.node.comment != left_message.node.comment {
-                right_message.node.oldcomment = left_message.node.comment.clone();
+                right_message
+                    .node
+                    .oldcomment
+                    .clone_from(&left_message.node.comment);
             }
         }
     });
 
     unique_messages_left
         .drain(0..)
-        .filter(|a| !unique_messages_right.contains(&a))
+        .filter(|message| !unique_messages_right.contains(message))
         .merge(unique_messages_right.iter().cloned())
         .map(|node| node.node)
         .collect()
 }
 
 fn load_file(path: &String) -> Result<TSNode, String> {
-    match quick_xml::Reader::from_file(&path) {
+    match quick_xml::Reader::from_file(path) {
         Ok(reader) => {
             let nodes: Result<TSNode, _> = quick_xml::de::from_reader(reader.into_inner());
             match nodes {

@@ -1,18 +1,24 @@
+use clap::{ArgAction, Args};
+
+use crate::locale::{tr, tr_args};
 use crate::ts;
 use crate::ts::{TSNode, TranslationType};
-use clap::Args;
 
 /// Extracts a translation type messages and contexts from the input translation file.
 #[derive(Args)]
+#[command(disable_help_flag = true)]
 pub struct ExtractArgs {
-    /// File path to extract translations from.
+    /// File path to exthelpract translations from.
+    #[arg(help = tr("cli-extract-input"), help_heading = tr("cli-headers-arguments"))]
     pub input_path: String,
     /// Translation type list to extract into a single, valid translation output.
-    #[arg(short('t'), long, value_enum, num_args = 1..)]
+    #[arg(short('t'), long, value_enum, num_args = 1.., help = tr("cli-extract-translation-type"), help_heading = tr("cli-headers-arguments"))]
     pub translation_type: Vec<TranslationTypeArg>,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long)]
+    #[arg(short, long, help = tr("cli-extract-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
+    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    pub help: bool,
 }
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
@@ -33,19 +39,27 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
                         .translation_type
                         .iter()
                         .map(to_translation_type)
-                        .collect();
+                        .collect::<Vec<TranslationType>>();
                     retain_ts_node(&mut ts_node, &wanted_types);
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
-                Err(e) => Err(format!(
-                    "Could not parse input file \"{}\". Error: {e:?}.",
-                    args.input_path
+                Err(e) => Err(tr_args(
+                    "open-or-parse-error",
+                    [
+                        ("file", args.input_path.as_str().into()),
+                        ("error", e.to_string().into()),
+                    ]
+                    .into(),
                 )),
             }
         }
-        Err(e) => Err(format!(
-            "Could not open or parse input file \"{}\". Error: {e:?}",
-            args.input_path
+        Err(e) => Err(tr_args(
+            "open-or-parse-error",
+            [
+                ("file", args.input_path.as_str().into()),
+                ("error", e.to_string().into()),
+            ]
+            .into(),
         )),
     }
 }
@@ -59,25 +73,24 @@ fn to_translation_type(value: &TranslationTypeArg) -> TranslationType {
 }
 
 /// Keep only the desired translation type from the node (if it matches one in `wanted_types`).
-fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &Vec<TranslationType>) {
+fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
     ts_node.contexts.retain_mut(|context| {
         context.messages.retain(|message| {
             message.translation.as_ref().is_some_and(|translation| {
                 translation
                     .translation_type
                     .as_ref()
-                    .is_some_and(|translation_type| wanted_types.contains(&translation_type))
+                    .is_some_and(|translation_type| wanted_types.contains(translation_type))
             })
         });
 
-        context.messages.len() > 0
+        !context.messages.is_empty()
     });
 }
 
 #[cfg(test)]
 mod extract_test {
     use super::*;
-    use quick_xml;
 
     #[test]
     fn test_extract_ts_node() {

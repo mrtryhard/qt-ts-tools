@@ -3,6 +3,8 @@ use std::io::{BufWriter, Write};
 
 use serde::{Deserialize, Serialize};
 
+use crate::locale::tr_args;
+
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
 // For now they can't handle Qt's semi-weird XSD.
@@ -196,20 +198,26 @@ pub struct NumerusFormNode {
 
 impl PartialOrd<Self> for MessageNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for MessageNode {
+    fn cmp(&self, other: &Self) -> Ordering {
         let id_cmp = other.id.cmp(&self.id);
 
         if id_cmp != Ordering::Equal {
-            return Some(id_cmp);
+            return id_cmp;
         }
 
-        let min_self = self
+        let (filename, line) = self
             .locations
             .iter()
             .min_by_key(|location| (location.filename.as_ref(), location.line))
             .map(|location| (location.filename.as_ref(), location.line.as_ref()))
             .unwrap_or_default();
 
-        let min_other = other
+        let (other_filename, other_line) = other
             .locations
             .iter()
             .min_by_key(|location| (location.filename.as_ref(), location.line))
@@ -218,66 +226,50 @@ impl PartialOrd<Self> for MessageNode {
 
         // Counterintuitive, but we want to have locationless message at the end:
         // handle `None` differently from default.
-        if min_self.0 == None && min_other.0 != None {
-            Some(Ordering::Greater)
-        } else if min_self.0 == min_other.0 && min_self.1 == None && min_other.1 != None {
-            Some(Ordering::Greater)
+        if filename.is_none() && other_filename.is_some() {
+            Ordering::Greater
         } else {
-            min_self.partial_cmp(&min_other)
+            (filename, line).cmp(&(other_filename, other_line))
         }
-    }
-}
-
-impl Ord for MessageNode {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(&other)
-            .expect("PartialOrd should always return a value for MessageNode")
     }
 }
 
 impl Ord for LocationNode {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(&other)
-            .expect("PartialOrd should always return a value for LocationNode")
-    }
-}
-
-impl PartialOrd<Self> for LocationNode {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match self
             .filename
             .as_ref()
             .unwrap_or(&"".to_owned())
             .to_lowercase()
-            .partial_cmp(
+            .cmp(
                 &other
                     .filename
                     .as_ref()
                     .unwrap_or(&"".to_owned())
                     .to_lowercase(),
-            )
-            .expect("LocationNode::filename should have an ordering")
-        {
-            Ordering::Less => Some(Ordering::Less),
-            Ordering::Greater => Some(Ordering::Greater),
-            Ordering::Equal => self.line.partial_cmp(&other.line),
+            ) {
+            Ordering::Equal => self.line.cmp(&other.line),
+            ordering => ordering,
         }
+    }
+}
+
+impl PartialOrd<Self> for LocationNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl PartialOrd<Self> for ContextNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
-        self.name
-            .to_lowercase()
-            .partial_cmp(&other.name.to_lowercase())
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for ContextNode {
     fn cmp(&self, other: &Self) -> Ordering {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
-        self.name.cmp(&other.name)
+        self.name.to_lowercase().cmp(&other.name.to_lowercase())
     }
 }
 
@@ -289,13 +281,19 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
         None => BufWriter::new(Box::new(std::io::stdout().lock())),
         Some(output_path) => match std::fs::File::options()
             .create(true)
+            .truncate(true)
             .write(true)
             .open(output_path)
         {
             Ok(file) => BufWriter::new(Box::new(file)),
             Err(e) => {
-                return Err(format!(
-                    "Error occured while opening output file \"{output_path}\": {e:?}"
+                return Err(tr_args(
+                    "ts-error-write-output-open",
+                    [
+                        ("output_path", output_path.into()),
+                        ("error", e.to_string().into()),
+                    ]
+                    .into(),
                 ))
             }
         },
@@ -311,17 +309,21 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
-                Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),
+                Err(e) => Err(tr_args(
+                    "ts-error-write-serialize",
+                    [("error", e.to_string().into())].into(),
+                )),
             }
         }
-        Err(e) => Err(format!("Problem occured while serializing output: {e:?}")),
+        Err(e) => Err(tr_args(
+            "ts-error-write-serialize",
+            [("error", e.to_string().into())].into(),
+        )),
     }
 }
 
 #[cfg(test)]
 mod write_file_test {
-    use quick_xml;
-
     use super::*;
 
     #[test]
@@ -346,8 +348,6 @@ mod write_file_test {
 
 #[cfg(test)]
 mod test {
-    use quick_xml;
-
     use super::*;
 
     // TODO: Data set. https://github.com/qt/qttranslations/
