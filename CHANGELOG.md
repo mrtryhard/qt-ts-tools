@@ -15,12 +15,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Fixed a lot of clippy errors, simplified the sorting algorithm for messages [#60](https://github.com/mrtryhard/qt-ts-tools/issues/60)
+- Bumped Serde, Itertools versions [#72](https://github.com/mrtryhard/qt-ts-tools/issues/72)
 
 ### Fixed 
 
 ### Known issues
 
-- Command lines _errors_ are not translated for now.
+- Command lines _errors_ are not translated for now. [#73](https://github.com/mrtryhard/qt-ts-tools/issues/73)
 
 ## [0.3.1] - 2024-05-12
 [Fourth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/5). Contains minor fixes to the command line tool.
