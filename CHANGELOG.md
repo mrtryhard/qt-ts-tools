@@ -10,13 +10,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Shell auto-completion scripts can now be auto-generated when using `shell-completion <shell name>` command line option. [#32](https://github.com/mrtryhard/qt-ts-tools/issues/32)
-- Localization is now supported. French and English are supported [#28](https://github.com/mrtryhard/qt-ts-tools/issues/28)
+- Localization is now supported. French and English are supported [#28](https://github.com/mrtryhard/qt-ts-tools/issues/28), [#63](https://github.com/mrtryhard/qt-ts-tools/issues/28)
 
 ### Changed
 
 - Fixed a lot of clippy errors, simplified the sorting algorithm for messages [#60](https://github.com/mrtryhard/qt-ts-tools/issues/60)
 
 ### Fixed 
+
+### Known issues
+
+- Command lines _errors_ are not translated for now.
 
 ## [0.3.1] - 2024-05-12
 [Fourth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/5). Contains minor fixes to the command line tool.
