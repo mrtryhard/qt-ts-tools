@@ -1,22 +1,27 @@
 use std::hash::{Hash, Hasher};
 
-use clap::Args;
+use clap::{ArgAction, Args};
 use itertools::Itertools;
 
-use crate::locale::tr_args;
+use crate::locale::{tr, tr_args};
 use crate::ts;
 use crate::ts::{MessageNode, TSNode};
 
 /// Merges two translation file contexts and messages into a single output.
 #[derive(Args)]
+#[command(disable_help_flag = true)]
 pub struct MergeArgs {
     /// File to receive the merge
+    #[arg(help = tr("cli-merge-input-left"), help_heading = tr("cli-headers-arguments"))]
     pub input_left: String,
     /// File to include changes from
+    #[arg(help = tr("cli-merge-input-right"), help_heading = tr("cli-headers-arguments"))]
     pub input_right: String,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long)]
+    #[arg(short, long, help = tr("cli-merge-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
+    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    pub help: bool,
 }
 
 /// MessageNode that can be `eq(...)`.

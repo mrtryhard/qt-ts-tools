@@ -1,17 +1,20 @@
-use clap::Args;
+use clap::{ArgAction, Args};
 
-use crate::locale::tr_args;
+use crate::locale::{tr, tr_args};
 use crate::ts;
 use crate::ts::TSNode;
 
-/// Sorts the input translation file by context, then by messages.
 #[derive(Args)]
+#[command(disable_help_flag = true)]
 pub struct SortArgs {
     /// File path to sort translations from.
+    #[arg(help = tr("cli-sort-input"), help_heading = tr("cli-headers-arguments"))]
     pub input_path: String,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long)]
+    #[arg(short, long, help = tr("cli-sort-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
+    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    pub help: bool,
 }
 
 /// Sorts an input TS file by context, then by messages.
