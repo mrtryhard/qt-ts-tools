@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.4.0] - Unreleased
-[Fourth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/4). 
+## [0.4.0] - 2024-05-24
+[Fifth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/4). This release introduces some user experience improvement efforts such as localization (adopting current system language) and auto-completion support.
 
 ### Added
 
