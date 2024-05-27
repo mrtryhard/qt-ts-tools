@@ -14,7 +14,7 @@ static_loader! {
 }
 
 lazy_static! {
-    static ref CURRENT_LANG: LanguageIdentifier = {
+    pub(crate) static ref CURRENT_LANG: LanguageIdentifier = {
         LanguageIdentifier::from_str(
             sys_locale::get_locale()
                 .unwrap_or("en".to_string())
@@ -39,7 +39,6 @@ lazy_static! {
 /// ```rust
 /// tr("some-text-id")
 /// ```
-#[allow(unused)]
 pub fn tr(text_id: &str) -> String {
     LOCALES.lookup(&CURRENT_LANG, text_id)
 }

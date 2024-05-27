@@ -1,4 +1,5 @@
 use clap::{ArgAction, Args};
+use tracing::debug;
 
 use crate::locale::{tr, tr_args};
 use crate::ts;
@@ -77,6 +78,11 @@ fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
     ts_node.contexts.retain_mut(|context| {
         context.messages.retain(|message| {
             message.translation.as_ref().is_some_and(|translation| {
+                debug!(
+                    "Translation node candidate for being retained: {:?} | {:?}",
+                    translation.translation_simple, translation.translation_type
+                );
+
                 translation
                     .translation_type
                     .as_ref()

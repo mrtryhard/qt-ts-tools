@@ -2,6 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use clap::{ArgAction, Args};
 use itertools::Itertools;
+use tracing::debug;
 
 use crate::locale::{tr, tr_args};
 use crate::ts;
@@ -53,7 +54,7 @@ impl Hash for EquatableMessageNode {
     }
 }
 
-// This wortks by depending on cmp looking up only source and location on messages nodes
+// This works by depending on cmp looking up only source and location on messages nodes
 // and on context by comparing the names only
 pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let left = load_file(&args.input_left);
@@ -100,12 +101,26 @@ fn merge_contexts(left: &mut TSNode, right: TSNode) {
             .find(|left_context| left_context.name == right_context.name);
 
         if let Some(left_context) = left_context_opt {
+            debug!(
+                "Found context '{}' matching in left and right files.",
+                left_context.name
+            );
+            debug!(
+                "Left context has {} messages, Right context has {} messages.",
+                left_context.messages.len(),
+                right_context.messages.len()
+            );
+
             left_context.comment = right_context.comment;
             left_context.encoding = right_context.encoding;
 
             left_context.messages =
                 merge_messages(&mut left_context.messages, &mut right_context.messages);
         } else {
+            debug!(
+                "No matching context with name '{}' in left file.",
+                right_context.name
+            );
             left.contexts.push(right_context);
         }
     });
@@ -133,7 +148,17 @@ fn merge_messages(
             .find(|&msg| msg == right_message);
 
         if let Some(left_message) = left_message {
+            debug!(
+                "Found matching message with source '{:?}' and id '{:?}' ",
+                left_message.node.source, left_message.node.id
+            );
+
             if right_message.node.source != left_message.node.source {
+                debug!(
+                    "Updating source '{:?}' to '{:?}'",
+                    left_message.node.source, right_message.node.source
+                );
+
                 right_message
                     .node
                     .oldsource
@@ -141,6 +166,11 @@ fn merge_messages(
             }
 
             if right_message.node.comment != left_message.node.comment {
+                debug!(
+                    "Updating comment '{:?}' to '{:?}'",
+                    left_message.node.comment, right_message.node.comment
+                );
+
                 right_message
                     .node
                     .oldcomment
