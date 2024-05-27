@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::io::{BufWriter, Write};
 
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use crate::locale::tr_args;
 
@@ -277,6 +278,12 @@ impl Ord for ContextNode {
 /// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
 /// `<name></name>` instead of `<name/>`.
 pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<(), String> {
+    debug!(
+        "Writing output to '{output_path:?}': Node contexts={}, standalone messages={}",
+        node.contexts.len(),
+        node.messages.len()
+    );
+
     let mut inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
         None => BufWriter::new(Box::new(std::io::stdout().lock())),
         Some(output_path) => match std::fs::File::options()
@@ -306,6 +313,8 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
 
     match node.serialize(ser) {
         Ok(_) => {
+            debug!("Bytes to write: {}", output_buffer.len());
+
             let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
