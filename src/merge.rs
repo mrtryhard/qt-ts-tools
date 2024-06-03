@@ -136,14 +136,14 @@ fn merge_messages(
             if right_message.node.source != left_message.node.source {
                 right_message
                     .node
-                    .oldsource
+                    .old_source
                     .clone_from(&left_message.node.source);
             }
 
             if right_message.node.comment != left_message.node.comment {
                 right_message
                     .node
-                    .oldcomment
+                    .old_comment
                     .clone_from(&left_message.node.comment);
             }
         }
