@@ -161,7 +161,7 @@ fn merge_messages(
 
                 right_message
                     .node
-                    .oldsource
+                    .old_source
                     .clone_from(&left_message.node.source);
             }
 
@@ -173,7 +173,7 @@ fn merge_messages(
 
                 right_message
                     .node
-                    .oldcomment
+                    .old_comment
                     .clone_from(&left_message.node.comment);
             }
         }
