@@ -5,12 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.5.0] - unreleased
+[Sixth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/6). This release aims to polish what's been done so far.
 
 ### Added
 
 - The tool now support logging for debugging and observability purpose [#18](https://github.com/mrtryhard/qt-ts-tools/issues/18)
 
 ### Changed
+
+- Improved code documentation for reusable parsing TS structures [#41](https://github.com/mrtryhard/qt-ts-tools/issues/41)
 
 ### Fixed
 
