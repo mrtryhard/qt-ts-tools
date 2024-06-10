@@ -1,15 +1,19 @@
+use std::io::Write;
+
 use clap::{ArgAction, Args, CommandFactory, ValueEnum};
 use clap_complete::{Generator, Shell};
 use clap_complete_nushell::Nushell;
 
 use crate::cli::Cli;
-use crate::locale::tr;
+use crate::locale::{tr, tr_args};
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
 pub struct ShellCompletionArgs {
-    #[arg(value_enum)]
+    #[arg(value_enum, help = tr("cli-shell-completion-shell"))]
     shell: clap_complete_command::Shell,
+    #[arg(short, long, help = tr("cli-shell-completion-install"))]
+    output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
     help: Option<bool>,
 }
@@ -56,8 +60,48 @@ impl Generator for GenShell {
 }
 
 pub fn shell_completion_main(args: &ShellCompletionArgs) -> Result<(), String> {
-    args.shell
-        .generate(&mut Cli::command(), &mut std::io::stdout());
+    let mut buf = Vec::<u8>::new();
 
-    Ok(())
+    {
+        let mut writer = std::io::BufWriter::new(&mut buf);
+        args.shell.generate(&mut Cli::command(), &mut writer);
+    }
+
+    match &args.output_path {
+        None => match &mut buf.is_empty() {
+            true => Err(tr_args(
+                "cli-shell-completion-error-get-shell",
+                [("shell", format!("{:?}", args.shell).into())].into(),
+            )),
+            false => Ok(()),
+        },
+        Some(output_path) => write_to_file(&mut buf, output_path),
+    }
+}
+
+fn write_to_file(buf: &mut Vec<u8>, output_path: &String) -> Result<(), String> {
+    let file = std::fs::File::create(output_path);
+
+    match file {
+        Ok(mut file) => match file.write(&buf) {
+            Ok(sz) => {
+                if sz == buf.len() {
+                    Ok(())
+                } else {
+                    Err(tr_args(
+                        "cli-shell-completion-error-write-to-file",
+                        [("file", output_path.into())].into(),
+                    ))
+                }
+            }
+            Err(err) => Err(tr_args(
+                "cli-shell-completion-error-write-privilege",
+                [("error", err.to_string().into())].into(),
+            )),
+        },
+        Err(err) => Err(tr_args(
+            "cli-shell-completion-error-open",
+            [("error", err.to_string().into())].into(),
+        )),
+    }
 }
