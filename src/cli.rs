@@ -2,10 +2,10 @@ use clap::{ArgAction, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::{Generator, Shell};
 use clap_complete_nushell::Nushell;
 
-use crate::extract::{extract_main, ExtractArgs};
+use crate::commands::extract::{extract_main, ExtractArgs};
+use crate::commands::merge::{merge_main, MergeArgs};
+use crate::commands::sort::{sort_main, SortArgs};
 use crate::locale::tr;
-use crate::merge::{merge_main, MergeArgs};
-use crate::sort::{sort_main, SortArgs};
 
 #[derive(Parser)]
 #[command(author,
