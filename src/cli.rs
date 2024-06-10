@@ -1,11 +1,10 @@
-use clap::{ArgAction, CommandFactory, Parser, Subcommand, ValueEnum};
-use clap_complete::{Generator, Shell};
-use clap_complete_nushell::Nushell;
+use clap::{ArgAction, Parser, Subcommand};
 
-use crate::extract::{extract_main, ExtractArgs};
+use crate::commands::extract::{extract_main, ExtractArgs};
+use crate::commands::merge::{merge_main, MergeArgs};
+use crate::commands::shell_completion::{shell_completion_main, ShellCompletionArgs};
+use crate::commands::sort::{sort_main, SortArgs};
 use crate::locale::tr;
-use crate::merge::{merge_main, MergeArgs};
-use crate::sort::{sort_main, SortArgs};
 
 #[derive(Parser)]
 #[command(author,
@@ -18,9 +17,9 @@ pub struct Cli {
     #[command(subcommand)]
     command: Commands,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
     #[arg(short, long, short_alias = 'v', action = ArgAction::Version, help = tr("cli-version"))]
-    version: bool,
+    version: Option<bool>,
 }
 
 #[derive(Subcommand)]
@@ -33,54 +32,8 @@ enum Commands {
     Extract(ExtractArgs),
     #[command(about = tr("cli-merge-desc"))]
     Merge(MergeArgs),
-    #[command(name = "shell-completion", about = tr("cli-shell-completion-desc"), disable_help_flag = true)]
-    ShellCompletion {
-        #[arg(value_enum)]
-        shell: clap_complete_command::Shell,
-        #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-        help: bool,
-    },
-}
-
-#[derive(Debug, Clone, ValueEnum)]
-#[value(rename_all = "lower")]
-pub enum GenShell {
-    Bash,
-    Elvish,
-    Fish,
-    Nushell,
-    PowerShell,
-    Zsh,
-}
-
-impl Generator for GenShell {
-    fn file_name(&self, name: &str) -> String {
-        match self {
-            // clap_complete
-            Self::Bash => Shell::Bash.file_name(name),
-            Self::Elvish => Shell::Elvish.file_name(name),
-            Self::Fish => Shell::Fish.file_name(name),
-            Self::PowerShell => Shell::PowerShell.file_name(name),
-            Self::Zsh => Shell::Zsh.file_name(name),
-
-            // clap_complete_nushell
-            Self::Nushell => Nushell.file_name(name),
-        }
-    }
-
-    fn generate(&self, cmd: &clap::Command, buf: &mut dyn std::io::prelude::Write) {
-        match self {
-            // clap_complete
-            Self::Bash => Shell::Bash.generate(cmd, buf),
-            Self::Elvish => Shell::Elvish.generate(cmd, buf),
-            Self::Fish => Shell::Fish.generate(cmd, buf),
-            Self::PowerShell => Shell::PowerShell.generate(cmd, buf),
-            Self::Zsh => Shell::Zsh.generate(cmd, buf),
-
-            // clap_complete_nushell
-            Self::Nushell => Nushell.generate(cmd, buf),
-        }
-    }
+    #[command(name = "shell-completion", about = tr("cli-shell-completion-desc"))]
+    ShellCompletion(ShellCompletionArgs),
 }
 
 pub fn get_cli_result() -> Result<(), String> {
@@ -90,9 +43,6 @@ pub fn get_cli_result() -> Result<(), String> {
         Commands::Sort(args) => sort_main(&args),
         Commands::Extract(args) => extract_main(&args),
         Commands::Merge(args) => merge_main(&args),
-        Commands::ShellCompletion { shell, help: _ } => {
-            shell.generate(&mut Cli::command(), &mut std::io::stdout());
-            Ok(())
-        }
+        Commands::ShellCompletion(args) => shell_completion_main(&args),
     }
 }

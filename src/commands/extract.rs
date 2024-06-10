@@ -19,7 +19,7 @@ pub struct ExtractArgs {
     #[arg(short, long, help = tr("cli-extract-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
 }
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]

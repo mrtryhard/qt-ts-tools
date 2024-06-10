@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - The tool now support logging for debugging and observability purpose [#18](https://github.com/mrtryhard/qt-ts-tools/issues/18)
+- Added `output-path` to `shell-completion` command [#57](https://github.com/mrtryhard/qt-ts-tools/issues/57)
 
 ### Changed
 
 - Improved code documentation for reusable parsing TS structures [#41](https://github.com/mrtryhard/qt-ts-tools/issues/41)
+- Extracted cli commands in their own subdirectory for code clarity [#57](https://github.com/mrtryhard/qt-ts-tools/issues/57)
 
 ### Fixed
+
+- Fixed an issue where the `help` parameter was erroring every command [#82](https://github.com/mrtryhard/qt-ts-tools/issues/82)
 
 ## [0.4.0] - 2024-05-24
 [Fifth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/4). This release introduces some user experience improvement efforts such as localization (adopting current system language) and auto-completion support.

@@ -22,7 +22,7 @@ pub struct MergeArgs {
     #[arg(short, long, help = tr("cli-merge-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
 }
 
 /// MessageNode that can be `eq(...)`.
