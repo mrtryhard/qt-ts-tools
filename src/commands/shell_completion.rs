@@ -79,11 +79,11 @@ pub fn shell_completion_main(args: &ShellCompletionArgs) -> Result<(), String> {
     }
 }
 
-fn write_to_file(buf: &mut Vec<u8>, output_path: &String) -> Result<(), String> {
+fn write_to_file(buf: &mut [u8], output_path: &String) -> Result<(), String> {
     let file = std::fs::File::create(output_path);
 
     match file {
-        Ok(mut file) => match file.write(&buf) {
+        Ok(mut file) => match file.write(buf) {
             Ok(sz) => {
                 if sz == buf.len() {
                     Ok(())
