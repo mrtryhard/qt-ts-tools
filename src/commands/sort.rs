@@ -14,7 +14,7 @@ pub struct SortArgs {
     #[arg(short, long, help = tr("cli-sort-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
 }
 
 /// Sorts an input TS file by context, then by messages.

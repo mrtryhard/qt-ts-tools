@@ -17,9 +17,9 @@ pub struct Cli {
     #[command(subcommand)]
     command: Commands,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
     #[arg(short, long, short_alias = 'v', action = ArgAction::Version, help = tr("cli-version"))]
-    version: bool,
+    version: Option<bool>,
 }
 
 #[derive(Subcommand)]

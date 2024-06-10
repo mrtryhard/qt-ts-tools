@@ -11,7 +11,7 @@ pub struct ShellCompletionArgs {
     #[arg(value_enum)]
     shell: clap_complete_command::Shell,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    help: bool,
+    help: Option<bool>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
