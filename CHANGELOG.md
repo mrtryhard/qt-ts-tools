@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Improved code documentation for reusable parsing TS structures [#41](https://github.com/mrtryhard/qt-ts-tools/issues/41)
 - Extracted cli commands in their own subdirectory for code clarity [#57](https://github.com/mrtryhard/qt-ts-tools/issues/57)
+- Updated clap-rs third parties [#83](https://github.com/mrtryhard/qt-ts-tools/issues/83)
 
 ### Fixed
 
