@@ -62,7 +62,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
 
     if let Err(e) = left {
         return Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_left.as_str().into()),
                 ("error", e.to_string().as_str().into()),
@@ -73,7 +73,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
 
     if let Err(e) = right {
         return Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_right.as_str().into()),
                 ("error", e.to_string().as_str().into()),
