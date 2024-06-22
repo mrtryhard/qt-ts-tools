@@ -125,18 +125,5 @@ mod extract_test {
         let extracted = node_to_formatted_string(&extracted_node);
 
         assert_eq!(expected_extracted, extracted);
-        // assert_eq!(data.contexts[0].messages.len(), 3);
-        // assert_eq!(
-        //     data.contexts[0].messages[0].source.as_ref().unwrap(),
-        //     "Shift+K"
-        // );
-        // assert_eq!(
-        //     data.contexts[0].messages[1].source.as_ref().unwrap(),
-        //     "Ctrl+K"
-        // );
-        // assert_eq!(
-        //     data.contexts[0].messages[2].source.as_ref().unwrap(),
-        //     "Alt+K"
-        // );
     }
 }
