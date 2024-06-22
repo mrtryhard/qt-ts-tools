@@ -11,6 +11,8 @@ This release aims to make the executable even more robust and fix regressions.
 ### Changed
 
 - Log library changed to `env_logger` for the purpose of reducing executable size [#95](https://github.com/mrtryhard/qt-ts-tools/issues/95)
+- Updated third party `quick-xml` to 0.33.0 (no ticket)
+- Updated third party `clap_complete` to 4.5.6 (no ticket)
 
 ## [0.5.0] - 2024-06-22
 [Sixth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/6). This release aims to polish what's been done so far.
