@@ -1,5 +1,5 @@
 use clap::{ArgAction, Args};
-use tracing::debug;
+use log::debug;
 
 use crate::locale::{tr, tr_args};
 use crate::ts;

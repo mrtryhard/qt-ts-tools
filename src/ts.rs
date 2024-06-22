@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 use std::io::{BufWriter, Write};
 
+use log::debug;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
 
 use crate::locale::tr_args;
 

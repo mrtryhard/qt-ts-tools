@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.1] - unreleased
+[Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 
+This release aims to make the executable even more robust and fix regressions.
+
+### Changed
+
+- Log library changed to `env_logger` for the purpose of reducing executable size [#95](https://github.com/mrtryhard/qt-ts-tools/issues/95)
+
 ## [0.5.0] - 2024-06-22
 [Sixth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/6). This release aims to polish what's been done so far.
 
