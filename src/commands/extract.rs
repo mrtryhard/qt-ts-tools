@@ -45,7 +45,7 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
                 Err(e) => Err(tr_args(
-                    "open-or-parse-error",
+                    "error-open-or-parse",
                     [
                         ("file", args.input_path.as_str().into()),
                         ("error", e.to_string().into()),
@@ -55,7 +55,7 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
             }
         }
         Err(e) => Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_path.as_str().into()),
                 ("error", e.to_string().into()),

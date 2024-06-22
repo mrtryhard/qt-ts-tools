@@ -329,7 +329,7 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             Ok(file) => BufWriter::new(Box::new(file)),
             Err(e) => {
                 return Err(tr_args(
-                    "ts-error-write-output-open",
+                    "error-ts-write-output-open",
                     [
                         ("output_path", output_path.into()),
                         ("error", e.to_string().into()),
@@ -353,13 +353,13 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             match res {
                 Ok(_) => Ok(()),
                 Err(e) => Err(tr_args(
-                    "ts-error-write-serialize",
+                    "error-ts-write-serialize",
                     [("error", e.to_string().into())].into(),
                 )),
             }
         }
         Err(e) => Err(tr_args(
-            "ts-error-write-serialize",
+            "error-ts-write-serialize",
             [("error", e.to_string().into())].into(),
         )),
     }
