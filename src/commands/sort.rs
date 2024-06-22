@@ -77,23 +77,13 @@ fn sort_ts_node(ts_node: &mut TSNode) {
 
 #[cfg(test)]
 mod sort_test {
-    use std::fs::File;
-    use std::io::Read;
-
-    use serde::Serialize;
+    use crate::commands::test_utils::{node_to_formatted_string, read_test_file};
 
     use super::*;
 
     #[test]
     fn test_sort_ts_node() {
-        let expected_sorted = {
-            let mut buf = String::new();
-            let _ = File::open("./test_data/example_sort_sorted.xml")
-                .expect("Test file is readable")
-                .read_to_string(&mut buf)
-                .expect("Output to string");
-            buf.replace('\r', "")
-        };
+        let expected_sorted = read_test_file("example_sort_sorted.xml");
 
         let mut data_nosort: TSNode = {
             let reader_nosort = quick_xml::Reader::from_file("./test_data/example_sort.xml")
@@ -103,16 +93,8 @@ mod sort_test {
 
         sort_ts_node(&mut data_nosort);
 
-        let sorted = node_to_formatted_string(&mut data_nosort);
+        let sorted = node_to_formatted_string(&data_nosort);
 
         assert_eq!(expected_sorted, sorted);
-    }
-
-    fn node_to_formatted_string(node: &mut TSNode) -> String {
-        let mut buf = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE TS>\n".to_string();
-        let mut ser = quick_xml::se::Serializer::new(&mut buf);
-        ser.indent(' ', 4).expand_empty_elements(true);
-        node.serialize(ser).expect("Nodes are serializable");
-        buf
     }
 }
