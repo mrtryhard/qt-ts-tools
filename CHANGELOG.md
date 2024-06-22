@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - The tool now support logging for debugging and observability purpose [#18](https://github.com/mrtryhard/qt-ts-tools/issues/18)
 - Added `output-path` to `shell-completion` command [#57](https://github.com/mrtryhard/qt-ts-tools/issues/57)
+- Added `strip` command to strip specific types of translation out of a file [#56](https://github.com/mrtryhard/qt-ts-tools/issues/56)
 
 ### Changed
 
