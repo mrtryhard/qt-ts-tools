@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="de">
+    <context>
+        <name>CodeContext</name>
+        <message>
+            <source>I am a message in which was written in Code</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>UiContext</name>
+        <message>
+            <source>This is just a Sample</source>
+            <translation>
+                Dies ist nur ein Beispiel
+            </translation>
+            <location filename="ui_main.cpp" line="144"></location>
+            <location filename="ui_potato_viewer.cpp" line="10"></location>
+        </message>
+        <message>
+            <source>Name</source>
+            <translation type="unfinished"></translation>
+            <location filename="ui_main.cpp" line="321"></location>
+            <location filename="ui_main.cpp" line="456"></location>
+            <location filename="ui_potato_viewer.cpp" line="10"></location>
+            <location filename="ui_potato_viewer.cpp" line="11"></location>
+            <comment>An example entry for Name</comment>
+        </message>
+        <message>
+            <source>Practice more</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <message>
+        <source>contextLessMessage</source>
+        <translation type="unfinished"></translation>
+        <location filename="ai_main.cpp" line="300"></location>
+        <location filename="ai_main.cpp" line="312"></location>
+        <location filename="ui_main.cpp" line="456"></location>
+        <location filename="ui_potato_viewer.cpp" line="10"></location>
+        <comment>An example entry for contextLessMessage</comment>
+    </message>
+</TS>

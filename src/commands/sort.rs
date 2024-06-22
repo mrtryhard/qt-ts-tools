@@ -67,62 +67,52 @@ fn sort_ts_node(ts_node: &mut TSNode) {
             .iter_mut()
             .for_each(|message| message.locations.sort());
     });
+
+    let messages = &mut ts_node.messages;
+    messages.sort();
+    messages
+        .iter_mut()
+        .for_each(|message| message.locations.sort());
 }
 
 #[cfg(test)]
 mod sort_test {
+    use std::fs::File;
+    use std::io::Read;
+
+    use serde::Serialize;
+
     use super::*;
 
     #[test]
     fn test_sort_ts_node() {
-        let reader_nosort = quick_xml::Reader::from_file("./test_data/example_unfinished.xml")
-            .expect("Couldn't open example_unfinished test file");
-        let mut data_nosort: TSNode =
-            quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable");
+        let expected_sorted = {
+            let mut buf = String::new();
+            let _ = File::open("./test_data/example_sort_sorted.xml")
+                .expect("Test file is readable")
+                .read_to_string(&mut buf)
+                .expect("Output to string");
+            buf.replace('\r', "")
+        };
+
+        let mut data_nosort: TSNode = {
+            let reader_nosort = quick_xml::Reader::from_file("./test_data/example_sort.xml")
+                .expect("Test file is readable");
+            quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable")
+        };
 
         sort_ts_node(&mut data_nosort);
 
-        // Validate context ordering
-        assert_eq!(data_nosort.contexts[0].name, "CodeContext".to_owned());
-        assert_eq!(data_nosort.contexts[1].name, "UiContext".to_owned());
+        let sorted = node_to_formatted_string(&mut data_nosort);
 
-        // Validate message ordering
-        let messages = &data_nosort.contexts[1].messages;
-        assert_eq!(messages[0].source, Some("This is just a Sample".to_owned()));
-        assert_eq!(messages[1].source, Some("Name".to_owned()));
-        assert_eq!(messages[2].source, Some("Practice more".to_owned()));
+        assert_eq!(expected_sorted, sorted);
+    }
 
-        // Validate locations ordering
-        assert_eq!(
-            messages[0].locations[0].filename,
-            Some("ui_main.cpp".to_owned())
-        );
-        assert_eq!(messages[0].locations[0].line, Some(144));
-        assert_eq!(
-            messages[0].locations[1].filename,
-            Some("ui_potato_viewer.cpp".to_owned())
-        );
-        assert_eq!(messages[0].locations[1].line, Some(10));
-
-        assert_eq!(
-            messages[1].locations[0].filename,
-            Some("ui_main.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[0].line, Some(321));
-        assert_eq!(
-            messages[1].locations[1].filename,
-            Some("ui_main.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[1].line, Some(456));
-        assert_eq!(
-            messages[1].locations[2].filename,
-            Some("ui_potato_viewer.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[2].line, Some(10));
-        assert_eq!(
-            messages[1].locations[3].filename,
-            Some("ui_potato_viewer.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[3].line, Some(11));
+    fn node_to_formatted_string(node: &mut TSNode) -> String {
+        let mut buf = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE TS>\n".to_string();
+        let mut ser = quick_xml::se::Serializer::new(&mut buf);
+        ser.indent(' ', 4).expand_empty_elements(true);
+        node.serialize(ser).expect("Nodes are serializable");
+        buf
     }
 }
