@@ -2,6 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use clap::{ArgAction, Args};
 use itertools::Itertools;
+use tracing::debug;
 
 use crate::locale::{tr, tr_args};
 use crate::ts;
@@ -21,7 +22,7 @@ pub struct MergeArgs {
     #[arg(short, long, help = tr("cli-merge-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
 }
 
 /// MessageNode that can be `eq(...)`.
@@ -53,7 +54,7 @@ impl Hash for EquatableMessageNode {
     }
 }
 
-// This wortks by depending on cmp looking up only source and location on messages nodes
+// This works by depending on cmp looking up only source and location on messages nodes
 // and on context by comparing the names only
 pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let left = load_file(&args.input_left);
@@ -61,7 +62,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
 
     if let Err(e) = left {
         return Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_left.as_str().into()),
                 ("error", e.to_string().as_str().into()),
@@ -72,7 +73,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
 
     if let Err(e) = right {
         return Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_right.as_str().into()),
                 ("error", e.to_string().as_str().into()),
@@ -100,12 +101,26 @@ fn merge_contexts(left: &mut TSNode, right: TSNode) {
             .find(|left_context| left_context.name == right_context.name);
 
         if let Some(left_context) = left_context_opt {
+            debug!(
+                "Found context '{}' matching in left and right files.",
+                left_context.name
+            );
+            debug!(
+                "Left context has {} messages, Right context has {} messages.",
+                left_context.messages.len(),
+                right_context.messages.len()
+            );
+
             left_context.comment = right_context.comment;
             left_context.encoding = right_context.encoding;
 
             left_context.messages =
                 merge_messages(&mut left_context.messages, &mut right_context.messages);
         } else {
+            debug!(
+                "No matching context with name '{}' in left file.",
+                right_context.name
+            );
             left.contexts.push(right_context);
         }
     });
@@ -133,17 +148,32 @@ fn merge_messages(
             .find(|&msg| msg == right_message);
 
         if let Some(left_message) = left_message {
+            debug!(
+                "Found matching message with source '{:?}' and id '{:?}' ",
+                left_message.node.source, left_message.node.id
+            );
+
             if right_message.node.source != left_message.node.source {
+                debug!(
+                    "Updating source '{:?}' to '{:?}'",
+                    left_message.node.source, right_message.node.source
+                );
+
                 right_message
                     .node
-                    .oldsource
+                    .old_source
                     .clone_from(&left_message.node.source);
             }
 
             if right_message.node.comment != left_message.node.comment {
+                debug!(
+                    "Updating comment '{:?}' to '{:?}'",
+                    left_message.node.comment, right_message.node.comment
+                );
+
                 right_message
                     .node
-                    .oldcomment
+                    .old_comment
                     .clone_from(&left_message.node.comment);
             }
         }

@@ -1,4 +1,5 @@
 use clap::{ArgAction, Args};
+use tracing::debug;
 
 use crate::locale::{tr, tr_args};
 use crate::ts;
@@ -18,7 +19,7 @@ pub struct ExtractArgs {
     #[arg(short, long, help = tr("cli-extract-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
 }
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
@@ -44,7 +45,7 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
                 Err(e) => Err(tr_args(
-                    "open-or-parse-error",
+                    "error-open-or-parse",
                     [
                         ("file", args.input_path.as_str().into()),
                         ("error", e.to_string().into()),
@@ -54,7 +55,7 @@ pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
             }
         }
         Err(e) => Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_path.as_str().into()),
                 ("error", e.to_string().into()),
@@ -77,6 +78,11 @@ fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
     ts_node.contexts.retain_mut(|context| {
         context.messages.retain(|message| {
             message.translation.as_ref().is_some_and(|translation| {
+                debug!(
+                    "Translation node candidate for being retained: {:?} | {:?}",
+                    translation.translation_simple, translation.translation_type
+                );
+
                 translation
                     .translation_type
                     .as_ref()

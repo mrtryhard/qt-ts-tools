@@ -1,15 +1,27 @@
+use tracing::{debug, error, info};
+
 use crate::cli::get_cli_result;
+use crate::logging::initialize_logging;
 
 mod cli;
-mod extract;
+mod commands;
 mod locale;
-mod merge;
-mod sort;
+mod logging;
 mod ts;
 
 fn main() {
+    initialize_logging();
+
+    debug!(
+        "Using localization language: {}",
+        locale::CURRENT_LANG.language.to_string()
+    );
+
     if let Err(e) = get_cli_result() {
-        println!("{e}");
+        error!("Command returned error: {e}");
+        eprintln!("{e}");
         std::process::exit(1);
     }
+
+    info!("Tool exits normally");
 }

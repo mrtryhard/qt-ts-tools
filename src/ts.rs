@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::io::{BufWriter, Write};
 
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use crate::locale::tr_args;
 
@@ -10,15 +11,19 @@ use crate::locale::tr_args;
 // For now they can't handle Qt's semi-weird XSD.
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
 
-/// If no type is set, a message is "finished".
+/// TranslationType defines the status of a translation (aka the progress)
 #[derive(Debug, Default, Clone, Eq, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TranslationType {
+    /// Translation is completed
     #[default]
     #[serde(skip)]
     Finished,
+    /// Translation is not finished
     Unfinished,
+    /// Translation requires an update
     Obsolete,
+    /// Translation is not used anymore
     Vanished,
 }
 
@@ -29,29 +34,39 @@ pub enum YesNo {
     No,
 }
 
+/// Root node of the translation file.
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename = "TS")]
 pub struct TSNode {
+    /// Defines the version of the TS format, although unused by this tool.
     #[serde(rename = "@version", skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// Source language on which this translation is based on.
     #[serde(rename = "@sourcelanguage", skip_serializing_if = "Option::is_none")]
     pub source_language: Option<String>,
+    /// Language of this translation.
     #[serde(rename = "@language", skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
+    /// Translations attached to a context
     #[serde(rename = "context", skip_serializing_if = "Vec::is_empty", default)]
     pub contexts: Vec<ContextNode>,
+    /// Standalone translation messages.
     #[serde(rename = "message", skip_serializing_if = "Vec::is_empty", default)]
     pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dependencies: Option<DependenciesNode>,
+    /// Translation comment.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub oldcomment: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub extracomment: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub translatorcomment: Option<String>,
+    /// Previous translation comment.
+    #[serde(rename = "oldcomment", skip_serializing_if = "Option::is_none")]
+    pub old_comment: Option<String>,
+    /// Other, extra comment
+    #[serde(rename = "extracomment", skip_serializing_if = "Option::is_none")]
+    pub extra_comment: Option<String>,
+    /// Translator comment
+    #[serde(rename = "translatorcomment", skip_serializing_if = "Option::is_none")]
+    pub translator_comment: Option<String>,
     /*
        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
        > extra elements may appear in TS and message elements. Each element may appear
@@ -82,13 +97,18 @@ pub struct TSNode {
     pub loc_blank: Option<String>,
 }
 
+/// Context and its associated translated message.
 #[derive(Debug, Eq, Deserialize, Serialize, PartialEq)]
 pub struct ContextNode {
+    /// Unique name of the context
     pub name: String,
+    /// List of translation messages
     #[serde(rename = "message")]
     pub messages: Vec<MessageNode>,
+    /// Comment describing information about the context
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
+    /// Encoding of the messages within that context.
     #[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
     pub encoding: Option<String>,
 }
@@ -104,34 +124,40 @@ pub struct Dependency {
     pub catalog: String,
 }
 
+/// Translation message node.
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct MessageNode {
     /// Original string to translate
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
-    /// Result of a merge
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub oldsource: Option<String>,
+    /// Old source before a merge. Merging will set that field.
+    #[serde(rename = "oldsource", skip_serializing_if = "Option::is_none")]
+    pub old_source: Option<String>,
+    /// Translation in the target language.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub translation: Option<TranslationNode>,
+    /// Lines and files in which the translation message is used.
     #[serde(skip_serializing_if = "Vec::is_empty", rename = "location", default)]
     pub locations: Vec<LocationNode>,
     /// This is "disambiguation" in the (new) API, or "msgctxt" in gettext speak
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     /// Previous content of comment (result of merge)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub oldcomment: Option<String>,
+    #[serde(rename = "oldcomment", skip_serializing_if = "Option::is_none")]
+    pub old_comment: Option<String>,
     /// The real comment (added by developer/designer)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub extracomment: Option<String>,
+    #[serde(rename = "extracomment", skip_serializing_if = "Option::is_none")]
+    pub extra_comment: Option<String>,
     /// Comment added by translator
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub translatorcomment: Option<String>,
+    #[serde(rename = "translatorcomment", skip_serializing_if = "Option::is_none")]
+    pub translator_comment: Option<String>,
+    /// Support for the plural forms
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
     pub numerus: Option<YesNo>,
+    /// Message unique id (not guaranteed to be existant)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Extra information
     #[serde(skip_serializing_if = "Option::is_none")]
     pub userdata: Option<String>,
     /*
@@ -164,30 +190,39 @@ pub struct MessageNode {
     pub loc_blank: Option<String>,
 }
 
+/// Translation node that indicates an actual translation for a message.
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TranslationNode {
     // Did not find a way to make it an enum
     // Therefore: either you have a `translation_simple` or a `numerus_forms`, but not both.
+    /// Simple translation version, which do not take plural forms into account
     #[serde(rename = "$text", skip_serializing_if = "Option::is_none")]
     pub translation_simple: Option<String>,
+    /// Plural forms for the translation
     #[serde(rename = "numerusform", skip_serializing_if = "Vec::is_empty", default)]
     pub numerus_forms: Vec<NumerusFormNode>,
+    /// Translation type (which represents the translation status)
     #[serde(rename = "@type", skip_serializing_if = "Option::is_none")]
     pub translation_type: Option<TranslationType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub variants: Option<YesNo>,
+    /// Extra data
     #[serde(skip_serializing_if = "Option::is_none")]
     pub userdata: Option<String>, // deprecated
 }
 
+/// Location of a translation
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct LocationNode {
+    /// File from which the translation source originates from.
     #[serde(rename = "@filename", skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
+    /// Line where the source of the translation message is located in the file.
     #[serde(rename = "@line", skip_serializing_if = "Option::is_none")]
     pub line: Option<u32>,
 }
 
+/// Represents a translation plural form.
 #[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
@@ -277,6 +312,12 @@ impl Ord for ContextNode {
 /// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
 /// `<name></name>` instead of `<name/>`.
 pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<(), String> {
+    debug!(
+        "Writing output to '{output_path:?}': Node contexts={}, standalone messages={}",
+        node.contexts.len(),
+        node.messages.len()
+    );
+
     let mut inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
         None => BufWriter::new(Box::new(std::io::stdout().lock())),
         Some(output_path) => match std::fs::File::options()
@@ -288,7 +329,7 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             Ok(file) => BufWriter::new(Box::new(file)),
             Err(e) => {
                 return Err(tr_args(
-                    "ts-error-write-output-open",
+                    "error-ts-write-output-open",
                     [
                         ("output_path", output_path.into()),
                         ("error", e.to_string().into()),
@@ -306,17 +347,19 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
 
     match node.serialize(ser) {
         Ok(_) => {
+            debug!("Bytes to write: {}", output_buffer.len());
+
             let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
                 Err(e) => Err(tr_args(
-                    "ts-error-write-serialize",
+                    "error-ts-write-serialize",
                     [("error", e.to_string().into())].into(),
                 )),
             }
         }
         Err(e) => Err(tr_args(
-            "ts-error-write-serialize",
+            "error-ts-write-serialize",
             [("error", e.to_string().into())].into(),
         )),
     }

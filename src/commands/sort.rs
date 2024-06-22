@@ -14,7 +14,7 @@ pub struct SortArgs {
     #[arg(short, long, help = tr("cli-sort-output"), help_heading = tr("cli-headers-options"))]
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
-    pub help: bool,
+    pub help: Option<bool>,
 }
 
 /// Sorts an input TS file by context, then by messages.
@@ -33,7 +33,7 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
                 Err(e) => Err(tr_args(
-                    "sort-parse-error",
+                    "error-ts-file-parse",
                     [
                         ("file", args.input_path.as_str().into()),
                         ("error", e.to_string().into()),
@@ -43,7 +43,7 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
             }
         }
         Err(e) => Err(tr_args(
-            "open-or-parse-error",
+            "error-open-or-parse",
             [
                 ("file", args.input_path.as_str().into()),
                 ("error", e.to_string().into()),

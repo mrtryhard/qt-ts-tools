@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.0] - unreleased
+[Sixth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/6). This release aims to polish what's been done so far.
+
+### Added
+
+- The tool now support logging for debugging and observability purpose [#18](https://github.com/mrtryhard/qt-ts-tools/issues/18)
+- Added `output-path` to `shell-completion` command [#57](https://github.com/mrtryhard/qt-ts-tools/issues/57)
+- Added `strip` command to strip specific types of translation out of a file [#56](https://github.com/mrtryhard/qt-ts-tools/issues/56)
+
+### Changed
+
+- Improved code documentation for reusable parsing TS structures [#41](https://github.com/mrtryhard/qt-ts-tools/issues/41)
+- Extracted cli commands in their own subdirectory for code clarity [#57](https://github.com/mrtryhard/qt-ts-tools/issues/57)
+- Updated clap-rs third party to 4.5.7 [#83](https://github.com/mrtryhard/qt-ts-tools/issues/83)
+- Updated quick-xml third party to 0.32.0 [#85](https://github.com/mrtryhard/qt-ts-tools/issues/85)
+
+### Fixed
+
+- Fixed an issue where the `help` parameter was erroring every command [#82](https://github.com/mrtryhard/qt-ts-tools/issues/82)
+
 ## [0.4.0] - 2024-05-24
 [Fifth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/4). This release introduces some user experience improvement efforts such as localization (adopting current system language) and auto-completion support.
 
