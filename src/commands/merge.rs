@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use clap::{ArgAction, Args};
 use itertools::Itertools;
-use tracing::debug;
+use log::debug;
 
 use crate::locale::{tr, tr_args};
 use crate::ts;

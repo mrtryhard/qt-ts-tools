@@ -1,8 +1,9 @@
+use clap::{ArgAction, Args};
+use log::debug;
+
 use crate::locale::{tr, tr_args};
 use crate::ts;
 use crate::ts::{TSNode, TranslationType};
-use clap::{ArgAction, Args};
-use tracing::debug;
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
 pub enum TranslationTypeArg {
