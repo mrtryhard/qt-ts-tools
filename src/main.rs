@@ -14,7 +14,7 @@ fn main() {
 
     debug!(
         "Using localization language: {}",
-        locale::CURRENT_LANG.language.to_string()
+        locale::current_lang().language.to_string()
     );
 
     if let Err(e) = get_cli_result() {
