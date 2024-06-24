@@ -4,13 +4,20 @@ This repository contains suite of tools for manipulating [Qt Framework](https://
 ## Implemented functions
 See `qt-ts-tools --help` for a list of operations in your version.
 
-### Sort
 ```shell
+# Sort
 ./qt-ts-tools sort my_file.ts -o my_file_sorted.ts
+# Strip symbols
+./qt-ts-tools strip my_file.ts -t vanished -o my_file_stripped.ts
+# Merge translation files
+./qt-ts-tools merge base.ts changes.ts -o merged_file.ts 
+# Extract only specific type of translation
+./qt-ts-tools extract my_file.ts -t obsolete -o extracted.ts
 ```
+
 ## Limitations
-* Sorting might not be 100% identical to Qt's. 
-* Some tags may become self-closing (e.g. `<translation/>` instead of `<translation></translation>`)
+* The output format may change a little bit i.e. self-closing tags becomes full tags
+* QtLinguist full functionality might not be fully replicated
 
 ## Planned work
 In no particular order:
@@ -37,7 +44,12 @@ Licensed under either of
 at your option.
 
 ## Contribution
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed information about contributing.
 
+### Bugs report or feature request
+You may report any bug reports or feature requests through [Github's issue tracker](https://github.com/mrtryhard/qt-ts-tools/issues/).
+
+### Code contribution
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
