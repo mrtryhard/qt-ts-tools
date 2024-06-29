@@ -12,8 +12,9 @@ This release aims to make the executable even more robust, fix bugs and regressi
 
 - Log library changed to `env_logger` for the purpose of reducing executable size [#95](https://github.com/mrtryhard/qt-ts-tools/issues/95)
 - Improved automated tests [#21](https://github.com/mrtryhard/qt-ts-tools/issues/21)
-- Updated third party `quick-xml` to 0.33.0 (no ticket)
-- Updated third party `clap_complete` to 4.5.6 (no ticket)
+- Updated third party `quick-xml` to 0.34.0 (no ticket)
+- Updated third party `clap_complete` to 4.5.8 (no ticket)
+- Updated third party `log` to 0.4.22 (no ticket)
 - Removed third party `lazy-static` and replaced with standard library `OnceLock` [#108](https://github.com/mrtryhard/qt-ts-tools/issues/21)
 - Simplified translation usage by unifying to a single variable macro `tr!` [#113](https://github.com/mrtryhard/qt-ts-tools/issues/113)
 
