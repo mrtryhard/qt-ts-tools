@@ -15,6 +15,7 @@ This release aims to make the executable even more robust, fix bugs and regressi
 - Updated third party `quick-xml` to 0.33.0 (no ticket)
 - Updated third party `clap_complete` to 4.5.6 (no ticket)
 - Removed third party `lazy-static` and replaced with standard library `OnceLock` [#108](https://github.com/mrtryhard/qt-ts-tools/issues/21)
+- Simplified translation usage by unifying to a single variable macro `tr!` [#113](https://github.com/mrtryhard/qt-ts-tools/issues/113)
 
 ### Fixed
 

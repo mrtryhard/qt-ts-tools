@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::OnceLock;
 
@@ -13,53 +12,79 @@ static_loader! {
     };
 }
 pub fn current_lang() -> &'static LanguageIdentifier {
-    static CURRENT_LANG: OnceLock<LanguageIdentifier> = OnceLock::new();
-    CURRENT_LANG.get_or_init(|| {
-        LanguageIdentifier::from_str(
-            sys_locale::get_locale()
-                .unwrap_or("en".to_string())
-                .as_str(),
-        )
-        .expect("No locale found")
-    })
+    #[cfg(test)]
+    {
+        static CURRENT_LANG: OnceLock<LanguageIdentifier> = OnceLock::new();
+        CURRENT_LANG.get_or_init(|| LanguageIdentifier::from_str("en").expect("No locale found"))
+    }
+    #[cfg(not(test))]
+    {
+        static CURRENT_LANG: OnceLock<LanguageIdentifier> = OnceLock::new();
+        CURRENT_LANG.get_or_init(|| {
+            LanguageIdentifier::from_str(
+                sys_locale::get_locale()
+                    .unwrap_or("en".to_string())
+                    .as_str(),
+            )
+            .expect("No locale found")
+        })
+    }
 }
 
-/// Look up text identifier in the translation dictionary for the **current system** locale.
-///
-/// ### Parameters
-/// * `text_id`: Identifier to look up into the `.ftl` translation file.
-///
-/// ### Returns
-///
-/// Returns the translation corresponding to `text_id` translated, otherwise falls back on the english
-/// translation.
-///
-/// ### Example
-///
-/// ```rust
-/// tr("some-text-id")
-/// ```
-pub fn tr(text_id: &str) -> String {
-    LOCALES.lookup(current_lang(), text_id)
-}
-
-/// Look up text identifier in the translation dictionary for the **current system** locale.
+/// Look up text identifier in the translation dictionary for the **current system** locale at runtime.
 /// Supports passing arguments.
 ///
 /// ### Parameters
 /// * `text_id`: Identifier to look up into the `.ftl` translation file.
-/// * `args`: Argument to substitute in the translated string.
+/// * `args...`: Arbitrary list of tuples ("arg-id", value)
 ///
 /// ### Returns
 ///
-/// Returns the translation corresponding to `text_id` translated, otherwise falls back on the english
-/// translation.
+/// Returns the translation corresponding to `text_id` translated with corresponding arguments,
+/// otherwise falls back on the english translation.
 ///
 /// ### Example
 ///
 /// ```rust
-/// tr_args("some-text-id", [("variablename", value.into())].into())
+/// tr!("simple-text-id"); // No arguments
+/// tr!("text-id", ("name", value), ("name2", value2)); // With 2 arguments
 /// ```
-pub fn tr_args<TArgs: AsRef<str>>(text_id: &str, args: HashMap<TArgs, FluentValue>) -> String {
-    LOCALES.lookup_with_args(current_lang(), text_id, &args)
+#[macro_export]
+macro_rules! tr {
+    ($text_id:literal) => {
+        $crate::locale::tr_impl($text_id)
+    };
+    ($text_id:literal, $( ($key:literal, $value:expr) ),* ) => {
+        $crate::locale::tr_args_impl($text_id, [ $(($key, $value.into()) ,)* ])
+    };
+}
+
+pub(crate) use tr;
+
+/// tr macro implementation without arguments
+pub fn tr_impl(text_id: &str) -> String {
+    LOCALES.lookup(current_lang(), text_id)
+}
+
+/// tr macro implementation with argument.
+pub fn tr_args_impl<TKeys: AsRef<str> + std::cmp::Eq + std::hash::Hash, const N_ARGS: usize>(
+    text_id: &str,
+    args: [(TKeys, FluentValue); N_ARGS],
+) -> String {
+    use std::collections::HashMap;
+    LOCALES.lookup_with_args(current_lang(), text_id, &HashMap::from(args))
+}
+
+#[test]
+fn test_tr_macro() {
+    let s = "MyFile".to_owned();
+    assert_eq!(
+        tr!(
+            "error-open-or-parse",
+            ("file", s.as_str()),
+            ("error", "Test")
+        ),
+        "Could not open or parse input file \"MyFile\". Reason: Test."
+    );
+    assert_eq!(tr!("cli-merge-input-left"), "File to receive the merge.");
 }

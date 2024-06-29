@@ -4,7 +4,7 @@ use clap::{ArgAction, Args};
 use itertools::Itertools;
 use log::debug;
 
-use crate::locale::{tr, tr_args};
+use crate::locale::tr;
 use crate::ts;
 use crate::ts::{MessageNode, TSNode};
 
@@ -13,15 +13,15 @@ use crate::ts::{MessageNode, TSNode};
 #[command(disable_help_flag = true)]
 pub struct MergeArgs {
     /// File to receive the merge
-    #[arg(help = tr("cli-merge-input-left"), help_heading = tr("cli-headers-arguments"))]
+    #[arg(help = tr!("cli-merge-input-left"), help_heading = tr!("cli-headers-arguments"))]
     pub input_left: String,
     /// File to include changes from
-    #[arg(help = tr("cli-merge-input-right"), help_heading = tr("cli-headers-arguments"))]
+    #[arg(help = tr!("cli-merge-input-right"), help_heading = tr!("cli-headers-arguments"))]
     pub input_right: String,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long, help = tr("cli-merge-output"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, help = tr!("cli-merge-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
 
@@ -61,24 +61,18 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     let right = load_file(&args.input_right);
 
     if let Err(e) = left {
-        return Err(tr_args(
+        return Err(tr!(
             "error-open-or-parse",
-            [
-                ("file", args.input_left.as_str().into()),
-                ("error", e.to_string().as_str().into()),
-            ]
-            .into(),
+            ("file", args.input_left.as_str()),
+            ("error", e.to_string().as_str())
         ));
     }
 
     if let Err(e) = right {
-        return Err(tr_args(
+        return Err(tr!(
             "error-open-or-parse",
-            [
-                ("file", args.input_right.as_str().into()),
-                ("error", e.to_string().as_str().into()),
-            ]
-            .into(),
+            ("file", args.input_right.as_str()),
+            ("error", e.to_string().as_str())
         ));
     }
 

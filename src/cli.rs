@@ -10,33 +10,33 @@ use crate::locale::tr;
 #[derive(Parser)]
 #[command(author,
     version,
-    about = tr("cli-about"),
+    about = tr!("cli-about"),
     disable_help_flag = true,
     disable_help_subcommand = true,
     disable_version_flag = true)]
 pub struct Cli {
     #[command(subcommand)]
     command: Commands,
-    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
-    #[arg(short, long, short_alias = 'v', action = ArgAction::Version, help = tr("cli-version"))]
+    #[arg(short, long, short_alias = 'v', action = ArgAction::Version, help = tr!("cli-version"))]
     version: Option<bool>,
 }
 
 #[derive(Subcommand)]
-#[command(subcommand_help_heading = tr("cli-headers-commands"),
-    next_help_heading = tr("cli-headers-options"))]
+#[command(subcommand_help_heading = tr!("cli-headers-commands"),
+    next_help_heading = tr!("cli-headers-options"))]
 enum Commands {
-    #[command(about = tr("cli-extract-desc"))]
+    #[command(about = tr!("cli-extract-desc"))]
     Extract(ExtractArgs),
-    #[command(about = tr("cli-merge-desc"))]
+    #[command(about = tr!("cli-merge-desc"))]
     Merge(MergeArgs),
-    #[command(about = tr("cli-sort-desc"))]
+    #[command(about = tr!("cli-sort-desc"))]
     Sort(SortArgs),
-    #[command(about = tr("cli-strip-desc"))]
+    #[command(about = tr!("cli-strip-desc"))]
     Strip(StripArgs),
     // Want to have shell-completion as the very last option displayed
-    #[command(name = "shell-completion", about = tr("cli-shell-completion-desc"))]
+    #[command(name = "shell-completion", about = tr!("cli-shell-completion-desc"))]
     ShellCompletion(ShellCompletionArgs),
 }
 

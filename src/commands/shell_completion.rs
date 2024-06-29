@@ -5,16 +5,16 @@ use clap_complete::{Generator, Shell};
 use clap_complete_nushell::Nushell;
 
 use crate::cli::Cli;
-use crate::locale::{tr, tr_args};
+use crate::locale::tr;
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
 pub struct ShellCompletionArgs {
-    #[arg(value_enum, help = tr("cli-shell-completion-shell"))]
+    #[arg(value_enum, help = tr!("cli-shell-completion-shell"))]
     shell: clap_complete_command::Shell,
-    #[arg(short, long, help = tr("cli-shell-completion-install"))]
+    #[arg(short, long, help = tr!("cli-shell-completion-install"))]
     output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     help: Option<bool>,
 }
 
@@ -69,9 +69,9 @@ pub fn shell_completion_main(args: &ShellCompletionArgs) -> Result<(), String> {
 
     match &args.output_path {
         None => match &mut buf.is_empty() {
-            true => Err(tr_args(
+            true => Err(tr!(
                 "cli-shell-completion-error-get-shell",
-                [("shell", format!("{:?}", args.shell).into())].into(),
+                ("shell", format!("{:?}", args.shell))
             )),
             false => Ok(()),
         },
@@ -88,20 +88,20 @@ fn write_to_file(buf: &mut [u8], output_path: &String) -> Result<(), String> {
                 if sz == buf.len() {
                     Ok(())
                 } else {
-                    Err(tr_args(
+                    Err(tr!(
                         "cli-shell-completion-error-write-to-file",
-                        [("file", output_path.into())].into(),
+                        ("file", output_path)
                     ))
                 }
             }
-            Err(err) => Err(tr_args(
+            Err(err) => Err(tr!(
                 "cli-shell-completion-error-write-privilege",
-                [("error", err.to_string().into())].into(),
+                ("error", err.to_string())
             )),
         },
-        Err(err) => Err(tr_args(
+        Err(err) => Err(tr!(
             "cli-shell-completion-error-open",
-            [("error", err.to_string().into())].into(),
+            ("error", err.to_string())
         )),
     }
 }
