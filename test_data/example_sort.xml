@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="de">
+    <message>
+        <source>contextLessMessage</source>
+        <location line="456" filename="ui_main.cpp" />
+        <location line="312" filename="ai_main.cpp" />
+        <location line="300" filename="ai_main.cpp" />
+        <location line="10" filename="ui_potato_viewer.cpp" />
+        <comment>An example entry for contextLessMessage</comment>
+        <translation type="unfinished"></translation>
+    </message>
     <context>
         <name>UiContext</name>
         <message>

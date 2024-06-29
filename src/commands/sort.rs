@@ -1,19 +1,18 @@
 use clap::{ArgAction, Args};
 
-use crate::locale::{tr, tr_args};
-use crate::ts;
 use crate::ts::TSNode;
+use crate::{tr, ts};
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
 pub struct SortArgs {
     /// File path to sort translations from.
-    #[arg(help = tr("cli-sort-input"), help_heading = tr("cli-headers-arguments"))]
+    #[arg(help = tr!("cli-sort-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input_path: String,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long, help = tr("cli-sort-output"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, help = tr!("cli-sort-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
 
@@ -32,23 +31,17 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
                     sort_ts_node(&mut ts_node);
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
-                Err(e) => Err(tr_args(
+                Err(e) => Err(tr!(
                     "error-ts-file-parse",
-                    [
-                        ("file", args.input_path.as_str().into()),
-                        ("error", e.to_string().into()),
-                    ]
-                    .into(),
+                    ("file", args.input_path.as_str()),
+                    ("error", e.to_string())
                 )),
             }
         }
-        Err(e) => Err(tr_args(
+        Err(e) => Err(tr!(
             "error-open-or-parse",
-            [
-                ("file", args.input_path.as_str().into()),
-                ("error", e.to_string().into()),
-            ]
-            .into(),
+            ("file", args.input_path.as_str()),
+            ("error", e.to_string())
         )),
     }
 }
@@ -67,62 +60,34 @@ fn sort_ts_node(ts_node: &mut TSNode) {
             .iter_mut()
             .for_each(|message| message.locations.sort());
     });
+
+    let messages = &mut ts_node.messages;
+    messages.sort();
+    messages
+        .iter_mut()
+        .for_each(|message| message.locations.sort());
 }
 
 #[cfg(test)]
 mod sort_test {
+    use crate::commands::test_utils::{node_to_formatted_string, read_test_file};
+
     use super::*;
 
     #[test]
     fn test_sort_ts_node() {
-        let reader_nosort = quick_xml::Reader::from_file("./test_data/example_unfinished.xml")
-            .expect("Couldn't open example_unfinished test file");
-        let mut data_nosort: TSNode =
-            quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable");
+        let expected_sorted = read_test_file("example_sort_sorted.xml");
+
+        let mut data_nosort: TSNode = {
+            let reader_nosort = quick_xml::Reader::from_file("./test_data/example_sort.xml")
+                .expect("Test file is readable");
+            quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable")
+        };
 
         sort_ts_node(&mut data_nosort);
 
-        // Validate context ordering
-        assert_eq!(data_nosort.contexts[0].name, "CodeContext".to_owned());
-        assert_eq!(data_nosort.contexts[1].name, "UiContext".to_owned());
+        let sorted = node_to_formatted_string(&data_nosort);
 
-        // Validate message ordering
-        let messages = &data_nosort.contexts[1].messages;
-        assert_eq!(messages[0].source, Some("This is just a Sample".to_owned()));
-        assert_eq!(messages[1].source, Some("Name".to_owned()));
-        assert_eq!(messages[2].source, Some("Practice more".to_owned()));
-
-        // Validate locations ordering
-        assert_eq!(
-            messages[0].locations[0].filename,
-            Some("ui_main.cpp".to_owned())
-        );
-        assert_eq!(messages[0].locations[0].line, Some(144));
-        assert_eq!(
-            messages[0].locations[1].filename,
-            Some("ui_potato_viewer.cpp".to_owned())
-        );
-        assert_eq!(messages[0].locations[1].line, Some(10));
-
-        assert_eq!(
-            messages[1].locations[0].filename,
-            Some("ui_main.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[0].line, Some(321));
-        assert_eq!(
-            messages[1].locations[1].filename,
-            Some("ui_main.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[1].line, Some(456));
-        assert_eq!(
-            messages[1].locations[2].filename,
-            Some("ui_potato_viewer.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[2].line, Some(10));
-        assert_eq!(
-            messages[1].locations[3].filename,
-            Some("ui_potato_viewer.cpp".to_owned())
-        );
-        assert_eq!(messages[1].locations[3].line, Some(11));
+        assert_eq!(expected_sorted, sorted);
     }
 }

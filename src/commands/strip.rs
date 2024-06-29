@@ -1,8 +1,9 @@
-use crate::locale::{tr, tr_args};
+use clap::{ArgAction, Args};
+use log::debug;
+
+use crate::locale::tr;
 use crate::ts;
 use crate::ts::{TSNode, TranslationType};
-use clap::{ArgAction, Args};
-use tracing::debug;
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
 pub enum TranslationTypeArg {
@@ -25,15 +26,15 @@ impl From<TranslationTypeArg> for TranslationType {
 #[command(disable_help_flag = true)]
 pub struct StripArgs {
     /// File path to sort translations from.
-    #[arg(help = tr("cli-strip-input"), help_heading = tr("cli-headers-arguments"))]
+    #[arg(help = tr!("cli-strip-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input_path: String,
     /// Translation type list to strip from input.
-    #[arg(short('t'), long, value_enum, num_args = 1.., help = tr("cli-strip-translation-type"), help_heading = tr("cli-headers-arguments"))]
+    #[arg(short('t'), long, value_enum, num_args = 1.., help = tr!("cli-strip-translation-type"), help_heading = tr!("cli-headers-arguments"))]
     pub translation_type: Vec<TranslationTypeArg>,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long, help = tr("cli-strip-output"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, help = tr!("cli-strip-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
 
@@ -52,23 +53,17 @@ pub fn strip_main(args: &StripArgs) -> Result<(), String> {
                     strip_nodes(&mut ts_node, &s);
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
-                Err(e) => Err(tr_args(
+                Err(e) => Err(tr!(
                     "strip-parse-error",
-                    [
-                        ("file", args.input_path.as_str().into()),
-                        ("error", e.to_string().into()),
-                    ]
-                    .into(),
+                    ("file", args.input_path.as_str()),
+                    ("error", e.to_string())
                 )),
             }
         }
-        Err(e) => Err(tr_args(
+        Err(e) => Err(tr!(
             "error-open-or-parse",
-            [
-                ("file", args.input_path.as_str().into()),
-                ("error", e.to_string().into()),
-            ]
-            .into(),
+            ("file", args.input_path.as_str()),
+            ("error", e.to_string())
         )),
     }
 }
