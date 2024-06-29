@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.5.1] - unreleased
+## [0.6.0] - unreleased
+
+## [0.5.1] - 2024-06-29
 [Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 
 This release aims to make the executable even more robust, fix bugs and regressions.
 
