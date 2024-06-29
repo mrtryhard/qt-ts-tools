@@ -1,19 +1,18 @@
 use clap::{ArgAction, Args};
 
-use crate::locale::{tr, tr_args};
-use crate::ts;
 use crate::ts::TSNode;
+use crate::{tr, ts};
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
 pub struct SortArgs {
     /// File path to sort translations from.
-    #[arg(help = tr("cli-sort-input"), help_heading = tr("cli-headers-arguments"))]
+    #[arg(help = tr!("cli-sort-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input_path: String,
     /// If specified, will produce output in a file at designated location instead of stdout.
-    #[arg(short, long, help = tr("cli-sort-output"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, help = tr!("cli-sort-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr("cli-help"), help_heading = tr("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
 
@@ -32,23 +31,17 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
                     sort_ts_node(&mut ts_node);
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
-                Err(e) => Err(tr_args(
+                Err(e) => Err(tr!(
                     "error-ts-file-parse",
-                    [
-                        ("file", args.input_path.as_str().into()),
-                        ("error", e.to_string().into()),
-                    ]
-                    .into(),
+                    ("file", args.input_path.as_str()),
+                    ("error", e.to_string())
                 )),
             }
         }
-        Err(e) => Err(tr_args(
+        Err(e) => Err(tr!(
             "error-open-or-parse",
-            [
-                ("file", args.input_path.as_str().into()),
-                ("error", e.to_string().into()),
-            ]
-            .into(),
+            ("file", args.input_path.as_str()),
+            ("error", e.to_string())
         )),
     }
 }

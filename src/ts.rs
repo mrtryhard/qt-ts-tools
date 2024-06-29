@@ -4,7 +4,7 @@ use std::io::{BufWriter, Write};
 use log::debug;
 use serde::{Deserialize, Serialize};
 
-use crate::locale::tr_args;
+use crate::tr;
 
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
@@ -328,13 +328,10 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
         {
             Ok(file) => BufWriter::new(Box::new(file)),
             Err(e) => {
-                return Err(tr_args(
+                return Err(tr!(
                     "error-ts-write-output-open",
-                    [
-                        ("output_path", output_path.into()),
-                        ("error", e.to_string().into()),
-                    ]
-                    .into(),
+                    ("output_path", output_path),
+                    ("error", e.to_string())
                 ))
             }
         },
@@ -352,16 +349,10 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
-                Err(e) => Err(tr_args(
-                    "error-ts-write-serialize",
-                    [("error", e.to_string().into())].into(),
-                )),
+                Err(e) => Err(tr!("error-ts-write-serialize", ("error", e.to_string()))),
             }
         }
-        Err(e) => Err(tr_args(
-            "error-ts-write-serialize",
-            [("error", e.to_string().into())].into(),
-        )),
+        Err(e) => Err(tr!("error-ts-write-serialize", ("error", e.to_string()))),
     }
 }
 
