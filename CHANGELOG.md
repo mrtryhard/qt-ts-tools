@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 
 This release aims to make the executable even more robust, fix bugs and regressions.
 
+### Added
+
+- Added `stat` command line to query information about the input file [#111](https://github.com/mrtryhard/qt-ts-tools/issues/111)
+
 ### Changed
 
 - Log library changed to `env_logger` for the purpose of reducing executable size [#95](https://github.com/mrtryhard/qt-ts-tools/issues/95)
