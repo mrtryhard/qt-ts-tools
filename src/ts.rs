@@ -329,7 +329,7 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             Ok(file) => BufWriter::new(Box::new(file)),
             Err(e) => {
                 return Err(tr!(
-                    "error-ts-write-output-open",
+                    "error-write-output-open",
                     ("output_path", output_path),
                     ("error", e.to_string())
                 ))

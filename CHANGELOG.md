@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.6.0] - unreleased
 
+### Added
+
+- Added `stat` command line to query information about the input file [#111](https://github.com/mrtryhard/qt-ts-tools/issues/111)
+
 ## [0.5.1] - 2024-06-29
 [Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 
 This release aims to make the executable even more robust, fix bugs and regressions.

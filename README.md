@@ -13,6 +13,8 @@ See `qt-ts-tools --help` for a list of operations in your version.
 ./qt-ts-tools merge base.ts changes.ts -o merged_file.ts 
 # Extract only specific type of translation
 ./qt-ts-tools extract my_file.ts -t obsolete -o extracted.ts
+# Print the summary of the translation file
+./qt-ts-tools stat my_file.ts
 ```
 
 ## Limitations
