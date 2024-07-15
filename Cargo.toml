@@ -15,7 +15,7 @@ description = "Small command line utility to manipulate Qt's translation files w
 clap = { version = "4.5.8", features = ["derive", "cargo", "string"] }
 clap_complete = "4.5.7"
 clap_complete_nushell = "4.5.2"
-clap_complete_command = "0.5.1"
+clap_complete_command = "0.6.1"
 fluent = "0.16.1"
 fluent-templates = "0.9.4"
 itertools = "0.13.0"
