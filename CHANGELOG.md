@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Added `stat` command line to query information about the input file [#111](https://github.com/mrtryhard/qt-ts-tools/issues/111)
 
+### Changed
+
+- Updated `clap` to version 4.5.9 (no ticket)
+- Updated `clap_complete_command` to 0.6.1 (no ticket)
+- Updated `quick_xml` to 0.36.0 (no ticket)
+
 ## [0.5.1] - 2024-06-29
 [Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 
 This release aims to make the executable even more robust, fix bugs and regressions.
