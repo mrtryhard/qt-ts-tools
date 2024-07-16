@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Updated `clap` to version 4.5.9 (no ticket)
+- Updated `clap_complete` to version 4.5.8 (no ticket)
 - Updated `clap_complete_command` to 0.6.1 (no ticket)
 - Updated `quick_xml` to 0.36.0 (no ticket)
 
