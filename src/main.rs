@@ -1,5 +1,4 @@
 use log::*;
-
 use crate::cli::get_cli_result;
 use crate::logging::initialize_logging;
 

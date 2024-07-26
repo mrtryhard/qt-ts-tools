@@ -3,6 +3,40 @@ use std::sync::OnceLock;
 
 use fluent::FluentValue;
 use fluent_templates::{static_loader, LanguageIdentifier, Loader};
+use i18n_embed::fluent::{fluent_language_loader, FluentLanguageLoader};
+use i18n_embed::LanguageLoader;
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "resources/"]
+struct Localizations;
+
+pub fn current_loader() -> &'static FluentLanguageLoader {
+    static CURRENT_LOADER: OnceLock<FluentLanguageLoader> = OnceLock::new();
+
+    #[cfg(test)]
+    {
+        CURRENT_LOADER.get_or_init(|| {
+            let loader: FluentLanguageLoader = fluent_language_loader!();
+            loader.select_languages(&["en-US".into()]);
+            loader.load_languages(&Localizations, &[loader.fallback_language()])
+                .unwrap();
+            loader
+        });
+    }
+    #[cfg(not(test))]
+    {
+        CURRENT_LOADER.get_or_init(|| {
+            let loader: FluentLanguageLoader = fluent_language_loader!();
+            loader.load_languages(&Localizations, &[loader.fallback_language()])
+                .unwrap();
+            loader
+        });
+    }
+
+    CURRENT_LOADER.get()
+}
+
 
 static_loader! {
     pub(crate) static LOCALES = {
@@ -11,6 +45,7 @@ static_loader! {
         customise: |bundle| bundle.set_use_isolating(false),
     };
 }
+
 pub fn current_lang() -> &'static LanguageIdentifier {
     #[cfg(test)]
     {

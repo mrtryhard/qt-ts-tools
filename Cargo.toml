@@ -16,10 +16,13 @@ clap = { version = "4.5.8", features = ["derive", "cargo", "string"] }
 clap_complete = "4.5.7"
 clap_complete_nushell = "4.5.2"
 clap_complete_command = "0.5.1"
+i18n-embed = { version = "0.14.1", features = ["fluent-system"] }
+i18n-embed-fl = "0.8.0"
 fluent = "0.16.1"
 fluent-templates = "0.9.4"
 itertools = "0.13.0"
 quick-xml = { version = "0.35.0", features = ["serialize"] }
+rust-embed = "8.5.0"
 serde = { version = "1.0.204", features = ["derive"] }
 sys-locale = "0.3.1"
 env_logger = "0.11.3"
