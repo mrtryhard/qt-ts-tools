@@ -4,6 +4,7 @@ use crate::commands::extract::{extract_main, ExtractArgs};
 use crate::commands::merge::{merge_main, MergeArgs};
 use crate::commands::shell_completion::{shell_completion_main, ShellCompletionArgs};
 use crate::commands::sort::{sort_main, SortArgs};
+use crate::commands::stat::{stat_main, StatArgs};
 use crate::commands::strip::{strip_main, StripArgs};
 use crate::locale::tr;
 
@@ -33,6 +34,8 @@ enum Commands {
     Merge(MergeArgs),
     #[command(about = tr!("cli-sort-desc"))]
     Sort(SortArgs),
+    #[command(about = tr!("cli-stat-desc"))]
+    Stat(StatArgs),
     #[command(about = tr!("cli-strip-desc"))]
     Strip(StripArgs),
     // Want to have shell-completion as the very last option displayed
@@ -47,6 +50,7 @@ pub fn get_cli_result() -> Result<(), String> {
         Commands::Extract(args) => extract_main(&args),
         Commands::Merge(args) => merge_main(&args),
         Commands::Sort(args) => sort_main(&args),
+        Commands::Stat(args) => stat_main(&args),
         Commands::Strip(args) => strip_main(&args),
         Commands::ShellCompletion(args) => shell_completion_main(&args),
     }

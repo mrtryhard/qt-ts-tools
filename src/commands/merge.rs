@@ -64,7 +64,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
         return Err(tr!(
             "error-open-or-parse",
             ("file", args.input_left.as_str()),
-            ("error", e.to_string().as_str())
+            ("error", e.to_string())
         ));
     }
 
@@ -72,7 +72,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
         return Err(tr!(
             "error-open-or-parse",
             ("file", args.input_right.as_str()),
-            ("error", e.to_string().as_str())
+            ("error", e.to_string())
         ));
     }
 

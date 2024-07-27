@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.6.0] - unreleased
+[Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
+This release aims to make the tool feature complete.
+
+### Added
+
+- Added `stat` command line to query information about the input file [#111](https://github.com/mrtryhard/qt-ts-tools/issues/111)
+
+## Fixed
+
+- Fixed reference to non-existing translation for `stat` command [#96](https://github.com/mrtryhard/qt-ts-tools/issues/96)
+- Executable size was 1.7MB in 0.5.1, 3.2MB during 0.6.0 development, now 1.2MB [#123](https://github.com/mrtryhard/qt-ts-tools/issues/123)
+
+### Changed
+
+- Now use `i18n_embed` for localization [#91](https://github.com/mrtryhard/qt-ts-tools/issues/91)
+- Now validate missing or incorrect translation during compilation [#96](https://github.com/mrtryhard/qt-ts-tools/issues/96)
+- Updated `clap` to version 4.5.9 (no ticket)
+- Updated `clap_complete` to version 4.5.8 (no ticket)
+- Updated `clap_complete_command` to 0.6.1 (no ticket)
+- Updated `quick_xml` to 0.36.0 (no ticket)
 
 ## [0.5.1] - 2024-06-29
 [Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 
