@@ -12,6 +12,11 @@ This release aims to make the tool feature complete.
 
 - Added `stat` command line to query information about the input file [#111](https://github.com/mrtryhard/qt-ts-tools/issues/111)
 
+## Fixed
+
+- Fixed reference to non-existing translation for `stat` command [#96](https://github.com/mrtryhard/qt-ts-tools/issues/96)
+- Executable size was 1.7MB in 0.5.1, 3.2MB during 0.6.0 development, now 1.2MB [#123](https://github.com/mrtryhard/qt-ts-tools/issues/123)
+
 ### Changed
 
 - Now use `i18n_embed` for localization [#91](https://github.com/mrtryhard/qt-ts-tools/issues/91)

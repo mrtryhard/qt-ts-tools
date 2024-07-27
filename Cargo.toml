@@ -12,20 +12,23 @@ description = "Small command line utility to manipulate Qt's translation files w
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.9", features = ["derive", "cargo", "string"] }
-clap_complete = "4.5.8"
-clap_complete_nushell = "4.5.2"
+clap = { version = "4.5.11", features = ["derive", "string"] }
+clap_complete = "4.5.11"
+clap_complete_nushell = "4.5.3"
 clap_complete_command = "0.6.1"
-env_logger = "0.11.3"
+env_logger = {  version = "0.11.5", default-features = false, features = ["humantime"] }
 fluent-bundle = "0.15.3"
-i18n-embed = { version = "0.14.1", features = ["fluent-system", "desktop-requester"] }
+i18n-embed = { version = "0.14.1", features = ["fluent-system"] }
 i18n-embed-fl = "0.8.0"
 itertools = "0.13.0"
 log = "0.4.22"
-quick-xml = { version = "0.36.0", features = ["serialize"] }
+quick-xml = { version = "0.36.1", features = ["serialize"] }
 rust-embed = "8.5.0"
 serde = { version = "1.0.204", features = ["derive"] }
+sys-locale = "0.3.1"
 
 [profile.release]
 strip = true
 lto = true
+codegen-units = 1
+panic = "abort"
