@@ -28,6 +28,6 @@ cli-strip-output = Si spécifié, chemin d'accès du fichier de sortie.
 cli-strip-translation-type = Types de traductions à retirer du fichier d'entrée
 cli-version = Affiche la version de l'utilitaire.
 error-open-or-parse = Échec de lecture ou décodage du fichier "{ $file }". Raison: { $error }.
-error-ts-file-parse = Échec de lecture du fichier "{ $file }". Raison: { $error }.
+error-ts-file-parse = Échec de lecture du fichier "{ $input_path }". Raison: { $error }.
 error-ts-write-output-open = Erreur lors de l'ouverture en écriture du fichier "{ $file }". Raison: { $error }.
 error-ts-write-serialize = Un problème est survenue lors de la sérialization du fichier. Raison: { $error }.

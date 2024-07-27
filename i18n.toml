@@ -1,4 +1,4 @@
-fallback_language = "en-US"
+fallback_language = "en"
 
 [fluent]
-assets_dir = "resources"
+assets_dir = "resources/locales"

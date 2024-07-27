@@ -33,14 +33,14 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
                 }
                 Err(e) => Err(tr!(
                     "error-ts-file-parse",
-                    ("file", args.input_path.as_str()),
+                    ("input_path", &args.input_path),
                     ("error", e.to_string())
                 )),
             }
         }
         Err(e) => Err(tr!(
             "error-open-or-parse",
-            ("file", args.input_path.as_str()),
+            ("file", &args.input_path),
             ("error", e.to_string())
         )),
     }
