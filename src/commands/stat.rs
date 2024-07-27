@@ -16,7 +16,7 @@ pub struct StatArgs {
     #[arg(help = tr!("cli-stat-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input_path: String,
     /// If set to true, will append a list of all unique file paths found.
-    #[arg(short, long, help = tr!("cli-stats-files"), help_heading = tr!("cli-headers-options"))]
+    #[arg(short, long, help = tr!("cli-stat-files"), help_heading = tr!("cli-headers-options"))]
     pub files: Option<bool>,
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-stat-output"), help_heading = tr!("cli-headers-options"))]
