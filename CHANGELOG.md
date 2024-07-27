@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.6.0] - unreleased
+[Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
+This release aims to make the tool feature complete.
 
 ### Added
 
@@ -12,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Now use `i18n_embed` for localization [#91](https://github.com/mrtryhard/qt-ts-tools/issues/91)
+- Now validate missing or incorrect translation during compilation [#96](https://github.com/mrtryhard/qt-ts-tools/issues/96)
 - Updated `clap` to version 4.5.9 (no ticket)
 - Updated `clap_complete` to version 4.5.8 (no ticket)
 - Updated `clap_complete_command` to 0.6.1 (no ticket)
