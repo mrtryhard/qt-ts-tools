@@ -16,14 +16,15 @@ clap = { version = "4.5.9", features = ["derive", "cargo", "string"] }
 clap_complete = "4.5.8"
 clap_complete_nushell = "4.5.2"
 clap_complete_command = "0.6.1"
-fluent = "0.16.1"
-fluent-templates = "0.9.4"
-itertools = "0.13.0"
-quick-xml = { version = "0.36.0", features = ["serialize"] }
-serde = { version = "1.0.204", features = ["derive"] }
-sys-locale = "0.3.1"
 env_logger = "0.11.3"
+fluent-bundle = "0.15.3"
+i18n-embed = { version = "0.14.1", features = ["fluent-system", "desktop-requester"] }
+i18n-embed-fl = "0.8.0"
+itertools = "0.13.0"
 log = "0.4.22"
+quick-xml = { version = "0.36.0", features = ["serialize"] }
+rust-embed = "8.5.0"
+serde = { version = "1.0.204", features = ["derive"] }
 
 [profile.release]
 strip = true

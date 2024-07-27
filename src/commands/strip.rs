@@ -54,8 +54,8 @@ pub fn strip_main(args: &StripArgs) -> Result<(), String> {
                     ts::write_to_output(&args.output_path, &ts_node)
                 }
                 Err(e) => Err(tr!(
-                    "strip-parse-error",
-                    ("file", args.input_path.as_str()),
+                    "error-ts-file-parse",
+                    ("input_path", &args.input_path),
                     ("error", e.to_string())
                 )),
             }
