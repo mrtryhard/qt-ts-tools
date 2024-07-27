@@ -1,12 +1,24 @@
+use std::str::FromStr;
 use std::sync::OnceLock;
 
 use i18n_embed::fluent::{fluent_language_loader, FluentLanguageLoader};
-use i18n_embed::{DefaultLocalizer, DesktopLanguageRequester, LanguageLoader, Localizer};
+use i18n_embed::unic_langid::LanguageIdentifier;
+use i18n_embed::{DefaultLocalizer, LanguageLoader, Localizer};
+use log::debug;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "resources/locales/"]
 struct Localizations;
+
+fn current_lang() -> LanguageIdentifier {
+    LanguageIdentifier::from_str(
+        sys_locale::get_locale()
+            .unwrap_or("en".to_string())
+            .as_str(),
+    )
+    .expect("No locale found")
+}
 
 pub fn current_loader() -> &'static FluentLanguageLoader {
     static CURRENT_LOADER: OnceLock<FluentLanguageLoader> = OnceLock::new();
@@ -57,9 +69,11 @@ pub(crate) use tr;
 /// Initializes the locale for the application by selecting the system's current locale.
 pub fn initialize_locale() -> Box<dyn Localizer> {
     let localizer = Box::from(DefaultLocalizer::new(current_loader(), &Localizations));
-    let requested_languages = DesktopLanguageRequester::requested_languages();
+    let requested_languages = current_lang();
 
-    if let Err(error) = localizer.select(&requested_languages) {
+    debug!("Using languages {:?}", &requested_languages);
+
+    if let Err(error) = localizer.select(&[requested_languages]) {
         eprintln!("Error while loading languages for library_fluent {error}");
     }
 
