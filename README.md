@@ -1,4 +1,6 @@
 # qt-ts-tools
+![Build](https://github.com/mrtryhard/qt-ts-tools/actions/workflows/rust.yml/badge.svg) ![Build](https://github.com/mrtryhard/qt-ts-tools/actions/workflows/security.yml/badge.svg)
+
 This repository contains suite of tools for manipulating [Qt Framework](https://www.qt.io/product)'s [translation files](https://wiki.qt.io/QtInternationalization), contained in a single executable.
 
 ## Implemented functions
