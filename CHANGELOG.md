@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.6.0] - unreleased
+## [0.6.0] - 2024-07-28
 [Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
-This release aims to make the tool feature complete.
+This release makes the tool feature complete. The tool remains open for new features and bug fixing.
 
 ### Added
 
