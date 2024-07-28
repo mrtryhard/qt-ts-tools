@@ -21,10 +21,10 @@ This release aims to make the tool feature complete.
 
 - Now use `i18n_embed` for localization [#91](https://github.com/mrtryhard/qt-ts-tools/issues/91)
 - Now validate missing or incorrect translation during compilation [#96](https://github.com/mrtryhard/qt-ts-tools/issues/96)
-- Updated `clap` to version 4.5.9 (no ticket)
-- Updated `clap_complete` to version 4.5.8 (no ticket)
+- Updated `clap` to version 4.5.11 (no ticket)
+- Updated `clap_complete` to version 4.5.11 (no ticket)
 - Updated `clap_complete_command` to 0.6.1 (no ticket)
-- Updated `quick_xml` to 0.36.0 (no ticket)
+- Updated `quick_xml` to 0.36.1 (no ticket)
 
 ## [0.5.1] - 2024-06-29
 [Seventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/7). 

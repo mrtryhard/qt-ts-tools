@@ -2,7 +2,7 @@
 name = "qt-ts-tools"
 authors = ["Alexandre Leblanc <a.leblanc+qttools@kitai.dev>"]
 repository = "https://github.com/mrtryhard/qt-ts-tools"
-keywords = ["qt", "translation"]
+keywords = ["qt", "translation", "windows", "linux"]
 homepage = "https://github.com/mrtryhard/qt-ts-tools"
 license = "MIT OR Apache-2.0"
 version = "0.6.0"
