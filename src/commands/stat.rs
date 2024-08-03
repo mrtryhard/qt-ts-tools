@@ -214,25 +214,24 @@ fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
 
     if verbose && !stats.files.is_empty() {
         buf.push_str("------------------------------------------------------------------------------------------------------\n");
-        buf.push_str(&format!(
-            "{: <30} | {: <22} | {: <10} | {: <8} | {: <8} | {: <8}\n",
-            tr!("cli-stat-filepath-header"),
-            tr!("cli-stat-total-trans-ref"),
-            // These are literals in the xml file, let's not translate.
-            "Unfinished",
-            "Complete",
-            "Obsolete",
-            "Vanished"
-        ));
+        buf.push_str(&format!("{}\r\n", tr!("cli-stat-detailed-report")));
         buf.push_str("------------------------------------------------------------------------------------------------------\n");
+
         for file in &stats.files {
+            // ["Unfinished", "Finished", "Obsolete", "Vanished"] are literals in the xml file, let's not translate.
             buf.push_str(&format!(
-                "{: <30} | {: <22} | {: <10} | {: <8} | {: <8} | {: <8}\n",
+                "{} \"{}\"\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n",
+                tr!("cli-stat-filepath-header"),
                 file.filepath,
+                tr!("cli-stat-translations-refs"),
                 file.total_translations,
+                "Unfinished",
                 file.unfinished_translations,
+                "Finished",
                 file.finished_translation,
+                "Obsolete",
                 file.obsolete_translations,
+                "Vanished",
                 file.vanished_translations
             ));
         }

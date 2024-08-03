@@ -12,6 +12,7 @@ the version gets bumped to 0.7.0.
 ### Fixed
 
 - Fixed default output for `stat` command. Now defaults to short summary. Extended stats can be obtained with the `verbose` flag [#129](https://github.com/mrtryhard/qt-ts-tools/issues/129)
+- Fixed output for detailed report with very long file paths. The format takes more space but is more readable [#130](https://github.com/mrtryhard/qt-ts-tools/issues/130)
 
 ## [0.6.0] - 2024-07-28
 [Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
