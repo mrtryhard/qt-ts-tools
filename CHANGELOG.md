@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.7.0] - unreleased
+[Nineth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
+This release improves on some missing functionality and functionalities defaults. Since it is breaking changes, 
+the version gets bumped to 0.7.0.
+
+### Fixed
+
+- Fixed default output for `stat` command. Now defaults to short summary. Extended stats can be obtained with the `verbose` flag [#129](https://github.com/mrtryhard/qt-ts-tools/issues/129)
+
 ## [0.6.0] - 2024-07-28
 [Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
 This release makes the tool feature complete. The tool remains open for new features and bug fixing.
