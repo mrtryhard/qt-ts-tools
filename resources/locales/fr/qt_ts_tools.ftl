@@ -33,6 +33,7 @@ cli-stat-translations-refs = Traduction réfs.
 cli-stat-type-translations = Traduction "{ $type }"
 cli-stat-input = Chemin du fichier pour obtenir les statistiques.
 cli-stat-output = Lorsque spécifié, produit le résultat dans le fichier au chemin spécifié.
+cli-stat-verbose = Affiche la liste détaillée des fichiers, préalable au sommaire
 cli-strip-desc = Retire les traductions du fichier de traduction spécifié selon le filtre donné.
 cli-strip-input = Fichier à enlever les traductions
 cli-strip-output = Si spécifié, chemin d'accès du fichier de sortie.
