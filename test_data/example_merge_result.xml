@@ -12,17 +12,17 @@
       <id>idBasedLeft</id>
     </message>
     <message>
+      <source>Newsletter</source>
+      <translation>
+        Nyhetsbrev - Right
+      </translation>
+    </message>
+    <message>
       <source>Only In Left Message</source>
       <translation>
         Only in Left translation
       </translation>
       <comment>Left message</comment>
-    </message>
-    <message>
-      <source>Newsletter</source>
-      <translation>
-        Nyhetsbrev - Right
-      </translation>
     </message>
     <message numerus="yes">
       <source>%1 takes at most %n argument(s). %2 is therefore invalid.</source>
@@ -57,6 +57,15 @@
     </message>
   </context>
   <message>
+    <source>Name</source>
+    <translation type="unfinished"/>
+    <location filename="ui_main.cpp" line="456"/>
+    <location filename="ui_potato_viewer.cpp" line="10"/>
+    <location filename="ui_main.cpp" line="321"/>
+    <location filename="ui_potato_viewer.cpp" line="11"/>
+    <comment>An example entry for Name</comment>
+  </message>
+  <message>
     <source>This is just a Sample</source>
     <translation>
       Dies ist nur ein Beispiel
@@ -70,15 +79,6 @@
   <message>
     <source>I am a message in which was written in Code</source>
     <translation/>
-  </message>
-  <message>
-    <source>Name</source>
-    <translation type="unfinished"/>
-    <location filename="ui_main.cpp" line="456"/>
-    <location filename="ui_potato_viewer.cpp" line="10"/>
-    <location filename="ui_main.cpp" line="321"/>
-    <location filename="ui_potato_viewer.cpp" line="11"/>
-    <comment>An example entry for Name</comment>
   </message>
   <message>
     <source>This is a new string</source>

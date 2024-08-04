@@ -9,10 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 This release improves on some missing functionality and functionalities defaults. Since it is breaking changes, 
 the version gets bumped to 0.7.0.
 
+### Added
+
+- Added `--keep-translation` flag to `merge` command to ensure to not override existing translations. 
+  Useful when you want to add new strings upon existing ones [#132](https://github.com/mrtryhard/qt-ts-tools/issues/132)
+
 ### Fixed
 
 - Fixed default output for `stat` command. Now defaults to short summary. Extended stats can be obtained with the `verbose` flag [#129](https://github.com/mrtryhard/qt-ts-tools/issues/129)
 - Fixed output for detailed report with very long file paths. The format takes more space but is more readable [#130](https://github.com/mrtryhard/qt-ts-tools/issues/130)
+
+### Changed
+
+- Removed dependency on `itertools` in [#132](https://github.com/mrtryhard/qt-ts-tools/issues/132)
 
 ## [0.6.0] - 2024-07-28
 [Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
@@ -22,7 +31,7 @@ This release makes the tool feature complete. The tool remains open for new feat
 
 - Added `stat` command line to query information about the input file [#111](https://github.com/mrtryhard/qt-ts-tools/issues/111)
 
-## Fixed
+### Fixed
 
 - Fixed reference to non-existing translation for `stat` command [#96](https://github.com/mrtryhard/qt-ts-tools/issues/96)
 - Executable size was 1.7MB in 0.5.1, 3.2MB during 0.6.0 development, now 1.2MB [#123](https://github.com/mrtryhard/qt-ts-tools/issues/123)
@@ -97,7 +106,7 @@ This release aims to make the executable even more robust, fix bugs and regressi
 ## [0.3.1] - 2024-05-12
 [Fourth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/5). Contains minor fixes to the command line tool.
 
-## Fixed
+### Fixed
 
 - Sorting now consider messages' id [#42](https://github.com/mrtryhard/qt-ts-tools/issues/42)
 
