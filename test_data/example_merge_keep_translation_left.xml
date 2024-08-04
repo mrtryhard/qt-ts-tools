@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="fr">
+    <context>
+        <name>kernel/in_merge</name>
+        <message>
+            <id>idBasedLeft</id>
+            <source>Translation should not change</source>
+            <translation>La traduction ne devrait pas changer</translation>
+        </message>
+    </context>
+    <message>
+        <source>Simple translation</source>
+        <translation>Traduction simple</translation>
+    </message>
+</TS>

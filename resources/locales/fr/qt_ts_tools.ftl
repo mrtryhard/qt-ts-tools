@@ -11,6 +11,7 @@ cli-help = Affiche l'aide.
 cli-merge-desc = Fusionne les contextes et message des deux fichiers de traductions spécifié en un seul.
 cli-merge-input-left = Fichier qui reçoit les changements.
 cli-merge-input-right = Fichier qui possède les changements.
+cli-merge-keep-translation = Lorsque spécifié, le merge ne met pas à jour les traductions dans le fichier de gauche. Utilisé pour ajouté les nouveaux noeuds "message" et "context".
 cli-merge-output = Si spécificé, chemin d'accès du fichier de sortie.
 cli-shell-completion-desc = Affiche le script d'auto-complétion pour un shell choisi.
 cli-shell-completion-install = Lorsque spécifié, l'outil tentera d'install le script d'auto-completion dans le chemin par défaut pour le shell, ou dans le path spécifié s'il y a lieu. Peut nécessiter une élévation de privilège.

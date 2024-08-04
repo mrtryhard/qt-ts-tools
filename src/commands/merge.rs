@@ -1,7 +1,6 @@
 use std::hash::{Hash, Hasher};
 
 use clap::{ArgAction, Args};
-use itertools::Itertools;
 use log::debug;
 
 use crate::locale::tr;
@@ -18,6 +17,9 @@ pub struct MergeArgs {
     /// File to include changes from
     #[arg(help = tr!("cli-merge-input-right"), help_heading = tr!("cli-headers-arguments"))]
     pub input_right: String,
+    /// When true, do not update the translation value.
+    #[arg(help = tr!("cli-merge-keep-translation"), help_heading = tr!("cli-headers-arguments"), action = ArgAction::SetTrue)]
+    pub keep_translation: bool,
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-merge-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
@@ -40,7 +42,7 @@ impl PartialEq for EquatableMessageNode {
             }
         }
 
-        self.node.source == other.node.source && self.node.locations == other.node.locations
+        self.node.source == other.node.source
     }
 }
 
@@ -76,18 +78,22 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
         ));
     }
 
-    let result = merge_ts_nodes(left.unwrap(), right.unwrap());
+    let result = merge_ts_nodes(left.unwrap(), right.unwrap(), args.keep_translation);
 
     ts::write_to_output(&args.output_path, &result)
 }
 
-fn merge_ts_nodes(mut left: TSNode, mut right: TSNode) -> TSNode {
-    left.messages = merge_messages(&mut left.messages, &mut right.messages);
-    merge_contexts(&mut left, right);
+fn merge_ts_nodes(mut left: TSNode, mut right: TSNode, keep_translation: bool) -> TSNode {
+    if keep_translation {
+        debug!("--keep_translation flag is active, the following nodes will NOT be updated from the right-side file: translation, comment, oldcomment, oldsource, encoding");
+    }
+
+    left.messages = merge_messages(&mut left.messages, &mut right.messages, keep_translation);
+    merge_contexts(&mut left, right, keep_translation);
     left
 }
 
-fn merge_contexts(left: &mut TSNode, right: TSNode) {
+fn merge_contexts(left: &mut TSNode, right: TSNode, keep_translation: bool) {
     right.contexts.into_iter().for_each(|mut right_context| {
         let left_context_opt = left
             .contexts
@@ -105,11 +111,16 @@ fn merge_contexts(left: &mut TSNode, right: TSNode) {
                 right_context.messages.len()
             );
 
-            left_context.comment = right_context.comment;
-            left_context.encoding = right_context.encoding;
+            if !keep_translation {
+                left_context.comment = right_context.comment;
+                left_context.encoding = right_context.encoding;
+            }
 
-            left_context.messages =
-                merge_messages(&mut left_context.messages, &mut right_context.messages);
+            left_context.messages = merge_messages(
+                &mut left_context.messages,
+                &mut right_context.messages,
+                keep_translation,
+            );
         } else {
             debug!(
                 "No matching context with name '{}' in left file.",
@@ -124,6 +135,7 @@ fn merge_contexts(left: &mut TSNode, right: TSNode) {
 fn merge_messages(
     left_messages: &mut Vec<MessageNode>,
     right_messages: &mut Vec<MessageNode>,
+    keep_translation: bool,
 ) -> Vec<MessageNode> {
     let mut unique_messages_left: Vec<_> = left_messages
         .drain(0..)
@@ -135,16 +147,16 @@ fn merge_messages(
         .map(|node| EquatableMessageNode { node })
         .collect();
 
-    // Update oldcomment, oldsource.
-    unique_messages_right.iter_mut().for_each(|right_message| {
-        let left_message = unique_messages_left
+    unique_messages_left.iter_mut().for_each(|left_message| {
+        // Find matching right message and merge information
+        let right_message = unique_messages_right
             .iter()
-            .find(|&msg| msg == right_message);
+            .find(|&msg| msg == left_message);
 
-        if let Some(left_message) = left_message {
+        if let Some(right_message) = right_message {
             debug!(
                 "Found matching message with source '{:?}' and id '{:?}' ",
-                left_message.node.source, left_message.node.id
+                right_message.node.source, right_message.node.id
             );
 
             if right_message.node.source != left_message.node.source {
@@ -153,10 +165,14 @@ fn merge_messages(
                     left_message.node.source, right_message.node.source
                 );
 
-                right_message
+                left_message
                     .node
                     .old_source
                     .clone_from(&left_message.node.source);
+                left_message
+                    .node
+                    .source
+                    .clone_from(&right_message.node.source);
             }
 
             if right_message.node.comment != left_message.node.comment {
@@ -165,19 +181,52 @@ fn merge_messages(
                     left_message.node.comment, right_message.node.comment
                 );
 
-                right_message
+                left_message
                     .node
                     .old_comment
                     .clone_from(&left_message.node.comment);
+                left_message
+                    .node
+                    .comment
+                    .clone_from(&right_message.node.comment);
+            }
+
+            left_message
+                .node
+                .locations
+                .clone_from(&right_message.node.locations);
+
+            if !keep_translation {
+                debug!(
+                    "Updating translation '{:?}' to '{:?}'",
+                    left_message.node.translation, right_message.node.translation
+                );
+                debug!(
+                    "Updating translator comment '{:?}' to '{:?}'",
+                    left_message.node.translator_comment, right_message.node.translator_comment
+                );
+
+                left_message.node.translation = right_message.node.translation.clone();
+                left_message.node.translator_comment =
+                    right_message.node.translator_comment.clone();
             }
         }
     });
 
+    let right_message_iter: Vec<EquatableMessageNode> = unique_messages_right
+        .drain(0..)
+        .filter(|right_message| !unique_messages_left.contains(right_message))
+        .collect();
+
+    debug!(
+        "Expecting to add {} messages from 'right' file.",
+        right_message_iter.len()
+    );
+
+    unique_messages_left.extend(right_message_iter);
     unique_messages_left
         .drain(0..)
-        .filter(|message| !unique_messages_right.contains(message))
-        .merge(unique_messages_right.iter().cloned())
-        .map(|node| node.node)
+        .map(|message| message.node)
         .collect()
 }
 
@@ -207,7 +256,22 @@ mod merge_test {
         let expected_result = load_file(&"./test_data/example_merge_result.xml".to_string())
             .expect("Test data could not be loaded for right file.");
 
-        let result = merge_ts_nodes(left, right);
+        let result = merge_ts_nodes(left, right, false);
+
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn test_merge_two_files_keep_translations() {
+        let left = load_file(&"./test_data/example_merge_keep_translation_left.xml".to_string())
+            .expect("Test data could not be loaded for left file.");
+        let right = load_file(&"./test_data/example_merge_keep_translation_right.xml".to_string())
+            .expect("Test data could not be loaded for right file.");
+        let expected_result =
+            load_file(&"./test_data/example_merge_keep_translation_result.xml".to_string())
+                .expect("Test data could not be loaded for right file.");
+
+        let result = merge_ts_nodes(left, right, true);
 
         assert_eq!(result, expected_result);
     }

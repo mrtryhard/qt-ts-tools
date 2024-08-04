@@ -11,6 +11,7 @@ cli-help = Prints help information.
 cli-merge-desc = Merges two translation file contexts and messages into a single output.
 cli-merge-input-left = File to receive the merge.
 cli-merge-input-right = File to include changes from.
+cli-merge-keep-translation = When set, do not update translation in left file. This is used for adding new message nodes or context nodes.
 cli-merge-output = If specified, will produce output in a file at designated location instead of stdout.
 cli-shell-completion-desc = Prints a shell completion for supported shells.
 cli-shell-completion-install = When set, tries to install to default path or provided path (may require elevation).
