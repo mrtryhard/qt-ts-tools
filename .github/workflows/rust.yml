@@ -16,10 +16,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Required tools
         run: cargo install cargo-deny && rustup component add clippy
-      - name: Clippy
-        run:  cargo clippy --all-targets --all-features -- -D warnings
       - name: Build
         run: cargo build --verbose
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
       - name: License check
         run: cargo deny -L debug --all-features --locked check
       - name: Run tests
