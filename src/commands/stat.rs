@@ -15,9 +15,9 @@ pub struct StatArgs {
     /// File path to sort translations from.
     #[arg(help = tr!("cli-stat-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input_path: String,
-    /// If set to true, will append a list of all unique file paths found.
-    #[arg(short, long, help = tr!("cli-stat-files"), help_heading = tr!("cli-headers-options"))]
-    pub files: Option<bool>,
+    /// If set to true, will prepend a list of all unique file paths found.
+    #[arg(short, long, help = tr!("cli-stat-verbose"), help_heading = tr!("cli-headers-options"), action = ArgAction::SetTrue)]
+    pub verbose: bool,
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-stat-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
@@ -66,7 +66,7 @@ pub fn stat_main(args: &StatArgs) -> Result<(), String> {
             match nodes {
                 Ok(ts_node) => {
                     let total_stats = stats_ts_node(&ts_node);
-                    let output = generate_message_for_stats(total_stats);
+                    let output = generate_message_for_stats(total_stats, args.verbose);
 
                     match &args.output_path {
                         None => {
@@ -209,30 +209,29 @@ fn stats_for_messages<'a>(
     }
 }
 
-fn generate_message_for_stats(stats: TotalStats) -> String {
+fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
     let mut buf = String::new();
 
-    if !stats.files.is_empty() {
+    if verbose && !stats.files.is_empty() {
         buf.push_str("------------------------------------------------------------------------------------------------------\n");
-        buf.push_str(&format!(
-            "{: <30} | {: <22} | {: <10} | {: <8} | {: <8} | {: <8}\n",
-            tr!("cli-stat-filepath-header"),
-            tr!("cli-stat-total-trans-ref"),
-            // These are literals in the xml file, let's not translate.
-            "Unfinished",
-            "Complete",
-            "Obsolete",
-            "Vanished"
-        ));
+        buf.push_str(&format!("{}\r\n", tr!("cli-stat-detailed-report")));
         buf.push_str("------------------------------------------------------------------------------------------------------\n");
+
         for file in &stats.files {
+            // ["Unfinished", "Finished", "Obsolete", "Vanished"] are literals in the xml file, let's not translate.
             buf.push_str(&format!(
-                "{: <30} | {: <22} | {: <10} | {: <8} | {: <8} | {: <8}\n",
+                "{} \"{}\"\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n",
+                tr!("cli-stat-filepath-header"),
                 file.filepath,
+                tr!("cli-stat-translations-refs"),
                 file.total_translations,
+                "Unfinished",
                 file.unfinished_translations,
+                "Finished",
                 file.finished_translation,
+                "Obsolete",
                 file.obsolete_translations,
+                "Vanished",
                 file.vanished_translations
             ));
         }
