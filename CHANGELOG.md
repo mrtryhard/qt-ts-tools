@@ -22,6 +22,8 @@ the version gets bumped to 0.7.0.
 ### Changed
 
 - Removed dependency on `itertools` in [#132](https://github.com/mrtryhard/qt-ts-tools/issues/132)
+- Updated `clap` to version 4.5.13 (no ticket)
+- Updated `clap_complete` to version 4.5.13 (no ticket)
 
 ## [0.6.0] - 2024-07-28
 [Eight milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
