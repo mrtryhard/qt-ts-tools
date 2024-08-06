@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.7.0] - unreleased
-[Nineth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
+## [0.7.0] - 2024-08-06
+[Ninth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
 This release improves on some missing functionality and functionalities defaults. Since it is breaking changes, 
 the version gets bumped to 0.7.0.
 
@@ -24,7 +24,7 @@ the version gets bumped to 0.7.0.
 - Removed dependency on `itertools` in [#132](https://github.com/mrtryhard/qt-ts-tools/issues/132)
 
 ## [0.6.0] - 2024-07-28
-[Eigth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
+[Eight milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/8).
 This release makes the tool feature complete. The tool remains open for new features and bug fixing.
 
 ### Added
@@ -82,7 +82,7 @@ This release aims to make the executable even more robust, fix bugs and regressi
 
 ### Fixed
 
-- Fixed an issue where the `help` parameter was erroring every command [#82](https://github.com/mrtryhard/qt-ts-tools/issues/82)
+- Fixed an issue where the `help` parameter was error-ing every command [#82](https://github.com/mrtryhard/qt-ts-tools/issues/82)
 
 ## [0.4.0] - 2024-05-24
 [Fifth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/4). This release introduces some user experience improvement efforts such as localization (adopting current system language) and auto-completion support.
