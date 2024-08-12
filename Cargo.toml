@@ -13,7 +13,7 @@ description = "Small command line utility to manipulate Qt's translation files w
 
 [dependencies]
 clap = { version = "4.5.13", features = ["derive", "string"] }
-clap_complete = "4.5.12"
+clap_complete = "4.5.13"
 clap_complete_nushell = "4.5.3"
 clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.5", default-features = false, features = ["humantime"] }
