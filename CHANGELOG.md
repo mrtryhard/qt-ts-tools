@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.7.1] - unreleased
+[Tenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/10).
+This release is a maintenance release with small dependencies update.
+
+### Fixed
+
+- Fixes security advisory check for unmaintained `proc-macro-error` crate indirectly linked with `i18n-embed` and `i18n-embed-fl` dependencies. [#157](https://github.com/mrtryhard/qt-ts-tools/issues/157)
+
 ## [0.7.0] - 2024-08-06
 [Ninth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
 This release improves on some missing functionality and functionalities defaults. Since it is breaking changes, 
