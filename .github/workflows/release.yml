@@ -29,7 +29,8 @@ jobs:
       - name: License check
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
-        run: cp target/release/qt-ts-tools.exe output/.
+        shell: bash
+        run: mkdir -p && cp target/release/qt-ts-tools.exe output/.
       - uses: actions/upload-artifact@master
         with:
           name: binary-artifact
@@ -55,7 +56,7 @@ jobs:
       - name: License check
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
-        run: cp target/release/qt-ts-tools output/qt-ts-tools-linux
+        run: mkdir -p output && cp target/release/qt-ts-tools output/qt-ts-tools-linux
       - uses: actions/upload-artifact@master
         with:
           name: binary-artifact
@@ -81,7 +82,7 @@ jobs:
       - name: License check
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
-        run: cp target/release/qt-ts-tools output/qt-ts-tools-macos
+        run: mkdir -p output && cp target/release/qt-ts-tools output/qt-ts-tools-macos
       - uses: actions/upload-artifact@master
         with:
           name: binary-artifact
