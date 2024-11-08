@@ -1,0 +1,104 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    name: Build and upload
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        # You can add more, for any target you'd like!
+        include:
+          - build: linux
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+
+          - build: macos
+            os: macos-latest
+            target: x86_64-apple-darwin
+
+          - build: windows-gnu
+            os: windows-latest
+            target: x86_64-pc-windows-gnu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get the release version from the tag
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --verbose --release --target ${{ matrix.target }}
+
+      - name: Test
+        run: cargo test --release --verbose
+
+      - name: License check
+        run: cargo deny -L debug --all-features --locked check
+
+      - name: Security advisory checks
+        uses: rustsec/audit-check@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build archive
+        shell: bash
+        run: |
+          # Replace with the name of your binary
+          binary_name="qt-ts-tools"
+
+          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+          mkdir "$dirname"
+          
+          cp "LICENSE-MIT" "$dirname/."
+          cp "LICENSE-APACHE" "$dirname/."
+          
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
+          else
+            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
+          fi
+
+          asset_name=""
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a "$dirname.zip" "$dirname"
+            asset_name="$dirname.zip"
+            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+          else
+            tar -czf "$dirname.tar.gz" "$dirname"
+            asset_name="$dirname.tar.gz"
+            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+          fi
+          
+          echo "CHECKSUM=$(sha256sum $asset_name)" >> $GITHUB_ENV
+          echo "CHANGES=$(awk 's{ print ""; print}; $0~v {print; s=1; next}; s=0' RS= v=${{ env.VERSION }} input) >> $GITHUB_ENV
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            # qt-ts-tools v${{ env.VERSION }}
+
+          append_body: |            
+            ${{ matrix.OS }}: `${{ env.ASSET }}`: `${{ env.CHECKSUM }}` 
+
+          files: |
+            ${{ env.ASSET }}
