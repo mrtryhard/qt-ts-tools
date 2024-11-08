@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.7.1] - unreleased
+## [0.8.0] - unreleased
 [Tenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/10).
-This release is a maintenance release with small dependencies update.
+This release contains breaking changes on the output produce by the tool. Otherwise, mostly dependencies upgrades.
 
 ### Fixed
 
@@ -21,6 +21,8 @@ This release is a maintenance release with small dependencies update.
 - Updated `i18n-embed-fl` to version `0.9.2`
 - Updated `serde` to version `1.0.214`
 - Updated `sys-locale` to version `0.3.2`
+- Breaking: Updated `quick-xml` to `0.37.0`, which effectively changes the output produced by the tool. 
+  The `translation` nodes now will have no indent.
 
 ## [0.7.0] - 2024-08-06
 [Ninth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
