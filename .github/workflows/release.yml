@@ -33,6 +33,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Get required tools
+        run: cargo install cargo-deny && rustup component add clippy
+
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
