@@ -86,20 +86,27 @@ jobs:
             7z a "$dirname.zip" "$dirname"
             asset_name="$dirname.zip"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+            echo "CHECKSUM=$(sha256sum.exe $asset_name)" >> $GITHUB_ENV
           else
             tar -czf "$dirname.tar.gz" "$dirname"
             asset_name="$dirname.tar.gz"
             echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+            echo "CHECKSUM=$(sha256sum $asset_name)" >> $GITHUB_ENV
           fi
           
-          echo "CHECKSUM=$(sha256sum $asset_name)" >> $GITHUB_ENV
-          echo "CHANGES=$(awk 's{ print ""; print}; $0~v {print; s=1; next}; s=0' RS= v=${{ env.VERSION }} input) >> $GITHUB_ENV
+          echo "CHANGES=\"$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')
+          
+          ### Checksums
+          
+          All checksums are in sha256
+          
+          \"" >> $GITHUB_ENV
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           body: |
             # qt-ts-tools v${{ env.VERSION }}
-
+            ${{ env.CHANGES }}
           append_body: |            
             ${{ matrix.OS }}: `${{ env.ASSET }}`: `${{ env.CHECKSUM }}` 
 
