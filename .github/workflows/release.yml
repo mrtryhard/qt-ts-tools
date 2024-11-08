@@ -106,9 +106,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          body: |
-            # qt-ts-tools v${{ env.VERSION }}
-            ${{ env.CHANGES }}
+          body_path: CHANGES.md
           append_body: |            
             ${{ matrix.OS }}: `${{ env.ASSET }}`: `${{ env.CHECKSUM }}` 
 
