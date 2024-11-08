@@ -30,11 +30,11 @@ jobs:
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
         shell: bash
-        run: mkdir -p && cp target/release/qt-ts-tools.exe output/.
+        run: mkdir -p output && cp target/release/qt-ts-tools.exe output/.
       - uses: actions/upload-artifact@master
         with:
-          name: binary-artifact
-          path: output
+          name: binary-win-artifact
+          path: output-win
 
   ubuntu:
     name: Build Ubuntu
@@ -59,8 +59,8 @@ jobs:
         run: mkdir -p output && cp target/release/qt-ts-tools output/qt-ts-tools-linux
       - uses: actions/upload-artifact@master
         with:
-          name: binary-artifact
-          path: output
+          name: binary-ub-artifact
+          path: output-ub
 
   macos:
     name: Build MacOS
@@ -82,11 +82,11 @@ jobs:
       - name: License check
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
-        run: mkdir -p output && cp target/release/qt-ts-tools output/qt-ts-tools-macos
+        run: mkdir -p output-mac && cp target/release/qt-ts-tools output/qt-ts-tools-macos
       - uses: actions/upload-artifact@master
         with:
-          name: binary-artifact
-          path: output
+          name: binary-mac-artifact
+          path: output-mac
 
   create-release:
     name: Create the release
@@ -97,11 +97,21 @@ jobs:
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-      - name: Retrieve build artifacts
+      - name: Retrieve Windows build artifacts
         uses: actions/download-artifact@v2
         with:
-          name: binary-artifact
-          path: output
+          name: binary-win-artifact
+          path: output-win
+      - name: Retrieve Mac build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: binary-mac-artifact
+          path: output-mac
+      - name: Retrieve Linux build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: binary-ub-artifact
+          path: output-ub
       - name: Package archives
         run: |
           mkdir qt-ts-tools-windows-${{ env.VERSION }}
@@ -112,9 +122,9 @@ jobs:
           cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-linux-${{ env.VERSION }}/.
           cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-macos-${{ env.VERSION }}/.
           
-          cp output/qt-ts-tools.exe qt-ts-tools-windows-${{ env.VERSION }}/.
-          cp output/qt-ts-tools-linux qt-ts-tools-linux-${{ env.VERSION }}/qt-ts-tools
-          cp output/qt-ts-tools-macos qt-ts-tools-macos-${{ env.VERSION }}/qt-ts-tools
+          cp output-win/qt-ts-tools.exe qt-ts-tools-windows-${{ env.VERSION }}/.
+          cp output-ub/qt-ts-tools-linux qt-ts-tools-linux-${{ env.VERSION }}/qt-ts-tools
+          cp output-mac/qt-ts-tools-macos qt-ts-tools-macos-${{ env.VERSION }}/qt-ts-tools
           
           7z a "qt-ts-tools-windows-${{ env.VERSION }}-x86.zip" qt-ts-tools-windows-${{ env.VERSION }}
           tar -czf "qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz" "qt-ts-tools-linux-${{ env.VERSION }}"
