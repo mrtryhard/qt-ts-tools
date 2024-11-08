@@ -55,13 +55,13 @@ jobs:
       - name: Test
         run: cargo test --release --verbose
 
-      - name: License check
-        run: cargo deny -L debug --all-features --locked check
-
       - name: Security advisory checks
         uses: rustsec/audit-check@v1.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: License check
+        run: cargo deny -L debug --all-features --locked check
 
       - name: Build archive
         shell: bash
