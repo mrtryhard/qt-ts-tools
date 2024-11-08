@@ -131,9 +131,9 @@ jobs:
           tar -czf "qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz" "qt-ts-tools-macos-${{ env.VERSION }}"
       - name: Create release
         run: |
-          w256=$(sha256 qt-ts-tools-windows-${{ env.VERSION }}-x86.zip)
-          l256=$(sha256 qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz)
-          m256=$(sha256 qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz)
+          w256=$(sha256sum qt-ts-tools-windows-${{ env.VERSION }}-x86.zip)
+          l256=$(sha256sum qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz)
+          m256=$(sha256sum qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz)
           
           changes="$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')"
           echo "$changes" > CHANGES.md
