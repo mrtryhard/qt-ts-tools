@@ -9,107 +9,144 @@ permissions:
   contents: write
 
 jobs:
-  build-and-upload:
-    name: Build and upload
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        include:
-          - os: "windows"
-            target: x86_64-pc-windows-msvc
-          - os: "macos"
-            target: aarch64-apple-darwin
-          - os: "linux"
-            target: x86_64-unknown-linux-gnu
-    timeout-minutes: 30
-
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: ./
-        name: Run dtolnay/rust-toolchain@stable
-        with:
-          targets: "${{ matrix.target }}"
-
-      - name: Get required tools
+      - name: Required tools
         run: cargo install cargo-deny && rustup component add clippy
-
-      - name: Get the release version from the tag
-        shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --verbose --release --target ${{ matrix.target }}
-
-      - name: Test
-        run: cargo test --release --verbose
-
-      - name: Security advisory checks
+        run: cargo build --verbose
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Security audit
         uses: rustsec/audit-check@v1.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: License check
         run: cargo deny -L debug --all-features --locked check
+      - name: Copy to ouput directory
+        run: cp target/release/qt-ts-tools.exe output/.
+      - uses: actions/upload-artifact@master
+        with:
+          name: binary-artifact
+          path: output
 
-      - name: Build archive
+  ubuntu:
+    name: Build Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required tools
+        run: cargo install cargo-deny && rustup component add clippy
+      - name: Build
+        run: cargo build --verbose
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Security audit
+        uses: rustsec/audit-check@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: License check
+        run: cargo deny -L debug --all-features --locked check
+      - name: Copy to ouput directory
+        run: cp target/release/qt-ts-tools output/qt-ts-tools-linux
+      - uses: actions/upload-artifact@master
+        with:
+          name: binary-artifact
+          path: output
+
+  macos:
+    name: Build MacOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required tools
+        run: cargo install cargo-deny && rustup component add clippy
+      - name: Build
+        run: cargo build --verbose
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Security audit
+        uses: rustsec/audit-check@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: License check
+        run: cargo deny -L debug --all-features --locked check
+      - name: Copy to ouput directory
+        run: cp target/release/qt-ts-tools output/qt-ts-tools-macos
+      - uses: actions/upload-artifact@master
+        with:
+          name: binary-artifact
+          path: output
+
+  create-release:
+    name: Create the release
+    runs-on: ubuntu-latest
+    needs: [windows, ubuntu, macos]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the release version from the tag
         shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Retrieve build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: binary-artifact
+          path: output
+      - name: Package archives
         run: |
-          # Replace with the name of your binary
-          binary_name="qt-ts-tools"
-
-          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
-          mkdir "$dirname"
+          mkdir qt-ts-tools-windows-${{ env.VERSION }}
+          mkdir qt-ts-tools-linux-${{ env.VERSION }}
+          mkdir qt-ts-tools-macos-${{ env.VERSION }}
           
-          cp "LICENSE-MIT" "$dirname/."
-          cp "LICENSE-APACHE" "$dirname/."
+          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-windows-${{ env.VERSION }}/.
+          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-linux-${{ env.VERSION }}/.
+          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-macos-${{ env.VERSION }}/.
           
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.os }}/release/$binary_name.exe" "$dirname"
-          else
-            mv "target/${{ matrix.os }}/release/$binary_name" "$dirname"
-          fi
-
-          if [ ! -f CHANGES.md ]; then
-            changes="$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')"
-            echo "$changes" > CHANGES.md
-            echo "
-            " >> CHANGES.md
-            echo "### Checksums" >> CHANGES.md
-            echo "
-            " >> CHANGES.md
-            echo "All checksums are in sha256" >> CHANGES.md
-            echo "
-            " >> CHANGES.md
-          fi
-
-          asset_name=""
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            7z a "$dirname.zip" "$dirname"
-            asset_name="$dirname.zip"
-            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
-            checksum=sha256sum $asset_name
-            echo "${{ matrix.os }}: `$asset_name`: `$checkshum`" >> CHANGES.md
-          else
-            tar -czf "$dirname.tar.gz" "$dirname"
-            asset_name="$dirname.tar.gz"
-            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
-            checksum=sha256sum $asset_name
-            echo "${{ matrix.os }}: `$asset_name`: `$checkshum`" >> CHANGES.md
-          fi
+          cp output/qt-ts-tools.exe qt-ts-tools-windows-${{ env.VERSION }}/.
+          cp output/qt-ts-tools-linux qt-ts-tools-linux-${{ env.VERSION }}/qt-ts-tools
+          cp output/qt-ts-tools-macos qt-ts-tools-macos-${{ env.VERSION }}/qt-ts-tools
+          
+          7z a "qt-ts-tools-windows-${{ env.VERSION }}-x86.zip" qt-ts-tools-windows-${{ env.VERSION }}
+          tar -czf "qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz" "qt-ts-tools-linux-${{ env.VERSION }}"
+          tar -czf "qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz" "qt-ts-tools-macos-${{ env.VERSION }}"
+      - name: Create release
+        run: |
+          w256=$(sha256 qt-ts-tools-windows-${{ env.VERSION }}-x86.zip)
+          l256=$(sha256 qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz)
+          m256=$(sha256 qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz)
+          
+          changes="$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')"
+          echo "$changes" > CHANGES.md
+          echo "
+          " >> CHANGES.md
+          echo "### Checksums" >> CHANGES.md
+          echo "
+          " >> CHANGES.md
+          echo "All checksums are in sha256  " >> CHANGES.md
+          echo "
+          " >> CHANGES.md
+          echo "Windows: `qt-ts-tools-windows-${{ env.VERSION }}-x86.zip`: `$w256`  " >> CHANGES.md
+          echo "
+          "
+          echo "Linux: `qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz`: `$w256`  " >> CHANGES.md
+          echo "
+          "
+          echo "MacOS: `qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz`: `$w256`  " >> CHANGES.md
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           body_path: CHANGES.md
           files: |
-            ${{ env.ASSET }}
+            qt-ts-tools-windows-${{ env.VERSION }}-x86.zip
+            qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz
+            qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz
