@@ -12,6 +12,16 @@ This release is a maintenance release with small dependencies update.
 
 - Fixes security advisory check for unmaintained `proc-macro-error` crate indirectly linked with `i18n-embed` and `i18n-embed-fl` dependencies. [#157](https://github.com/mrtryhard/qt-ts-tools/issues/157)
 
+### Changed
+
+- Updated `clap` to version `4.5.20`
+- Updated `clap_complete` to version `4.5.24`
+- Updated `clap_complete_nushell` to version `4.5.3`
+- Updated `i18n-embed` to version `0.15.2`
+- Updated `i18n-embed-fl` to version `0.9.2`
+- Updated `serde` to version `1.0.214`
+- Updated `sys-locale` to version `0.3.2`
+
 ## [0.7.0] - 2024-08-06
 [Ninth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
 This release improves on some missing functionality and functionalities defaults. Since it is breaking changes, 
