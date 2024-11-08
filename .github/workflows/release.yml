@@ -94,7 +94,8 @@ jobs:
             echo "CHECKSUM=$(sha256sum $asset_name)" >> $GITHUB_ENV
           fi
           
-          $(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}') > CHANGES.md
+          changes="$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')"
+          echo $changes > CHANGES.md
           echo "
           " >> CHANGES.md
           echo "### Checksums" >> CHANGES.md
