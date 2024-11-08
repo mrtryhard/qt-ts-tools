@@ -95,7 +95,7 @@ jobs:
           fi
           
           changes="$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')"
-          echo $changes > CHANGES.md
+          echo "$changes" > CHANGES.md
           echo "
           " >> CHANGES.md
           echo "### Checksums" >> CHANGES.md
