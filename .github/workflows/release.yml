@@ -94,13 +94,15 @@ jobs:
             echo "CHECKSUM=$(sha256sum $asset_name)" >> $GITHUB_ENV
           fi
           
-          echo "CHANGES=\"$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')
-          
-          ### Checksums
-          
-          All checksums are in sha256
-          
-          \"" >> $GITHUB_ENV
+          $(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}') > CHANGES.md
+          echo "
+          " >> CHANGES.md
+          echo "### Checksums" >> CHANGES.md
+          echo "
+          " >> CHANGES.md
+          echo "All checksums are in sha256" >> CHANGES.md
+          echo "
+          " >> CHANGES.md
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
