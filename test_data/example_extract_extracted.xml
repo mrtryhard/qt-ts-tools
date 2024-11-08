@@ -5,32 +5,24 @@
         <name>tst_QKeySequence</name>
         <message>
             <source>Shift+K</source>
-            <translation type="obsolete">
-                Umschalt+K
-            </translation>
+            <translation type="obsolete">Umschalt+K</translation>
             <location filename="tst_qkeysequence.cpp" line="369"></location>
         </message>
         <message>
             <source>Ctrl+K</source>
-            <translation type="obsolete">
-                Strg+K
-            </translation>
+            <translation type="obsolete">Strg+K</translation>
             <location filename="tst_qkeysequence.cpp" line="370"></location>
         </message>
         <message>
             <source>Alt+K</source>
-            <translation type="obsolete">
-                Alt+K
-            </translation>
+            <translation type="obsolete">Alt+K</translation>
             <location filename="tst_qkeysequence.cpp" line="150"></location>
             <location filename="tst_qkeysequence.cpp" line="371"></location>
         </message>
     </context>
     <message>
         <source>Shift+K</source>
-        <translation type="obsolete">
-            Umschalt+K
-        </translation>
+        <translation type="obsolete">Umschalt+K</translation>
         <location filename="tst_qkeysequence.cpp" line="369"></location>
     </message>
 </TS>

@@ -12,9 +12,7 @@
         <name>UiContext</name>
         <message>
             <source>This is just a Sample</source>
-            <translation>
-                Dies ist nur ein Beispiel
-            </translation>
+            <translation>Dies ist nur ein Beispiel</translation>
             <location filename="ui_main.cpp" line="144"></location>
             <location filename="ui_potato_viewer.cpp" line="10"></location>
         </message>
