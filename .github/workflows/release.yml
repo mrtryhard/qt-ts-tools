@@ -145,13 +145,13 @@ jobs:
           echo "All checksums are in sha256  " >> CHANGES.md
           echo "
           " >> CHANGES.md
-          echo "Windows: `qt-ts-tools-windows-${{ env.VERSION }}-x86.zip`: `$w256`  " >> CHANGES.md
+          echo "Windows: \`qt-ts-tools-windows-${{ env.VERSION }}-x86.zip\`: \`$w256\`  " >> CHANGES.md
           echo "
           "
-          echo "Linux: `qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz`: `$w256`  " >> CHANGES.md
+          echo "Linux: \`qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz\`: \`$w256\`  " >> CHANGES.md
           echo "
           "
-          echo "MacOS: `qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz`: `$w256`  " >> CHANGES.md
+          echo "MacOS: \`qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz\`: \`$w256`\  " >> CHANGES.md
 
       - name: Release
         uses: softprops/action-gh-release@v2
