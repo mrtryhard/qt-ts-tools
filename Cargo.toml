@@ -25,7 +25,7 @@ serde = { version = "1.0.215", features = ["derive"] }
 sys-locale = "0.3.2"
 
 [profile.release]
-strip = true
-lto = true
 codegen-units = 1
+lto = true
 panic = "abort"
+strip = true

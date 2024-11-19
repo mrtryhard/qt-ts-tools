@@ -27,6 +27,33 @@ pub struct MergeArgs {
     pub help: Option<bool>,
 }
 
+// This works by depending on cmp looking up only source and location on messages nodes
+// and on context by comparing the names only
+pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
+    let left = load_file(&args.input_left);
+    let right = load_file(&args.input_right);
+
+    if let Err(e) = left {
+        return Err(tr!(
+            "error-open-or-parse",
+            ("file", args.input_left.as_str()),
+            ("error", e.to_string())
+        ));
+    }
+
+    if let Err(e) = right {
+        return Err(tr!(
+            "error-open-or-parse",
+            ("file", args.input_right.as_str()),
+            ("error", e.to_string())
+        ));
+    }
+
+    let result = merge_ts_nodes(left.unwrap(), right.unwrap(), args.keep_translation);
+
+    ts::write_to_output(&args.output_path, &result)
+}
+
 /// MessageNode that can be `eq(...)`.
 #[derive(Eq, PartialOrd, Clone)]
 struct EquatableMessageNode {
@@ -54,33 +81,6 @@ impl Hash for EquatableMessageNode {
             loc.filename.hash(state);
         });
     }
-}
-
-// This works by depending on cmp looking up only source and location on messages nodes
-// and on context by comparing the names only
-pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
-    let left = load_file(&args.input_left);
-    let right = load_file(&args.input_right);
-
-    if let Err(e) = left {
-        return Err(tr!(
-            "error-open-or-parse",
-            ("file", args.input_left.as_str()),
-            ("error", e.to_string())
-        ));
-    }
-
-    if let Err(e) = right {
-        return Err(tr!(
-            "error-open-or-parse",
-            ("file", args.input_right.as_str()),
-            ("error", e.to_string())
-        ));
-    }
-
-    let result = merge_ts_nodes(left.unwrap(), right.unwrap(), args.keep_translation);
-
-    ts::write_to_output(&args.output_path, &result)
 }
 
 fn merge_ts_nodes(mut left: TSNode, mut right: TSNode, keep_translation: bool) -> TSNode {

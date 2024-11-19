@@ -7,17 +7,6 @@ use clap_complete_nushell::Nushell;
 use crate::cli::Cli;
 use crate::locale::tr;
 
-#[derive(Args)]
-#[command(disable_help_flag = true)]
-pub struct ShellCompletionArgs {
-    #[arg(value_enum, help = tr!("cli-shell-completion-shell"))]
-    shell: clap_complete_command::Shell,
-    #[arg(short, long, help = tr!("cli-shell-completion-install"))]
-    output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
-    help: Option<bool>,
-}
-
 #[derive(Debug, Clone, ValueEnum)]
 #[value(rename_all = "lower")]
 pub enum GenShell {
@@ -27,6 +16,17 @@ pub enum GenShell {
     Nushell,
     PowerShell,
     Zsh,
+}
+
+#[derive(Args)]
+#[command(disable_help_flag = true)]
+pub struct ShellCompletionArgs {
+    #[arg(value_enum, help = tr!("cli-shell-completion-shell"))]
+    shell: clap_complete_command::Shell,
+    #[arg(short, long, help = tr!("cli-shell-completion-install"))]
+    output_path: Option<String>,
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
+    help: Option<bool>,
 }
 
 impl Generator for GenShell {
