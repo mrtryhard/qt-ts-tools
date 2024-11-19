@@ -4,6 +4,13 @@ use log::debug;
 use crate::ts::{TSNode, TranslationNode, TranslationType};
 use crate::{tr, ts};
 
+#[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
+pub enum TranslationTypeArg {
+    Obsolete,
+    Unfinished,
+    Vanished,
+}
+
 /// Extracts a translation type messages and contexts from the input translation file.
 #[derive(Args)]
 #[command(disable_help_flag = true)]
@@ -19,13 +26,6 @@ pub struct ExtractArgs {
     pub output_path: Option<String>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
-}
-
-#[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
-pub enum TranslationTypeArg {
-    Obsolete,
-    Unfinished,
-    Vanished,
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.

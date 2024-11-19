@@ -83,12 +83,15 @@ pub fn initialize_locale() -> Box<dyn Localizer> {
     localizer
 }
 
-#[test]
-fn test_tr_macro() {
-    let s = "MyFile".to_owned();
-    assert_eq!(
-        tr!("error-open-or-parse", ("file", s), ("error", "Test")),
-        "Could not open or parse input file \"MyFile\". Reason: Test."
-    );
-    assert_eq!(tr!("cli-merge-input-left"), "File to receive the merge.");
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_tr_macro() {
+        let s = "MyFile".to_owned();
+        assert_eq!(
+            tr!("error-open-or-parse", ("file", s), ("error", "Test")),
+            "Could not open or parse input file \"MyFile\". Reason: Test."
+        );
+        assert_eq!(tr!("cli-merge-input-left"), "File to receive the merge.");
+    }
 }

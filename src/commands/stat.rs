@@ -25,39 +25,6 @@ pub struct StatArgs {
     pub help: Option<bool>,
 }
 
-#[derive(Clone, Default, Eq, Ord, PartialEq, PartialOrd)]
-struct FileStats {
-    pub filepath: String,
-    pub unfinished_translations: usize,
-    pub vanished_translations: usize,
-    pub obsolete_translations: usize,
-    pub finished_translation: usize,
-    /// For files, total_translations corresponds to number of time that file was
-    /// mentioned as a location.
-    pub total_translations: usize,
-}
-
-#[derive(Default)]
-struct TotalStats {
-    // Translation block
-    pub total_missing_translations: usize,
-    pub total_vanished_translations: usize,
-    pub total_obsolete_translations: usize,
-    /// Corresponds to the number of unique translation
-    /// This is the sum of obsolete, vanished, missing and complete translations.
-    pub total_unique_translations: usize,
-    /// Corresponds to the number of references in files.
-    /// For example, if a translation is the same for 3 files, it will return 3, not 1.
-    /// Even if 2 locations is in the same file, it will count as 2.
-    pub total_translations_references: usize,
-    pub total_contexts: usize,
-    pub total_messages: usize,
-    pub total_context_less_messages: usize,
-
-    /// Statistics by file
-    pub files: Vec<FileStats>,
-}
-
 /// Aggregates the stats for provided file and arguments.
 pub fn stat_main(args: &StatArgs) -> Result<(), String> {
     match quick_xml::Reader::from_file(&args.input_path) {
@@ -91,44 +58,115 @@ pub fn stat_main(args: &StatArgs) -> Result<(), String> {
     }
 }
 
-/// Writes the output TS file to the specified output (file or stdout).
-/// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
-/// `<name></name>` instead of `<name/>`.
-pub fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
-    debug!("Writing {} characters to '{output_path}'", output.len());
+#[derive(Clone, Default, Eq, Ord, PartialEq, PartialOrd)]
+struct FileStats {
+    pub filepath: String,
+    pub unfinished_translations: usize,
+    pub vanished_translations: usize,
+    pub obsolete_translations: usize,
+    pub finished_translation: usize,
+    /// For files, total_translations corresponds to number of time that file was
+    /// mentioned as a location.
+    pub total_translations: usize,
+}
 
-    match std::fs::File::options()
-        .create(true)
-        .truncate(true)
-        .write(true)
-        .open(output_path)
-    {
-        Ok(mut file) => match file.write(output.as_bytes()) {
-            Ok(bytes) => {
-                debug!("Successfully wrote {}", bytes);
-                Ok(())
-            }
-            Err(err) => {
-                debug!("Failed to write to output_path: {err:?}");
-                Err(tr!(
-                    "error-write-output",
-                    ("output_path", output_path),
-                    ("error", err.to_string())
-                ))
-            }
-        },
-        Err(e) => Err(tr!(
-            "error-write-output-open",
-            ("output_path", output_path),
-            ("error", e.to_string())
-        )),
-    }
+#[derive(Default)]
+struct TotalStats {
+    // Translation block
+    pub total_missing_translations: usize,
+    pub total_vanished_translations: usize,
+    pub total_obsolete_translations: usize,
+    /// Corresponds to the number of unique translation
+    /// This is the sum of obsolete, vanished, missing and complete translations.
+    pub total_unique_translations: usize,
+    /// Corresponds to the number of references in files.
+    /// For example, if a translation is the same for 3 files, it will return 3, not 1.
+    /// Even if 2 locations is in the same file, it will count as 2.
+    pub total_translations_references: usize,
+    pub total_contexts: usize,
+    pub total_messages: usize,
+    pub total_context_less_messages: usize,
+
+    /// Statistics by file
+    pub files: Vec<FileStats>,
 }
 
 #[derive(Clone, Eq, Hash, PartialEq)]
 enum FileKey<'a> {
     Invalid,
     Valid(&'a String),
+}
+
+fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
+    let mut buf = String::new();
+
+    if verbose && !stats.files.is_empty() {
+        buf.push_str("------------------------------------------------------------------------------------------------------\n");
+        buf.push_str(&format!("{}\r\n", tr!("cli-stat-detailed-report")));
+        buf.push_str("------------------------------------------------------------------------------------------------------\n");
+
+        for file in &stats.files {
+            // ["Unfinished", "Finished", "Obsolete", "Vanished"] are literals in the xml file, let's not translate.
+            buf.push_str(&format!(
+                "{} \"{}\"\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n",
+                tr!("cli-stat-filepath-header"),
+                file.filepath,
+                tr!("cli-stat-translations-refs"),
+                file.total_translations,
+                "Unfinished",
+                file.unfinished_translations,
+                "Finished",
+                file.finished_translation,
+                "Obsolete",
+                file.obsolete_translations,
+                "Vanished",
+                file.vanished_translations
+            ));
+        }
+    }
+
+    buf.push_str("------------------------------------------------------------------------------------------------------\n");
+    buf.push_str(&format!("{}\n", tr!("cli-stat-file-summary")));
+    buf.push_str("------------------------------------------------------------------------------------------------------\n");
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-files"),
+        stats.files.len()
+    ));
+    buf.push_str(&format!("{: <24} : {}\n", "Contexts", stats.total_contexts));
+    buf.push_str(&format!("{: <24} : {}\n", "Messages", stats.total_messages));
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-messages-without-context"),
+        stats.total_context_less_messages
+    ));
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-unique-translations"),
+        stats.total_unique_translations
+    ));
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-translations-refs"),
+        stats.total_translations_references
+    ));
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-type-translations", ("type", "Missing")),
+        stats.total_missing_translations
+    ));
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-type-translations", ("type", "Obsolete")),
+        stats.total_obsolete_translations
+    ));
+    buf.push_str(&format!(
+        "{: <24} : {}\n",
+        tr!("cli-stat-type-translations", ("type", "Vanished")),
+        stats.total_vanished_translations
+    ));
+
+    buf
 }
 
 fn stats_ts_node(ts_node: &TSNode) -> TotalStats {
@@ -209,76 +247,38 @@ fn stats_for_messages<'a>(
     }
 }
 
-fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
-    let mut buf = String::new();
+/// Writes the output TS file to the specified output (file or stdout).
+/// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
+/// `<name></name>` instead of `<name/>`.
+fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
+    debug!("Writing {} characters to '{output_path}'", output.len());
 
-    if verbose && !stats.files.is_empty() {
-        buf.push_str("------------------------------------------------------------------------------------------------------\n");
-        buf.push_str(&format!("{}\r\n", tr!("cli-stat-detailed-report")));
-        buf.push_str("------------------------------------------------------------------------------------------------------\n");
-
-        for file in &stats.files {
-            // ["Unfinished", "Finished", "Obsolete", "Vanished"] are literals in the xml file, let's not translate.
-            buf.push_str(&format!(
-                "{} \"{}\"\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n\t{: <25}: {}\r\n",
-                tr!("cli-stat-filepath-header"),
-                file.filepath,
-                tr!("cli-stat-translations-refs"),
-                file.total_translations,
-                "Unfinished",
-                file.unfinished_translations,
-                "Finished",
-                file.finished_translation,
-                "Obsolete",
-                file.obsolete_translations,
-                "Vanished",
-                file.vanished_translations
-            ));
-        }
+    match std::fs::File::options()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(output_path)
+    {
+        Ok(mut file) => match file.write(output.as_bytes()) {
+            Ok(bytes) => {
+                debug!("Successfully wrote {}", bytes);
+                Ok(())
+            }
+            Err(err) => {
+                debug!("Failed to write to output_path: {err:?}");
+                Err(tr!(
+                    "error-write-output",
+                    ("output_path", output_path),
+                    ("error", err.to_string())
+                ))
+            }
+        },
+        Err(e) => Err(tr!(
+            "error-write-output-open",
+            ("output_path", output_path),
+            ("error", e.to_string())
+        )),
     }
-
-    buf.push_str("------------------------------------------------------------------------------------------------------\n");
-    buf.push_str(&format!("{}\n", tr!("cli-stat-file-summary")));
-    buf.push_str("------------------------------------------------------------------------------------------------------\n");
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-files"),
-        stats.files.len()
-    ));
-    buf.push_str(&format!("{: <24} : {}\n", "Contexts", stats.total_contexts));
-    buf.push_str(&format!("{: <24} : {}\n", "Messages", stats.total_messages));
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-messages-without-context"),
-        stats.total_context_less_messages
-    ));
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-unique-translations"),
-        stats.total_unique_translations
-    ));
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-translations-refs"),
-        stats.total_translations_references
-    ));
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-type-translations", ("type", "Missing")),
-        stats.total_missing_translations
-    ));
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-type-translations", ("type", "Obsolete")),
-        stats.total_obsolete_translations
-    ));
-    buf.push_str(&format!(
-        "{: <24} : {}\n",
-        tr!("cli-stat-type-translations", ("type", "Vanished")),
-        stats.total_vanished_translations
-    ));
-
-    buf
 }
 
 #[cfg(test)]
