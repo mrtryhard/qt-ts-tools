@@ -8,21 +8,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [Tenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/10).
 This release contains breaking changes on the output produce by the tool. Otherwise, mostly dependencies upgrades.
 
+### Added
+
+- Added MacOS build binary in the official release. This build is not officially tested, but should work. [#40](https://github.com/mrtryhard/qt-ts-tools/issues/40)
+
 ### Fixed
 
 - Fixes security advisory check for unmaintained `proc-macro-error` crate indirectly linked with `i18n-embed` and `i18n-embed-fl` dependencies. [#157](https://github.com/mrtryhard/qt-ts-tools/issues/157)
 
 ### Changed
 
-- Updated `clap` to version `4.5.20`
-- Updated `clap_complete` to version `4.5.24`
-- Updated `clap_complete_nushell` to version `4.5.3`
+- Updated `clap` to version `4.5.21`
+- Updated `clap_complete` to version `4.5.38`
+- Updated `clap_complete_nushell` to version `4.5.4`
 - Updated `i18n-embed` to version `0.15.2`
 - Updated `i18n-embed-fl` to version `0.9.2`
-- Updated `serde` to version `1.0.214`
-- Updated `sys-locale` to version `0.3.2`
-- Breaking: Updated `quick-xml` to `0.37.0`, which effectively changes the output produced by the tool. 
-  The `translation` nodes now will have no indent.
+- Updated `serde` to version `1.0.215`
+- Updated `sys-locale` to version `0.3.2``
+- Breaking: Updated `quick-xml` to `0.37.1`, which effectively changes the output produced by the tool. 
+  The `translation` nodes now will have no indent. [#170](https://github.com/mrtryhard/qt-ts-tools/issues/170)
 
 ## [0.7.0] - 2024-08-06
 [Ninth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/9).
