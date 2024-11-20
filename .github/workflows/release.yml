@@ -94,6 +94,8 @@ jobs:
     needs: [windows, ubuntu, macos]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -135,6 +137,7 @@ jobs:
           l256=$(sha256sum qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz)
           m256=$(sha256sum qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz)
           
+          git fetch -a
           previous_tag=$(git describe --abbrev=0 --tags ${{ env.VERSION }}^)
           changes="$(cat CHANGELOG.md | awk '/^## /{block++} {if (block==1) {print}}')"
           echo "$changes" > CHANGES.md
