@@ -4,7 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.0] - unreleased
+## [0.8.1] - 2025-01-08
+[Eleventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/11).  
+This releases is a maintenance release and contains dependencies updates.
+
+### Changed
+
+- Updated `clap` to version `4.5.24`
+- Updated `clap_complete` to version `4.5.41`
+- Updated `clap_complete_nushell` to version `4.5.5`
+- Updated `env_logger` to version `0.11.6`
+- Updated `i18n-embed` to version `0.15.3`
+- Updated `i18n-embed-fl` to version `0.9.3`
+- Updated `quick-xml` to version `0.37.2`
+- Updated `serde` to version `1.0.217`
+
+## [0.8.0] - 2024-11-20
 [Tenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/10).
 This release contains breaking changes on the output produce by the tool. Otherwise, mostly dependencies upgrades.
 
