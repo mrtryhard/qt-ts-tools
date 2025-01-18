@@ -62,6 +62,32 @@ jobs:
           name: binary-ub-artifact
           path: output-ub
 
+  ubuntu-arm:
+    name: Build Ubuntu ARM
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required tools
+        run: cargo install cargo-deny && rustup component add clippy
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Security audit
+        uses: rustsec/audit-check@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: License check
+        run: cargo deny -L debug --all-features --locked check
+      - name: Copy to ouput directory
+        run: mkdir -p output-ub && cp target/release/qt-ts-tools output-ub/qt-ts-tools-linux-arm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-ub-arm-artifact
+          path: output-ub-arm
+
   macos:
     name: Build MacOS
     runs-on: macos-latest
@@ -114,27 +140,37 @@ jobs:
         with:
           name: binary-ub-artifact
           path: output-ub
+      - name: Retrieve Linux Arm build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-ub-arm-artifact
+          path: output-ub-arm
       - name: Package archives
         run: |
           mkdir qt-ts-tools-windows-${{ env.VERSION }}
           mkdir qt-ts-tools-linux-${{ env.VERSION }}
+          mkdir qt-ts-tools-linux-arm-${{ env.VERSION }}
           mkdir qt-ts-tools-macos-${{ env.VERSION }}
           
           cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-windows-${{ env.VERSION }}/.
           cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-linux-${{ env.VERSION }}/.
+          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-linux-arm-${{ env.VERSION }}/.
           cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-macos-${{ env.VERSION }}/.
           
           cp output-win/qt-ts-tools.exe qt-ts-tools-windows-${{ env.VERSION }}/.
           cp output-ub/qt-ts-tools-linux qt-ts-tools-linux-${{ env.VERSION }}/qt-ts-tools
+          cp output-ub-arm/qt-ts-tools-linux-arm qt-ts-tools-linux-arm${{ env.VERSION }}/qt-ts-tools
           cp output-mac/qt-ts-tools-macos qt-ts-tools-macos-${{ env.VERSION }}/qt-ts-tools
           
           7z a "qt-ts-tools-windows-${{ env.VERSION }}-x86.zip" qt-ts-tools-windows-${{ env.VERSION }}
           tar -czf "qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz" "qt-ts-tools-linux-${{ env.VERSION }}"
+          tar -czf "qt-ts-tools-linux-${{ env.VERSION }}-arm64.tar.gz" "qt-ts-tools-linux-arm-${{ env.VERSION }}"
           tar -czf "qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz" "qt-ts-tools-macos-${{ env.VERSION }}"
       - name: Create release
         run: |
           w256=$(sha256sum qt-ts-tools-windows-${{ env.VERSION }}-x86.zip)
           l256=$(sha256sum qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz)
+          larm256=$(sha256sum qt-ts-tools-linux-${{ env.VERSION }}-arm64.tar.gz)
           m256=$(sha256sum qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz)
           
           git fetch -a
@@ -154,7 +190,10 @@ jobs:
           echo "Windows: \`$w256\`  " >> CHANGES.md
           echo "
           "
-          echo "Linux: \`$l256\`  " >> CHANGES.md
+          echo "Linux x86: \`$l256\`  " >> CHANGES.md
+          echo "
+          "
+          echo "Linux arm64: \`$larm256\`  " >> CHANGES.md
           echo "
           "
           echo "MacOS: \`$m256\`  " >> CHANGES.md
@@ -166,4 +205,5 @@ jobs:
           files: |
             qt-ts-tools-windows-${{ env.VERSION }}-x86.zip
             qt-ts-tools-linux-${{ env.VERSION }}-x86.tar.gz
+            qt-ts-tools-linux-${{ env.VERSION }}-arm64.tar.gz
             qt-ts-tools-macos-${{ env.VERSION }}-aarch64.tar.gz
