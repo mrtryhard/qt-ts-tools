@@ -82,7 +82,7 @@ jobs:
       - name: License check
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
-        run: mkdir -p output-ub && cp target/release/qt-ts-tools output-ub/qt-ts-tools-linux-arm
+        run: mkdir -p output-ub-arm && cp target/release/qt-ts-tools output-ub-arm/qt-ts-tools-linux-arm
       - uses: actions/upload-artifact@v4
         with:
           name: binary-ub-arm-artifact
