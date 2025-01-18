@@ -159,7 +159,7 @@ jobs:
           
           cp output-win/qt-ts-tools.exe qt-ts-tools-windows-${{ env.VERSION }}/.
           cp output-ub/qt-ts-tools-linux qt-ts-tools-linux-${{ env.VERSION }}/qt-ts-tools
-          cp output-ub-arm/qt-ts-tools-linux-arm qt-ts-tools-linux-arm${{ env.VERSION }}/qt-ts-tools
+          cp output-ub-arm/qt-ts-tools-linux-arm qt-ts-tools-linux-arm-${{ env.VERSION }}/qt-ts-tools
           cp output-mac/qt-ts-tools-macos qt-ts-tools-macos-${{ env.VERSION }}/qt-ts-tools
           
           7z a "qt-ts-tools-windows-${{ env.VERSION }}-x86.zip" qt-ts-tools-windows-${{ env.VERSION }}
