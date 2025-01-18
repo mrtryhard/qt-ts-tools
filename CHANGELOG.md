@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.2] unreleased
+## [0.8.2] 2025-01-18
 [Twelveth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/12).
 This release introduces ARM64 for Linux and minor changes.
 
@@ -16,6 +16,7 @@ This release introduces ARM64 for Linux and minor changes.
 
 - Upgraded `clap` to version `4.5.26`
 - Upgraded `clap_complete` to version `4.5.42`
+- Upgraded `log` to version `0.4.25`
 
 ## [0.8.1] - 2025-01-08
 [Eleventh milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/11).  
