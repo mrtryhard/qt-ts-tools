@@ -21,7 +21,7 @@ i18n-embed-fl = "0.9.3"
 log = "0.4.25"
 quick-xml = { version = "0.37.2", features = ["serialize"] }
 rust-embed = "8.5.0"
-serde = { version = "1.0.217", features = ["derive"] }
+serde = { version = "1.0.218", features = ["derive"] }
 sys-locale = "0.3.2"
 
 [profile.release]
