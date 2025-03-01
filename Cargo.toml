@@ -6,22 +6,22 @@ keywords = ["qt", "translation", "windows", "linux"]
 homepage = "https://github.com/mrtryhard/qt-ts-tools"
 license = "MIT OR Apache-2.0"
 version = "0.8.2"
-edition = "2021"
+edition = "2024"
 description = "Small command line utility to manipulate Qt's translation files with diverse operations."
 
 [dependencies]
-clap = { version = "4.5.29", features = ["derive", "string"] }
-clap_complete = "4.5.44"
+clap = { version = "4.5.31", features = ["derive", "string"] }
+clap_complete = "4.5.46"
 clap_complete_nushell = "4.5.5"
 clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.6", default-features = false, features = ["humantime"] }
 fluent-bundle = "0.15.3"
 i18n-embed = { version = "0.15.3", features = ["fluent-system"] }
 i18n-embed-fl = "0.9.3"
-log = "0.4.25"
+log = "0.4.26"
 quick-xml = { version = "0.37.2", features = ["serialize"] }
-rust-embed = "8.5.0"
-serde = { version = "1.0.217", features = ["derive"] }
+rust-embed = "8.6.0"
+serde = { version = "1.0.218", features = ["derive"] }
 sys-locale = "0.3.2"
 
 [profile.release]

@@ -14,6 +14,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Update Rust
+        run: rustup update
       - name: Required tools
         run: cargo install cargo-deny && rustup component add clippy
       - name: Build
@@ -41,6 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Update Rust
+        run: rustup update
       - name: Required tools
         run: cargo install cargo-deny && rustup component add clippy
       - name: Build
@@ -67,6 +71,8 @@ jobs:
     runs-on: ubuntu-22.04-arm
     steps:
       - uses: actions/checkout@v4
+      - name: Update Rust
+        run: rustup update
       - name: Required tools
         run: cargo install cargo-deny && rustup component add clippy
       - name: Build
@@ -93,6 +99,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Update Rust
+        run: rustup update
       - name: Required tools
         run: cargo install cargo-deny && rustup component add clippy
       - name: Build

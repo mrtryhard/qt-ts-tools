@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.3] unreleased
+[Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/12).
+This release is a maintenance release and introduces an upgrade of dependencies and Rust edition. 
+
+### Changed
+
+- Rust edition upgraded from 2021 to 2024 [#175](https://github.com/mrtryhard/qt-ts-tools/issues/175)
+- Upgraded `clap` to version `4.5.31`
+- Upgraded `clap_complete` to version `4.5.46`
+- Upgraded `log` to version `0.4.26`
+- Upgraded `rust_embed` to version `8.6.0`
+- Upgraded `serde` to version `1.0.218`
+
 ## [0.8.2] 2025-01-18
 [Twelveth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/12).
 This release introduces ARM64 for Linux and minor changes.
