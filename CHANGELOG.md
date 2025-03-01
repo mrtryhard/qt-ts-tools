@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.3] unreleased
+## [0.8.3] 2025-03-01
 [Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/12).
 This release is a maintenance release and introduces an upgrade of dependencies and Rust edition. 
 
