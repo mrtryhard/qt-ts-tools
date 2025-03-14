@@ -4,8 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.4] unreleased
+[Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/14).
+This release is a maintenance release and introduces an upgrade of dependencies
+
+### Fixed
+
+- Updated executable metadata to report the right version [#209](https://github.com/mrtryhard/qt-ts-tools/issues/175)
+
+### Changed
+
+- Upgraded `clap` to version `4.5.32`
+- Upgraded `env_logger` to version `0.11.7`
+
 ## [0.8.3] 2025-03-01
-[Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/12).
+[Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/13).
 This release is a maintenance release and introduces an upgrade of dependencies and Rust edition. 
 
 ### Changed
