@@ -19,7 +19,7 @@ fluent-bundle = "0.15.3"
 i18n-embed = { version = "0.15.3", features = ["fluent-system"] }
 i18n-embed-fl = "0.9.3"
 log = "0.4.27"
-quick-xml = { version = "0.37.2", features = ["serialize"] }
+quick-xml = { version = "0.37.3", features = ["serialize"] }
 rust-embed = "8.6.0"
 serde = { version = "1.0.219", features = ["derive"] }
 sys-locale = "0.3.2"
