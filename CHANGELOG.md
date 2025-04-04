@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.4] unreleased
+## [0.8.4] 2025-04-04
 [Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/14).
 This release is a maintenance release and introduces an upgrade of dependencies
 
@@ -14,8 +14,12 @@ This release is a maintenance release and introduces an upgrade of dependencies
 
 ### Changed
 
-- Upgraded `clap` to version `4.5.32`
-- Upgraded `env_logger` to version `0.11.7`
+- Upgraded `clap` to version `4.5.35`
+- Upgraded `clap_complete` to version `4.5.47`
+- Upgraded `env_logger` to version `0.11.8`
+- Upgraded `log` to version `0.4.27`
+- Upgraded `quick-xml` to version `0.37.3`
+- Upgraded `serde` to version `1.0.219`
 
 ## [0.8.3] 2025-03-01
 [Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/13).
