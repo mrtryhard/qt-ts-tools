@@ -17,7 +17,7 @@ clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.8", default-features = false, features = ["humantime"] }
 fluent-bundle = "0.15.3"
 i18n-embed = { version = "0.15.4", features = ["fluent-system"] }
-i18n-embed-fl = "0.9.3"
+i18n-embed-fl = "0.9.4"
 log = "0.4.27"
 quick-xml = { version = "0.37.4", features = ["serialize"] }
 rust-embed = "8.7.0"
