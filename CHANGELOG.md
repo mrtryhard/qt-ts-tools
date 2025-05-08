@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.5] 2025-05-09
+[Fourteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/15).
+This release is a maintenance release and introduces an upgrade of dependencies
+
+### Changed
+
+- Upgraded `clap` to version `4.5.37`
+- Upgraded `clap_complete` to version `4.5.50`
+- Upgraded `i18n-embed` to version `0.15.4`
+- Upgraded `i18n-embed-fl` to version `0.9.4`
+- Upgraded `quick-xml` to version `0.37.5`
+- Upgraded `rust-embed` to version `8.7.1`
+
 ## [0.8.4] 2025-04-04
 [Thirteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/14).
 This release is a maintenance release and introduces an upgrade of dependencies
