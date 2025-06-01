@@ -36,16 +36,16 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
     if let Err(e) = left {
         return Err(tr!(
             "error-open-or-parse",
-            ("file", args.input_left.as_str()),
-            ("error", e.to_string())
+            file = args.input_left.as_str(),
+            error = e.to_string()
         ));
     }
 
     if let Err(e) = right {
         return Err(tr!(
             "error-open-or-parse",
-            ("file", args.input_right.as_str()),
-            ("error", e.to_string())
+            file = args.input_right.as_str(),
+            error = e.to_string()
         ));
     }
 
@@ -85,7 +85,9 @@ impl Hash for EquatableMessageNode {
 
 fn merge_ts_nodes(mut left: TSNode, mut right: TSNode, keep_translation: bool) -> TSNode {
     if keep_translation {
-        debug!("--keep_translation flag is active, the following nodes will NOT be updated from the right-side file: translation, comment, oldcomment, oldsource, encoding");
+        debug!(
+            "--keep_translation flag is active, the following nodes will NOT be updated from the right-side file: translation, comment, oldcomment, oldsource, encoding"
+        );
     }
 
     left.messages = merge_messages(&mut left.messages, &mut right.messages, keep_translation);

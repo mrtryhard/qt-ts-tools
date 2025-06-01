@@ -1,4 +1,5 @@
 use clap::{ArgAction, Args};
+use i18n_embed_fl::fl;
 use log::debug;
 
 use crate::ts::{TSNode, TranslationNode, TranslationType};
@@ -29,31 +30,32 @@ pub struct ExtractArgs {
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.
-pub fn extract_main(args: &ExtractArgs) -> Result<(), String> {
-    match quick_xml::Reader::from_file(&args.input_path) {
+pub fn extract_main(extract_args: &ExtractArgs) -> Result<(), String> {
+    match quick_xml::Reader::from_file(&extract_args.input_path) {
         Ok(file) => {
             let nodes: Result<TSNode, _> = quick_xml::de::from_reader(file.into_inner());
             match nodes {
                 Ok(mut ts_node) => {
-                    let wanted_types = args
+                    let wanted_types = extract_args
                         .translation_type
                         .iter()
                         .map(to_translation_type)
                         .collect::<Vec<TranslationType>>();
                     retain_ts_node(&mut ts_node, &wanted_types);
-                    ts::write_to_output(&args.output_path, &ts_node)
+                    ts::write_to_output(&extract_args.output_path, &ts_node)
                 }
-                Err(e) => Err(tr!(
+                Err(e) => Err(fl!(
+                    crate::locale::current_loader(),
                     "error-open-or-parse",
-                    ("file", args.input_path.as_str()),
-                    ("error", e.to_string())
+                    file = extract_args.input_path.as_str(),
+                    error = e.to_string()
                 )),
             }
         }
         Err(e) => Err(tr!(
             "error-open-or-parse",
-            ("file", args.input_path.as_str()),
-            ("error", e.to_string())
+            file = extract_args.input_path.as_str(),
+            error = e.to_string()
         )),
     }
 }

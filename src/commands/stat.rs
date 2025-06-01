@@ -45,15 +45,15 @@ pub fn stat_main(args: &StatArgs) -> Result<(), String> {
                 }
                 Err(e) => Err(tr!(
                     "error-ts-file-parse",
-                    ("file", args.input_path.as_str()),
-                    ("error", e.to_string())
+                    input_path = args.input_path.as_str(),
+                    error = e.to_string()
                 )),
             }
         }
         Err(e) => Err(tr!(
             "error-open-or-parse",
-            ("file", args.input_path.as_str()),
-            ("error", e.to_string())
+            file = args.input_path.as_str(),
+            error = e.to_string()
         )),
     }
 }
@@ -152,17 +152,17 @@ fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
     ));
     buf.push_str(&format!(
         "{: <24} : {}\n",
-        tr!("cli-stat-type-translations", ("type", "Missing")),
+        tr!("cli-stat-type-translations", ttype = "Missing"),
         stats.total_missing_translations
     ));
     buf.push_str(&format!(
         "{: <24} : {}\n",
-        tr!("cli-stat-type-translations", ("type", "Obsolete")),
+        tr!("cli-stat-type-translations", ttype = "Obsolete"),
         stats.total_obsolete_translations
     ));
     buf.push_str(&format!(
         "{: <24} : {}\n",
-        tr!("cli-stat-type-translations", ("type", "Vanished")),
+        tr!("cli-stat-type-translations", ttype = "Vanished"),
         stats.total_vanished_translations
     ));
 
@@ -268,15 +268,15 @@ fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
                 debug!("Failed to write to output_path: {err:?}");
                 Err(tr!(
                     "error-write-output",
-                    ("output_path", output_path),
-                    ("error", err.to_string())
+                    output_path = output_path,
+                    error = err.to_string()
                 ))
             }
         },
         Err(e) => Err(tr!(
             "error-write-output-open",
-            ("output_path", output_path),
-            ("error", e.to_string())
+            output_path = output_path,
+            error = e.to_string()
         )),
     }
 }

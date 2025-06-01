@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.6] unreleased
+
+### Changed
+
+- Upgraded `i18n-embed-fl` to 0.6.0 and modified inner `tr!` macro to simplify and improve compatibility with `i18n-embed-fl` `fl!` macro.
+
 ## [0.8.5] 2025-05-09
 [Fourteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/15).
 This release is a maintenance release and introduces an upgrade of dependencies

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use std::sync::OnceLock;
 
-use i18n_embed::fluent::{fluent_language_loader, FluentLanguageLoader};
+use i18n_embed::fluent::{FluentLanguageLoader, fluent_language_loader};
 use i18n_embed::unic_langid::LanguageIdentifier;
 use i18n_embed::{DefaultLocalizer, LanguageLoader, Localizer};
 use log::debug;
@@ -54,14 +54,13 @@ pub fn current_loader() -> &'static FluentLanguageLoader {
 /// ```
 #[macro_export]
 macro_rules! tr {
-    ($text_id:literal) => {{
-        i18n_embed_fl::fl!($crate::locale::current_loader(), $text_id)
+    ($message_id:literal) => {{
+        i18n_embed_fl::fl!($crate::locale::current_loader(), $message_id)
     }};
-    ($text_id:literal, $( ($key:literal, $value:expr) ),* ) => {{
-        let mut args: std::collections::HashMap<&str, fluent_bundle::FluentValue> = std::collections::HashMap::new();
-        $(args.insert($key, $value.into());)*
-        i18n_embed_fl::fl!($crate::locale::current_loader(), $text_id, args)
-    }};
+
+    ($message_id:literal, $($field:ident = $value:expr),*) => (
+        i18n_embed_fl::fl!($crate::locale::current_loader(), $message_id, $($field = $value)*)
+    )
 }
 
 pub(crate) use tr;
@@ -89,7 +88,7 @@ mod tests {
     fn test_tr_macro() {
         let s = "MyFile".to_owned();
         assert_eq!(
-            tr!("error-open-or-parse", ("file", s), ("error", "Test")),
+            tr!("error-open-or-parse", file = s, error = "Test"),
             "Could not open or parse input file \"MyFile\". Reason: Test."
         );
         assert_eq!(tr!("cli-merge-input-left"), "File to receive the merge.");
