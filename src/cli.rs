@@ -1,11 +1,11 @@
 use clap::{ArgAction, Parser, Subcommand};
 
-use crate::commands::extract::{extract_main, ExtractArgs};
-use crate::commands::merge::{merge_main, MergeArgs};
-use crate::commands::shell_completion::{shell_completion_main, ShellCompletionArgs};
-use crate::commands::sort::{sort_main, SortArgs};
-use crate::commands::stat::{stat_main, StatArgs};
-use crate::commands::strip::{strip_main, StripArgs};
+use crate::commands::extract::{ExtractArgs, extract_main};
+use crate::commands::merge::{MergeArgs, merge_main};
+use crate::commands::shell_completion::{ShellCompletionArgs, shell_completion_main};
+use crate::commands::sort::{SortArgs, sort_main};
+use crate::commands::stat::{StatArgs, stat_main};
+use crate::commands::strip::{StripArgs, strip_main};
 use crate::locale::tr;
 
 #[derive(Parser)]

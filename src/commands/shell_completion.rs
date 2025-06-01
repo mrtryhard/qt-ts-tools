@@ -71,7 +71,7 @@ pub fn shell_completion_main(args: &ShellCompletionArgs) -> Result<(), String> {
         None => match &mut buf.is_empty() {
             true => Err(tr!(
                 "cli-shell-completion-error-get-shell",
-                ("shell", format!("{:?}", args.shell))
+                shell = format!("{:?}", args.shell)
             )),
             false => Ok(()),
         },
@@ -90,18 +90,18 @@ fn write_to_file(buf: &mut [u8], output_path: &String) -> Result<(), String> {
                 } else {
                     Err(tr!(
                         "cli-shell-completion-error-write-to-file",
-                        ("file", output_path)
+                        file = output_path
                     ))
                 }
             }
             Err(err) => Err(tr!(
                 "cli-shell-completion-error-write-privilege",
-                ("error", err.to_string())
+                error = err.to_string()
             )),
         },
         Err(err) => Err(tr!(
             "cli-shell-completion-error-open",
-            ("error", err.to_string())
+            error = err.to_string()
         )),
     }
 }

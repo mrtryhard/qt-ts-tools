@@ -330,9 +330,9 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             Err(e) => {
                 return Err(tr!(
                     "error-write-output-open",
-                    ("output_path", output_path),
-                    ("error", e.to_string())
-                ))
+                    output_path = output_path,
+                    error = e.to_string()
+                ));
             }
         },
     };
@@ -349,10 +349,10 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
             let res = inner_writer.write_all(output_buffer.as_bytes());
             match res {
                 Ok(_) => Ok(()),
-                Err(e) => Err(tr!("error-ts-write-serialize", ("error", e.to_string()))),
+                Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
             }
         }
-        Err(e) => Err(tr!("error-ts-write-serialize", ("error", e.to_string()))),
+        Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
     }
 }
 
