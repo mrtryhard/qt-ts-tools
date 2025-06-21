@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.6] unreleased
+## [0.8.6] 2025-06-21
+[Fifteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/16).
+This release is a maintenance release and introduces an upgrade of dependencies
 
 ### Changed
 
-- Upgraded `i18n-embed-fl` to 0.6.0 and modified inner `tr!` macro to simplify and improve compatibility with `i18n-embed-fl` `fl!` macro.
+- Modified inner `tr!` macro to simplify and improve compatibility with `i18n-embed-fl` `fl!` macro, thus allowing removing `fluent-bundle` crate [#229](https://github.com/mrtryhard/qt-ts-tools/pull/229/files)
+- Upgraded `clap` to version `4.5.40`
+- Upgraded `clap_complete` to version `4.5.54`
+- Upgraded `clap_complete_nushell` to version `4.5.7`
+- Upgraded `rust-embed` to version `8.7.2`
 
 ## [0.8.5] 2025-05-09
 [Fourteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/15).

@@ -15,7 +15,6 @@ clap_complete = "4.5.54"
 clap_complete_nushell = "4.5.7"
 clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.8", default-features = false, features = ["humantime"] }
-fluent-bundle = "0.16.0"
 i18n-embed = { version = "0.15.4", features = ["fluent-system"] }
 i18n-embed-fl = "0.9.4"
 log = "0.4.27"
