@@ -6,33 +6,23 @@
     <message>
       <source>Now Right Source</source>
       <oldsource>Source string Left should be in oldsource</oldsource>
-      <translation>
-        Also, translated.
-      </translation>
+      <translation>Also, translated.</translation>
       <id>idBasedLeft</id>
     </message>
     <message>
       <source>Newsletter</source>
-      <translation>
-        Nyhetsbrev - Right
-      </translation>
+      <translation>Nyhetsbrev - Right</translation>
     </message>
     <message>
       <source>Only In Left Message</source>
-      <translation>
-        Only in Left translation
-      </translation>
+      <translation>Only in Left translation</translation>
       <comment>Left message</comment>
     </message>
     <message numerus="yes">
       <source>%1 takes at most %n argument(s). %2 is therefore invalid.</source>
       <translation>
-        <numerusform>
-          %1 prend au maximum %n argument. %2 est donc invalide.
-        </numerusform>
-        <numerusform>
-          %1 prend au maximum %n arguments. %2 est donc invalide.
-        </numerusform>
+        <numerusform>%1 prend au maximum %n argument. %2 est donc invalide.</numerusform>
+        <numerusform>%1 prend au maximum %n arguments. %2 est donc invalide.</numerusform>
       </translation>
       <comment>Coming from right.</comment>
       <oldcomment>This is a old comment from Left. Should be in oldcomment.</oldcomment>
@@ -42,18 +32,14 @@
     <name>kernel/not_in_merge</name>
     <message>
       <source>Newsletter</source>
-      <translation>
-        Nyhetsbrev - Left
-      </translation>
+      <translation>Nyhetsbrev - Left</translation>
     </message>
   </context>
   <context>
     <name>kernel/in_merge_from_right</name>
     <message>
       <source>Extra Context</source>
-      <translation>
-        Context Extra Right
-      </translation>
+      <translation>Context Extra Right</translation>
     </message>
   </context>
   <message>
@@ -67,9 +53,7 @@
   </message>
   <message>
     <source>This is just a Sample</source>
-    <translation>
-      Dies ist nur ein Beispiel
-    </translation>
+    <translation>Dies ist nur ein Beispiel</translation>
     <location filename="ui_potato_viewer.cpp" line="10"/>
     <location filename="ui_main.cpp" line="144"/>
   </message>
@@ -82,9 +66,7 @@
   </message>
   <message>
     <source>This is a new string</source>
-    <translation>
-      Ceci est une nouvelle chaîne
-    </translation>
+    <translation>Ceci est une nouvelle chaîne</translation>
     <location filename="ui_test_viewer.cpp" line="10"/>
     <location filename="ui_test_viewer.cpp" line="144"/>
   </message>
