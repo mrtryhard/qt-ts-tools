@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.7] unreleased
-[Fifteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/16).
-This release is a maintenance release and introduces an upgrade of dependencies
+## [0.9.0] unreleased
+[Sixteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/17).
+This release is a breaking change release. The formatted XML output now avoids inserting whitespaces. 
 
 ### Changed
 
