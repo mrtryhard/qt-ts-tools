@@ -5,14 +5,14 @@ repository = "https://github.com/mrtryhard/qt-ts-tools"
 keywords = ["qt", "translation", "windows", "linux"]
 homepage = "https://github.com/mrtryhard/qt-ts-tools"
 license = "MIT OR Apache-2.0"
-version = "0.8.5"
+version = "0.9.0"
 edition = "2024"
 description = "Small command line utility to manipulate Qt's translation files with diverse operations."
 
 [dependencies]
-clap = { version = "4.5.40", features = ["derive", "string"] }
-clap_complete = "4.5.54"
-clap_complete_nushell = "4.5.7"
+clap = { version = "4.5.41", features = ["derive", "string"] }
+clap_complete = "4.5.55"
+clap_complete_nushell = "4.5.8"
 clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.8", default-features = false, features = ["humantime"] }
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
