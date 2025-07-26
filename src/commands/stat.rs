@@ -37,7 +37,7 @@ pub fn stat_main(args: &StatArgs) -> Result<(), String> {
 
                     match &args.output_path {
                         None => {
-                            println!("{}", output);
+                            println!("{output}");
                             Ok(())
                         }
                         Some(output_path) => write_to_output(output_path, output),
@@ -261,7 +261,7 @@ fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
     {
         Ok(mut file) => match file.write(output.as_bytes()) {
             Ok(bytes) => {
-                debug!("Successfully wrote {}", bytes);
+                debug!("Successfully wrote {bytes} bytes");
                 Ok(())
             }
             Err(err) => {
