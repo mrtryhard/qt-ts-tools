@@ -63,10 +63,10 @@ struct EquatableMessageNode {
 /// The rule for equality is if the message id or source match.
 impl PartialEq for EquatableMessageNode {
     fn eq(&self, other: &Self) -> bool {
-        if let Some(this_id) = &self.node.id {
-            if let Some(other_id) = &other.node.id {
-                return this_id == other_id;
-            }
+        if let Some(this_id) = &self.node.id
+            && let Some(other_id) = &other.node.id
+        {
+            return this_id == other_id;
         }
 
         self.node.source == other.node.source

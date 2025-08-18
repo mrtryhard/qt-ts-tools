@@ -72,41 +72,39 @@ fn strip_nodes(nodes: &mut TSNode, translation_type_filter: &[TranslationType]) 
     let mut count = 0;
     nodes.contexts.iter_mut().for_each(|context| {
         context.messages.iter_mut().for_each(|message| {
-            if let Some(translation) = &mut message.translation.as_ref() {
-                if let Some(translation_type) = translation.translation_type.clone() {
-                    if translation_type_filter.contains(&translation_type) {
-                        debug!(
-                            "Stripping translation {:?} from message `{}`",
-                            &translation.translation_simple,
-                            &message
-                                .source
-                                .as_ref()
-                                .unwrap_or(&"Unknown source text".to_owned())
-                        );
-                        message.translation = None;
-                        count += 1;
-                    }
-                }
+            if let Some(translation) = &mut message.translation.as_ref()
+                && let Some(translation_type) = translation.translation_type.clone()
+                && translation_type_filter.contains(&translation_type)
+            {
+                debug!(
+                    "Stripping translation {:?} from message `{}`",
+                    &translation.translation_simple,
+                    &message
+                        .source
+                        .as_ref()
+                        .unwrap_or(&"Unknown source text".to_owned())
+                );
+                message.translation = None;
+                count += 1;
             }
         });
     });
 
     nodes.messages.iter_mut().for_each(|message| {
-        if let Some(translation) = &mut message.translation.as_ref() {
-            if let Some(translation_type) = translation.translation_type.clone() {
-                if translation_type_filter.contains(&translation_type) {
-                    debug!(
-                        "Stripping translation {:?} from message `{}`",
-                        &translation.translation_simple,
-                        &message
-                            .source
-                            .as_ref()
-                            .unwrap_or(&"Unknown source text".to_owned())
-                    );
-                    message.translation = None;
-                    count += 1;
-                }
-            }
+        if let Some(translation) = &mut message.translation.as_ref()
+            && let Some(translation_type) = translation.translation_type.clone()
+            && translation_type_filter.contains(&translation_type)
+        {
+            debug!(
+                "Stripping translation {:?} from message `{}`",
+                &translation.translation_simple,
+                &message
+                    .source
+                    .as_ref()
+                    .unwrap_or(&"Unknown source text".to_owned())
+            );
+            message.translation = None;
+            count += 1;
         }
     });
 
