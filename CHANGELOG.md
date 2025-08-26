@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.9.1] 2025-08-26
+[Seventeenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/18).
+This is a maintenance release and introduces an upgrade of dependencies.
+
+### Changed
+
+- Upgraded `clap` to version `4.5.45`
+- Upgraded `clap_complete` to version `4.5.57`
+- Upgraded `clap_nushell` to version `4.5.8`
+- Upgraded `quick-xml` to version `0.38.3`
+
+
 ## [0.9.0] 2025-07-26
 [Sixteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/17).
 This release is a breaking change release. The formatted XML output now avoids inserting whitespaces. 
