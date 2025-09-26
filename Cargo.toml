@@ -10,7 +10,7 @@ edition = "2024"
 description = "Small command line utility to manipulate Qt's translation files with diverse operations."
 
 [dependencies]
-clap = { version = "4.5.47", features = ["derive", "string"] }
+clap = { version = "4.5.48", features = ["derive", "string"] }
 clap_complete = "4.5.58"
 clap_complete_nushell = "4.5.8"
 clap_complete_command = "0.6.1"
@@ -20,7 +20,7 @@ i18n-embed-fl = "0.10.0"
 log = "0.4.28"
 quick-xml = { version = "0.38.3", features = ["serialize"] }
 rust-embed = "8.7.2"
-serde = { version = "1.0.223", features = ["derive"] }
+serde = { version = "1.0.226", features = ["derive"] }
 sys-locale = "0.3.2"
 
 [profile.release]
