@@ -19,7 +19,7 @@ i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.0"
 log = "0.4.28"
 quick-xml = { version = "0.38.3", features = ["serialize"] }
-rust-embed = "8.7.2"
+rust-embed = "8.8.0"
 serde = { version = "1.0.228", features = ["derive"] }
 sys-locale = "0.3.2"
 
