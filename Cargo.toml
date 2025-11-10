@@ -12,7 +12,7 @@ description = "Small command line utility to manipulate Qt's translation files w
 [dependencies]
 clap = { version = "4.5.51", features = ["derive", "string"] }
 clap_complete = "4.5.60"
-clap_complete_nushell = "4.5.9"
+clap_complete_nushell = "4.5.10"
 clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.8", default-features = false, features = ["humantime"] }
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
