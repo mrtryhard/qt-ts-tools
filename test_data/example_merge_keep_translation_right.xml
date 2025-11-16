@@ -3,13 +3,11 @@
 <TS version="2.1" language="fr">
     <context>
         <name>kernel/in_merge</name>
-        <message>
-            <id>idBasedLeft</id>
+        <message id="idBasedLeft">
             <source>Translation should not change</source>
             <translation type="unfinished"></translation>
         </message>
-        <message>
-            <id>newID</id>
+        <message id="newId">
             <source>Should now be in merge.</source>
             <translation type="unfinished"></translation>
         </message>

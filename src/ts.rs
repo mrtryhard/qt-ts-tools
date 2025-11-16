@@ -155,7 +155,7 @@ pub struct MessageNode {
     #[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
     pub numerus: Option<YesNo>,
     /// Message unique id (not guaranteed to be existant)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "@id", skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     /// Extra information
     #[serde(skip_serializing_if = "Option::is_none")]
