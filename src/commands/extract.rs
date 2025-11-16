@@ -93,10 +93,6 @@ fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
             .retain(|message| translation_is_wanted(message.translation.as_ref(), wanted_types));
         !context.messages.is_empty()
     });
-
-    ts_node
-        .messages
-        .retain_mut(|message| translation_is_wanted(message.translation.as_ref(), wanted_types));
 }
 
 #[cfg(test)]

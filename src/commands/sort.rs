@@ -60,12 +60,6 @@ fn sort_ts_node(ts_node: &mut TSNode) {
             .iter_mut()
             .for_each(|message| message.locations.sort());
     });
-
-    let messages = &mut ts_node.messages;
-    messages.sort();
-    messages
-        .iter_mut()
-        .for_each(|message| message.locations.sort());
 }
 
 #[cfg(test)]
