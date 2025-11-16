@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.0] unreleased
+
+### Fixed
+
+- Fixed a bug where message ids were read and written as child nodes instead of attributes [#268](https://github.com/mrtryhard/qt-ts-tools/issues/268) 
+
 ## [0.9.3] 2025-11-03
 [Nineteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/19).  
 This is a maintenance release and introduces an upgrade of dependencies.
