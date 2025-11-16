@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fixed a bug where message ids were read and written as child nodes instead of attributes [#268](https://github.com/mrtryhard/qt-ts-tools/issues/268) 
 
+### Changed
+
+- Dropped support for contextless messages, as they are supposed to be within an unnamed context [#269](https://github.com/mrtryhard/qt-ts-tools/issues/268)
+
 ## [0.9.3] 2025-11-03
 [Nineteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/19).  
 This is a maintenance release and introduces an upgrade of dependencies.
