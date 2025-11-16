@@ -3,8 +3,7 @@
 <TS version="2.1" language="fr">
     <context>
         <name>kernel/in_merge</name>
-        <message>
-            <id>idBasedLeft</id>
+        <message id="idBasedLeft">
             <source>Translation should not change</source>
             <translation>La traduction ne devrait pas changer</translation>
         </message>

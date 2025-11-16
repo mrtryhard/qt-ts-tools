@@ -3,8 +3,7 @@
 <TS version="2.1" language="de">
     <context>
         <name>kernel/in_merge</name>
-        <message>
-            <id>idBasedLeft</id>
+        <message id="idBasedLeft">
             <source>Now Right Source</source>
             <translation>Also, translated.</translation>
         </message>

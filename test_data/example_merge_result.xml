@@ -3,11 +3,10 @@
 <TS version="2.1" language="de">
   <context>
     <name>kernel/in_merge</name>
-    <message>
+    <message id="idBasedLeft">
       <source>Now Right Source</source>
       <oldsource>Source string Left should be in oldsource</oldsource>
       <translation>Also, translated.</translation>
-      <id>idBasedLeft</id>
     </message>
     <message>
       <source>Newsletter</source>

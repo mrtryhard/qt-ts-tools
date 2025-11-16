@@ -3,8 +3,7 @@
 <TS version="2.1" language="de">
     <context>
         <name>kernel/in_merge</name>
-        <message>
-            <id>idBasedLeft</id>
+        <message id="idBasedLeft">
             <source>Source string Left should be in oldsource</source>
             <translation></translation>
         </message>
