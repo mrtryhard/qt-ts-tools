@@ -90,24 +90,6 @@ fn strip_nodes(nodes: &mut TSNode, translation_type_filter: &[TranslationType]) 
         });
     });
 
-    nodes.messages.iter_mut().for_each(|message| {
-        if let Some(translation) = &mut message.translation.as_ref()
-            && let Some(translation_type) = translation.translation_type.clone()
-            && translation_type_filter.contains(&translation_type)
-        {
-            debug!(
-                "Stripping translation {:?} from message `{}`",
-                &translation.translation_simple,
-                &message
-                    .source
-                    .as_ref()
-                    .unwrap_or(&"Unknown source text".to_owned())
-            );
-            message.translation = None;
-            count += 1;
-        }
-    });
-
     debug!("Stripped {count} translation tags");
 }
 

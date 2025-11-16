@@ -50,9 +50,6 @@ pub struct TSNode {
     /// Translations attached to a context
     #[serde(rename = "context", skip_serializing_if = "Vec::is_empty", default)]
     pub contexts: Vec<ContextNode>,
-    /// Standalone translation messages.
-    #[serde(rename = "message", skip_serializing_if = "Vec::is_empty", default)]
-    pub messages: Vec<MessageNode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dependencies: Option<DependenciesNode>,
     /// Translation comment.
@@ -313,9 +310,8 @@ impl Ord for ContextNode {
 /// `<name></name>` instead of `<name/>`.
 pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<(), String> {
     debug!(
-        "Writing output to '{output_path:?}': Node contexts={}, standalone messages={}",
-        node.contexts.len(),
-        node.messages.len()
+        "Writing output to '{output_path:?}': {} context nodes",
+        node.contexts.len()
     );
 
     let mut inner_writer: BufWriter<Box<dyn Write>> = match &output_path {

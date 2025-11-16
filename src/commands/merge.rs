@@ -83,14 +83,13 @@ impl Hash for EquatableMessageNode {
     }
 }
 
-fn merge_ts_nodes(mut left: TSNode, mut right: TSNode, keep_translation: bool) -> TSNode {
+fn merge_ts_nodes(mut left: TSNode, right: TSNode, keep_translation: bool) -> TSNode {
     if keep_translation {
         debug!(
             "--keep_translation flag is active, the following nodes will NOT be updated from the right-side file: translation, comment, oldcomment, oldsource, encoding"
         );
     }
 
-    left.messages = merge_messages(&mut left.messages, &mut right.messages, keep_translation);
     merge_contexts(&mut left, right, keep_translation);
     left
 }

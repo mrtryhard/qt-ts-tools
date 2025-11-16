@@ -20,9 +20,4 @@
             <location filename="tst_qkeysequence.cpp" line="371"></location>
         </message>
     </context>
-    <message>
-        <source>Shift+K</source>
-        <translation type="obsolete">Umschalt+K</translation>
-        <location filename="tst_qkeysequence.cpp" line="369"></location>
-    </message>
 </TS>

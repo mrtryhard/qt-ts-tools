@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS><TS version="1.1" language="de">
     <context>
-        <name>tst_seq2</name>
-        <message>
-            <location filename="tst_qkeysequence.cpp" line="369"/>
-            <source>Shift+K</source>
-            <translation>Umschalt+K</translation>
-        </message>
-    </context>
-    <context>
         <name>tst_QKeySequence</name>
         <message>
             <location filename="tst_qkeysequence.cpp" line="369"/>
@@ -57,14 +49,14 @@
             <translation>Umschalt+,, Strg++</translation>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="403"/>
+            <location filename="tst_nostrip.cpp" line="403"/>
             <source>Shift+,, Alt++</source>
             <translation>Umschalt+,, Alt++</translation>
         </message>
         <message>
             <location filename="tst_qkeysequence.cpp" line="404"/>
             <source>Shift+,, Meta++</source>
-            <translation>Umschalt+,, Meta++</translation>
+            <translation type="vanished">Umschalt+,, Meta++</translation>
         </message>
     </context>
 </TS>

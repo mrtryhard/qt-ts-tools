@@ -30,13 +30,4 @@
             <translation type="unfinished"></translation>
         </message>
     </context>
-    <message>
-        <source>contextLessMessage</source>
-        <translation type="unfinished"></translation>
-        <location filename="ai_main.cpp" line="300"></location>
-        <location filename="ai_main.cpp" line="312"></location>
-        <location filename="ui_main.cpp" line="456"></location>
-        <location filename="ui_potato_viewer.cpp" line="10"></location>
-        <comment>An example entry for contextLessMessage</comment>
-    </message>
 </TS>
