@@ -17,7 +17,7 @@ clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.8", default-features = false, features = ["humantime"] }
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.0"
-log = "0.4.28"
+log = "0.4.29"
 quick-xml = { version = "0.38.4", features = ["serialize"] }
 rust-embed = "8.8.0"
 serde = { version = "1.0.228", features = ["derive"] }
