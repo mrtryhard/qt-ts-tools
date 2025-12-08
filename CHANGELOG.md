@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.0.0] unreleased
+## [0.10.0] 2025-12-08
+[Twentieth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/20).  
+This is a breaking change release. This aligns with Qt Linguist expectations of a correct TS format.
+This should not break any already well-formed TS file. 
 
 ### Fixed
 
@@ -13,6 +16,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Dropped support for contextless messages, as they are supposed to be within an unnamed context [#269](https://github.com/mrtryhard/qt-ts-tools/issues/269)
+- Upgraded `clap` to version `4.5.53`
+- Upgraded `clap_complete` to version `4.5.61`
+- Upgraded `clap_complete_nushell` to version `4.5.10`
+- Upgraded `log` to version `0.4.29`
+- Upgraded `quick-xml` to version `0.38.4`
 
 ## [0.9.3] 2025-11-03
 [Nineteenth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/19).  
