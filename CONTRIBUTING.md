@@ -67,7 +67,7 @@ The cleared the request, the easier to make it go through.
 
 For patch submission please go through the pull request mechanism on Github. Makes sure the contribution contains:
 
-* License expectation if different from `MIT` or `Apache 2.0`. This will need a discussion.
+* License expectation if different from `Apache 2.0`. This will need a discussion.
 * A pull request may not be merged unless the author has approved of it. 
 * Contributions must adhere and respect the [Developer Certificate](https://developercertificate.org/).
 
