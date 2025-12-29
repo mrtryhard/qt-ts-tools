@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
       - name: Security audit
-        uses: rustsec/audit-check@v1.4.1
+        uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: License check
@@ -54,7 +54,7 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
       - name: Security audit
-        uses: rustsec/audit-check@v1.4.1
+        uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: License check
@@ -82,7 +82,7 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
       - name: Security audit
-        uses: rustsec/audit-check@v1.4.1
+        uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: License check
@@ -110,7 +110,7 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
       - name: Security audit
-        uses: rustsec/audit-check@v1.4.1
+        uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: License check
