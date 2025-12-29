@@ -11,7 +11,7 @@ impl SysVHasher {
         This function is based on the [elf crate](https://docs.rs/elf/).
         As of 2025-12-28, it is compatible license-wise (MIT or Apache-2.0).
     */
-    pub fn hash_with(&mut self, value: &[u8]) -> &SysVHasher {
+    pub fn hash(&mut self, value: &[u8]) -> &SysVHasher {
         for byte in value {
             self.computed = self.computed.wrapping_mul(16).wrapping_add(*byte as u32);
             self.computed ^= (self.computed >> 24) & 0xf0;
@@ -21,7 +21,7 @@ impl SysVHasher {
         self
     }
 
-    pub fn finish(&self) -> u32 {
+    pub fn compute(&self) -> u32 {
         if self.computed != 0 { self.computed } else { 1 }
     }
 }
@@ -35,7 +35,7 @@ mod hash_tests {
         // This matches Qt's encoding
         let expected_raw: [u8; 4] = [0x07, 0xa6, 0xc8, 0x95];
         let expected = u32::from_be_bytes(expected_raw);
-        let actual = SysVHasher::new().hash_with("source".as_bytes()).finish();
+        let actual = SysVHasher::new().hash("source".as_bytes()).compute();
 
         assert_eq!(actual, expected);
     }
