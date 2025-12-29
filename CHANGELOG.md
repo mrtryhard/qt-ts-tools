@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.0] unreleased
+
+### Changed
+
+- MIT License support is dropped, now the project is fully licensed under Apache 2.0. [#271](https://github.com/mrtryhard/qt-ts-tools/issues/271)
+
 ## [0.10.0] 2025-12-08
 [Twentieth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/20).  
 This is a breaking change release. This aligns with Qt Linguist expectations of a correct TS format.
