@@ -33,7 +33,7 @@ jobs:
       - name: Copy to ouput directory
         shell: bash
         run: mkdir -p output-win && cp target/release/qt-ts-tools.exe output-win/.
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # 6.0.0
         with:
           name: binary-win-artifact
           path: output-win
@@ -61,7 +61,7 @@ jobs:
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
         run: mkdir -p output-ub && cp target/release/qt-ts-tools output-ub/qt-ts-tools-linux
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # 6.0.0
         with:
           name: binary-ub-artifact
           path: output-ub
@@ -89,7 +89,7 @@ jobs:
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
         run: mkdir -p output-ub-arm && cp target/release/qt-ts-tools output-ub-arm/qt-ts-tools-linux-arm
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # 6.0.0
         with:
           name: binary-ub-arm-artifact
           path: output-ub-arm
@@ -117,7 +117,7 @@ jobs:
         run: cargo deny -L debug --all-features --locked check
       - name: Copy to ouput directory
         run: mkdir -p output-mac && cp target/release/qt-ts-tools output-mac/qt-ts-tools-macos
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # 6.0.0
         with:
           name: binary-mac-artifact
           path: output-mac
