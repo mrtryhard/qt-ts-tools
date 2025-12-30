@@ -1,10 +1,15 @@
 use std::{io::Write, path::Path};
 
+use log::debug;
+
 use crate::{
     commands::hash::SysVHasher,
     ts::{ContextNode, TSNode},
 };
 
+///
+/// This is a fixed identifier for Qt's QM files.
+///
 const QM_HEADER: [u8; 16] = [
     0x3c, 0xb8, 0x64, 0x18, 0xca, 0xef, 0x9c, 0x95, 0xcd, 0x21, 0x1c, 0xbf, 0x60, 0xa1, 0xbd, 0xdd,
 ];
@@ -28,7 +33,17 @@ enum MessageTag {
     Comment = 0x08,
 }
 
-fn compile_file(file: &Path, target: &Path) -> Result<(), String> {
+struct HashAndOffset {
+    hash: u32,
+    offset: u32,
+}
+
+struct HashAndMessage {
+    hash: u32,
+    msg: Vec<u8>,
+}
+
+pub fn compile_file(file: &Path, target: &Path) -> Result<(), String> {
     let f = quick_xml::Reader::from_file(file).expect("Couldn't open source file");
 
     let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
@@ -36,8 +51,13 @@ fn compile_file(file: &Path, target: &Path) -> Result<(), String> {
     Ok(())
 }
 
+///
+/// Resolves the BCP47 code for the provided shorthand code
+/// e.g. "fr" -> "fr_FR"
+///
+/// TODO: This function is brittle and should be replaced by a crate.
 fn get_bcp47(input: &String) -> Result<String, String> {
-    // TODO: better impl
+    debug!("Resolved language: {input}");
     match input.to_lowercase().as_str() {
         "fr" => Ok("fr_FR".to_string()),
         "sv" => Ok("sv_SE".to_string()),
@@ -45,77 +65,62 @@ fn get_bcp47(input: &String) -> Result<String, String> {
     }
 }
 
-struct HashAndOffset {
-    hash: u32,
-    offset: u32,
-}
-
-/// TODO: Hashes require to know the distance to where the message and contexts
-/// are written to. Navigating per tables.
 fn write_hashes<W: Write>(
     writer: &mut W,
-    data: &[ContextNode],
-    msgs: &Vec<HashAndMessage>,
+    hashed_messages: &Vec<HashAndMessage>,
 ) -> Result<(), String> {
-    let mut hashes_buffer: Vec<u8> = vec![];
+    let mut buffer: Vec<u8> = vec![];
     let mut hashes: Vec<HashAndOffset> = vec![];
 
-    for context in data {
-        for message in &context.messages {
-            let hash = SysVHasher::new()
-                .hash(message.source.as_ref().expect("Have source").as_bytes())
-                .compute();
-            let distance = msgs
-                .iter()
-                .take_while(|hm| hm.hash != hash)
-                .map(|hm| hm.msg.len() as u32)
-                .sum::<u32>();
-            println!(
-                "Message|Hash: {:02X?} | {:02X?}",
-                message.source.as_ref().expect("yes"),
-                hash.to_be_bytes()
-            );
-            hashes.push(HashAndOffset {
-                hash: hash,
-                offset: distance,
-            });
-        }
-    }
-    hashes.sort_by_key(|d| d.hash);
-    for ho in hashes {
-        hashes_buffer.extend(&ho.hash.to_be_bytes());
-        hashes_buffer.extend(&ho.offset.to_be_bytes());
-        println!(
-            "Hash|Offset: {:02X?} || {:02X?}",
-            &ho.hash.to_be_bytes(),
-            &ho.offset.to_be_bytes()
-        );
-    }
-    writer.write(&[BlockTag::Hashes as u8]);
-    writer.write(&(hashes_buffer.len() as u32).to_be_bytes());
-    writer.write(&hashes_buffer);
+    debug!(
+        "QM Hashes Table: {} entries (hash, offset).",
+        hashed_messages.len()
+    );
 
-    Ok(())
+    hashed_messages.iter().fold(0u32, |distance, hm| {
+        debug!(
+            "\t{:02X?} => {:02X?}",
+            hm.hash.to_be_bytes(),
+            distance.to_be_bytes()
+        );
+
+        hashes.push(HashAndOffset {
+            hash: hm.hash,
+            offset: distance,
+        });
+        distance + hm.msg.len() as u32
+    });
+
+    // While the messages offsets are calculated while not sorted, the hash tables generated
+    // by Qt Linguist appear to be sorted. We try to not deviate from that to simplify testing and matching the file.
+    hashes.sort_by_key(|d| d.hash);
+
+    for ho in hashes {
+        buffer.extend(&ho.hash.to_be_bytes());
+        buffer.extend(&ho.offset.to_be_bytes());
+    }
+
+    writer
+        .write(&[BlockTag::Hashes as u8])
+        .and_then(|_| writer.write(&(buffer.len() as u32).to_be_bytes()))
+        .and_then(|_| writer.write(&buffer))
+        .map_err(|e| e.to_string())
+        .map(|_| ())
 }
 
 fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), String> {
+    debug!("Writing QM file language");
     data.language
         .as_ref()
         .map_or_else(|| Err("No language set".to_owned()), get_bcp47)
         .and_then(|value| {
-            let lang_length = (value.len() as u32).to_be_bytes();
-
-            let mut buffer = Vec::from(&[BlockTag::Language as u8]);
-            buffer.extend(lang_length);
-            buffer.extend(value.as_bytes());
-
-            writer.write(&buffer).map(|_| ()).map_err(|e| e.to_string())
+            writer
+                .write(&[BlockTag::Language as u8])
+                .and_then(|_| writer.write(&(value.len() as u32).to_be_bytes()))
+                .and_then(|_| writer.write(value.as_bytes()))
+                .map_err(|e| e.to_string())
+                .map(|_| ())
         })
-}
-
-struct HashAndMessage {
-    hash: u32,
-    msg: Vec<u8>,
 }
 
 fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
@@ -165,6 +170,7 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
             //
             // SOURCE
             //
+
             buffer.extend(&[MessageTag::Source as u8]);
             buffer.extend(
                 &(message.source.as_ref().expect("TO HAVE A SOURCE").len() as u32).to_be_bytes(),
@@ -204,7 +210,7 @@ fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), Stri
     write_lang(writer, data)?;
 
     let msgs = produce_messages(&data)?;
-    let hashes = write_hashes(writer, &data.contexts, &msgs)?;
+    let hashes = write_hashes(writer, &msgs)?;
 
     //    let mut result: Vec<u8> = vec![];
     writer.write(&[BlockTag::Messages as u8]);
