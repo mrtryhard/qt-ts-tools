@@ -24,7 +24,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 sys-locale = "0.3.2"
 
 [dev-dependencies]
-assert_hex = "0.4.1"
+rstest = "0.26.1"
 
 [profile.release]
 codegen-units = 1

@@ -70,7 +70,11 @@ fn write_hashes<W: Write>(
                 .take_while(|hm| hm.hash != hash)
                 .map(|hm| hm.msg.len() as u32)
                 .sum::<u32>();
-
+            println!(
+                "Message|Hash: {:02X?} | {:02X?}",
+                message.source.as_ref().expect("yes"),
+                hash.to_be_bytes()
+            );
             hashes.push(HashAndOffset {
                 hash: hash,
                 offset: distance,
@@ -80,8 +84,12 @@ fn write_hashes<W: Write>(
     hashes.sort_by_key(|d| d.hash);
     for ho in hashes {
         hashes_buffer.extend(&ho.hash.to_be_bytes());
-        // TODO: Expected position or offset:
         hashes_buffer.extend(&ho.offset.to_be_bytes());
+        println!(
+            "Hash|Offset: {:02X?} || {:02X?}",
+            &ho.hash.to_be_bytes(),
+            &ho.offset.to_be_bytes()
+        );
     }
     writer.write(&[BlockTag::Hashes as u8]);
     writer.write(&(hashes_buffer.len() as u32).to_be_bytes());
@@ -113,7 +121,12 @@ struct HashAndMessage {
 fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
     let mut serialized: Vec<HashAndMessage> = vec![];
 
-    for context in &data.contexts {
+    // View on context nodes in order to sort them without affecting the original collection
+    let mut ordered_ctx: Vec<&ContextNode> = vec![];
+    data.contexts.iter().for_each(|c| ordered_ctx.push(c));
+    ordered_ctx.sort_by_key(|l| &l.name);
+
+    for context in &ordered_ctx {
         for message in &context.messages {
             let mut buffer: Vec<u8> = vec![];
             buffer.extend(&[MessageTag::Translation as u8]);
@@ -134,10 +147,12 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
             buffer.extend(translation_utf16.as_slice());
 
             //
-            // COMMENT: TODO
+            // COMMENT: TODO -- do not include comments until activated by flag ?
             //
             buffer.extend(&[MessageTag::Comment as u8]);
-            if let Some(comment) = &message.comment {
+            if let Some(comment) = &message.comment
+                && false
+            {
                 buffer.extend(
                     &(message.comment.as_ref().unwrap_or(&String::new()).len() as u32)
                         .to_be_bytes(),
@@ -205,22 +220,27 @@ fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), Stri
     // to use etc etc. This is a bit more advanced to reverse engineer. So for now let's pretend there's none.
     //
     writer.write(&[BlockTag::NumerusRules as u8]);
-    writer.write(&0u32.to_be_bytes()); // length of the numerus buffer
-    //    writer.write(&[3u8]); // Q_OP_LEQ not sure
-    //    writer.write(&[1u8]);
+    writer.write(&2u32.to_be_bytes()); // length of the numerus buffer
+    writer.write(&[0u8]); // Q_OP_LEQ not sure
+    writer.write(&[0u8]);
 
     Ok(())
 }
 
 #[cfg(test)]
 mod release_tests {
+    use rstest::rstest;
+
     use crate::commands::release::compile_to_buffer;
 
-    #[test]
-    fn compiling_single_context_single_message_file() {
-        let expected_data = std::fs::read("./test_data/simple.qm").expect("File to exist");
+    #[rstest]
+    #[case::one_ctx_one_msg("simple")]
+    #[case::one_ctx_many_msgs("one_ctx_many_msgs")]
+    #[case::many_ctx_many_msgs("many_ctx_many_msgs")]
+    fn compile_ts_to_qm(#[case] case: &str) {
+        let expected_data = std::fs::read(format!("./test_data/{case}.qm")).expect("File to exist");
         let base_ts_data =
-            quick_xml::Reader::from_file("./test_data/simple.ts").expect("File to exist");
+            quick_xml::Reader::from_file(format!("./test_data/{case}.ts")).expect("File to exist");
         let ts_node = quick_xml::de::from_reader(base_ts_data.into_inner()).expect("Parsable");
 
         let mut buf = Vec::<u8>::new();
@@ -228,37 +248,9 @@ mod release_tests {
 
         let result = compile_to_buffer(&mut writer, &ts_node);
 
+        //        println!("{:02X?}", &buf.as_slice());
+        //        std::fs::write(format!("./test_data/output_{case}"), &buf);
         assert_eq!(result, Ok(()));
-        assert_eq!(
-            numerus_stripped(buf.iter().as_slice()),
-            numerus_stripped(&expected_data)
-        );
-    }
-
-    #[test]
-    fn compiling_single_context_multi_message_file() {
-        let expected_data =
-            std::fs::read("./test_data/example_multimessage.qm").expect("File to exist");
-        let base_ts_data = quick_xml::Reader::from_file("./test_data/example_multimessage.ts")
-            .expect("File to exist");
-        let ts_node = quick_xml::de::from_reader(base_ts_data.into_inner()).expect("Parsable");
-
-        let mut buf = Vec::<u8>::new();
-        let mut writer = std::io::Cursor::new(&mut buf);
-
-        let result = compile_to_buffer(&mut writer, &ts_node);
-
-        assert_eq!(result, Ok(()));
-        assert_eq!(
-            numerus_stripped(buf.iter().as_slice()),
-            numerus_stripped(&expected_data)
-        );
-    }
-
-    fn numerus_stripped(d: &[u8]) -> &[u8] {
-        &d[0..d
-            .iter()
-            .rposition(|c| c == &0x88)
-            .expect("have numerus block")]
+        assert_eq!(buf.iter().as_slice(), &expected_data);
     }
 }
