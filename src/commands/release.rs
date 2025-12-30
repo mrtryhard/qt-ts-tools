@@ -56,19 +56,22 @@ pub fn compile_file(file: &Path, target: &Path) -> Result<(), String> {
 /// e.g. "fr" -> "fr_FR"
 ///
 /// TODO: This function is brittle and should be replaced by a crate.
-fn get_bcp47(input: &String) -> Result<String, String> {
+fn get_bcp47(input: &String) -> Option<String> {
     debug!("Resolved language: {input}");
     match input.to_lowercase().as_str() {
-        "fr" => Ok("fr_FR".to_string()),
-        "sv" => Ok("sv_SE".to_string()),
-        _ => Err("BCP 47 not found (invalid target language code)".to_string()),
+        "fr" => Some("fr_FR".to_string()),
+        "sv" => Some("sv_SE".to_string()),
+        _ => {
+            debug!("No BCP47 correspondance found!");
+            None
+        }
     }
 }
 
 fn write_hashes<W: Write>(
     writer: &mut W,
     hashed_messages: &Vec<HashAndMessage>,
-) -> Result<(), String> {
+) -> Result<usize, std::io::Error> {
     let mut buffer: Vec<u8> = vec![];
     let mut hashes: Vec<HashAndOffset> = vec![];
 
@@ -104,23 +107,20 @@ fn write_hashes<W: Write>(
         .write(&[BlockTag::Hashes as u8])
         .and_then(|_| writer.write(&(buffer.len() as u32).to_be_bytes()))
         .and_then(|_| writer.write(&buffer))
-        .map_err(|e| e.to_string())
-        .map(|_| ())
 }
 
-fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), String> {
+fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io::Error> {
     debug!("Writing QM file language");
-    data.language
-        .as_ref()
-        .map_or_else(|| Err("No language set".to_owned()), get_bcp47)
-        .and_then(|value| {
-            writer
-                .write(&[BlockTag::Language as u8])
-                .and_then(|_| writer.write(&(value.len() as u32).to_be_bytes()))
-                .and_then(|_| writer.write(value.as_bytes()))
-                .map_err(|e| e.to_string())
-                .map(|_| ())
-        })
+    let bcp47 = data.language.as_ref().and_then(|v| get_bcp47(v));
+
+    match bcp47 {
+        Some(value) => writer
+            .write(&[BlockTag::Language as u8])
+            .and_then(|_| writer.write(&(value.len() as u32).to_be_bytes()))
+            .and_then(|_| writer.write(value.as_bytes())),
+
+        None => Err(std::io::Error::other("Invalid language set for TS file.")),
+    }
 }
 
 fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
@@ -205,32 +205,31 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
 }
 
 fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), String> {
-    writer.write(&QM_HEADER);
-
-    write_lang(writer, data)?;
-
     let msgs = produce_messages(&data)?;
-    let hashes = write_hashes(writer, &msgs)?;
+    let msg_block: Vec<u8> = msgs.iter().flat_map(|hm| &hm.msg).copied().collect();
 
-    //    let mut result: Vec<u8> = vec![];
-    writer.write(&[BlockTag::Messages as u8]);
-    writer.write(&(msgs.iter().map(|hm| hm.msg.len() as u32).sum::<u32>() as u32).to_be_bytes());
-
-    for message in msgs {
-        writer.write(&message.msg);
-    }
+    writer
+        .write(&QM_HEADER)
+        .and_then(|_| write_lang(writer, data))
+        .and_then(|_| write_hashes(writer, &msgs))
+        .and_then(|_| writer.write(&[BlockTag::Messages as u8]))
+        .and_then(|_| writer.write(&(msg_block.len() as u32).to_be_bytes()))
+        .and_then(|_| writer.write(&msg_block))
+        .map_err(|e| e.to_string())
+        .map(|_| ())?;
 
     //
     // NUMERUS: TODO
     // These are rules computed according to the target locale, giving information about what form
     // to use etc etc. This is a bit more advanced to reverse engineer. So for now let's pretend there's none.
     //
-    writer.write(&[BlockTag::NumerusRules as u8]);
-    writer.write(&2u32.to_be_bytes()); // length of the numerus buffer
-    writer.write(&[0u8]); // Q_OP_LEQ not sure
-    writer.write(&[0u8]);
-
-    Ok(())
+    writer
+        .write(&[BlockTag::NumerusRules as u8])
+        .and_then(|_| writer.write(&2u32.to_be_bytes()))
+        .and_then(|_| writer.write(&[0u8])) // Operation mask ?
+        .and_then(|_| writer.write(&[0u8])) // Operation operand ?
+        .map(|_| ())
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
