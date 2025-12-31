@@ -2,6 +2,7 @@ use clap::{ArgAction, Parser, Subcommand};
 
 use crate::commands::extract::{ExtractArgs, extract_main};
 use crate::commands::merge::{MergeArgs, merge_main};
+use crate::commands::release::{ReleaseArgs, release_main};
 use crate::commands::shell_completion::{ShellCompletionArgs, shell_completion_main};
 use crate::commands::sort::{SortArgs, sort_main};
 use crate::commands::stat::{StatArgs, stat_main};
@@ -32,6 +33,8 @@ enum Commands {
     Extract(ExtractArgs),
     #[command(about = tr!("cli-merge-desc"))]
     Merge(MergeArgs),
+    #[command(about = tr!("cli-release-desc"))]
+    Release(ReleaseArgs),
     #[command(about = tr!("cli-sort-desc"))]
     Sort(SortArgs),
     #[command(about = tr!("cli-stat-desc"))]
@@ -49,6 +52,7 @@ pub fn get_cli_result() -> Result<(), String> {
     match cli.command {
         Commands::Extract(args) => extract_main(&args),
         Commands::Merge(args) => merge_main(&args),
+        Commands::Release(args) => release_main(&args),
         Commands::Sort(args) => sort_main(&args),
         Commands::Stat(args) => stat_main(&args),
         Commands::Strip(args) => strip_main(&args),

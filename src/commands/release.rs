@@ -1,29 +1,107 @@
-use std::{io::Write, path::Path};
+use std::io::{BufWriter, Cursor, Write};
 
+use clap::{ArgAction, Args};
 use log::debug;
 
 use crate::{
     commands::hash::SysVHasher,
+    tr,
     ts::{ContextNode, TSNode},
 };
 
+#[derive(Args)]
+#[command(disable_help_flag = true)]
+pub struct ReleaseArgs {
+    /// File to release
+    #[arg(help = tr!("cli-release-input"), help_heading = tr!("cli-headers-arguments"))]
+    pub input: String,
+    /// When true, keep comments in the QM file output.
+    #[arg(help = tr!("cli-release-keep-comments"), help_heading = tr!("cli-headers-arguments"), action = ArgAction::SetTrue)]
+    pub keep_comments: bool,
+    /// If specified, will produce output in a file at designated location instead of stdout.
+    #[arg(short, long, help = tr!("cli-release-output"), help_heading = tr!("cli-headers-options"))]
+    pub output_path: Option<String>,
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
+    pub help: Option<bool>,
+}
+
+pub fn release_main(args: &ReleaseArgs) -> Result<(), String> {
+    let f = quick_xml::Reader::from_file(&args.input).expect("Couldn't open source file");
+    let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
+    let mut writer = Cursor::new(Vec::<u8>::new());
+
+    compile_to_buffer(&mut writer, &data)
+        .and_then(|_| write_output(&args.output_path, &writer.into_inner()))
+}
+
+fn write_output(output: &Option<String>, data: &[u8]) -> Result<(), String> {
+    let mut buf: BufWriter<Box<dyn Write>> = match output {
+        None => BufWriter::new(Box::new(std::io::stdout().lock())),
+        Some(path) => match std::fs::File::options()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(path)
+        {
+            Ok(file) => BufWriter::new(Box::new(file)),
+            Err(e) => {
+                return Err(tr!(
+                    "error-write-output-open",
+                    output_path = path,
+                    error = e.to_string()
+                ));
+            }
+        },
+    };
+
+    match buf.write(data) {
+        Ok(written) => {
+            if written == data.len() {
+                Ok(())
+            } else {
+                Err(format!(
+                    "Could not write to the file completely! {written} bytes written, {} bytes expected",
+                    data.len()
+                ))
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 ///
-/// This is a fixed identifier for Qt's QM files.
+/// This is a fixed identifier for Qt's QM files, probably serving as a file identifier.
 ///
 const QM_HEADER: [u8; 16] = [
     0x3c, 0xb8, 0x64, 0x18, 0xca, 0xef, 0x9c, 0x95, 0xcd, 0x21, 0x1c, 0xbf, 0x60, 0xa1, 0xbd, 0xdd,
 ];
 
+///
+/// The QM top level structure blocks.
+/// See [qm_file.md] for details.
 #[repr(u8)]
 enum BlockTag {
+    /// Block for language encoding data (bcp47)
     Language = 0xa7,
+    /// Block for the hashes table.
+    /// The hashes are messages' hash pointing to the actual message in the message block.
+    /// This is used for quick lookup when loading the QM in the Qt application.
     Hashes = 0x42,
+    /// Messages table block.
+    /// This contain the original string (utf-8), translation (utf-16), context name.
     Messages = 0x69,
+    /// Numerus rule block
+    /// This is expressed as an encoded formula depending on the language.
+    /// TODO: not supported yet.
     NumerusRules = 0x88,
-    Contexts = 0x2f,
-    Dependencies = 0x96,
+
+    // Below is unsupported.
+    _Contexts = 0x2f,
+    _Dependencies = 0x96,
 }
 
+/// A message entry in the messages table is split by its component.
+/// This structure expresses the tags to identify said components.
 #[repr(u8)]
 enum MessageTag {
     Translation = 0x03,
@@ -33,6 +111,9 @@ enum MessageTag {
     Comment = 0x08,
 }
 
+/// This structure represents an hash table entry.
+/// The hash itself is the message original text hashed,
+/// the offset is a pointer to the full message and its translation.
 struct HashAndOffset {
     hash: u32,
     offset: u32,
@@ -41,14 +122,6 @@ struct HashAndOffset {
 struct HashAndMessage {
     hash: u32,
     msg: Vec<u8>,
-}
-
-pub fn compile_file(file: &Path, target: &Path) -> Result<(), String> {
-    let f = quick_xml::Reader::from_file(file).expect("Couldn't open source file");
-
-    let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
-
-    Ok(())
 }
 
 ///
@@ -70,7 +143,7 @@ fn get_bcp47(input: &String) -> Option<String> {
 
 fn write_hashes<W: Write>(
     writer: &mut W,
-    hashed_messages: &Vec<HashAndMessage>,
+    hashed_messages: &[HashAndMessage],
 ) -> Result<usize, std::io::Error> {
     let mut buffer: Vec<u8> = vec![];
     let mut hashes: Vec<HashAndOffset> = vec![];
@@ -111,7 +184,7 @@ fn write_hashes<W: Write>(
 
 fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io::Error> {
     debug!("Writing QM file language");
-    let bcp47 = data.language.as_ref().and_then(|v| get_bcp47(v));
+    let bcp47 = data.language.as_ref().and_then(get_bcp47);
 
     match bcp47 {
         Some(value) => writer
@@ -144,8 +217,7 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
                 .as_ref()
                 .expect("TODO: Supposed to have translation")
                 .encode_utf16()
-                .map(|value| value.to_be_bytes())
-                .flatten()
+                .flat_map(|value| value.to_be_bytes())
                 .collect::<Vec<u8>>();
 
             buffer.extend(&(translation_utf16.len() as u32).to_be_bytes());
@@ -205,7 +277,7 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
 }
 
 fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), String> {
-    let msgs = produce_messages(&data)?;
+    let msgs = produce_messages(data)?;
     let msg_block: Vec<u8> = msgs.iter().flat_map(|hm| &hm.msg).copied().collect();
 
     writer
@@ -234,28 +306,32 @@ fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), Stri
 
 #[cfg(test)]
 mod release_tests {
-    use rstest::rstest;
+    use rstest::{fixture, rstest};
 
-    use crate::commands::release::compile_to_buffer;
+    use crate::{commands::release::compile_to_buffer, logging::initialize_logging};
+
+    #[fixture]
+    #[once]
+    fn logs() {
+        // Recommended to run test as `RUST_LOG=debug cargo test release -- --test-threads=1`
+        initialize_logging();
+    }
 
     #[rstest]
     #[case::one_ctx_one_msg("simple")]
     #[case::one_ctx_many_msgs("one_ctx_many_msgs")]
     #[case::many_ctx_many_msgs("many_ctx_many_msgs")]
-    fn compile_ts_to_qm(#[case] case: &str) {
+    fn compile_ts_to_qm(#[case] case: &str, #[allow(unused)] logs: ()) {
         let expected_data = std::fs::read(format!("./test_data/{case}.qm")).expect("File to exist");
         let base_ts_data =
             quick_xml::Reader::from_file(format!("./test_data/{case}.ts")).expect("File to exist");
         let ts_node = quick_xml::de::from_reader(base_ts_data.into_inner()).expect("Parsable");
 
-        let mut buf = Vec::<u8>::new();
-        let mut writer = std::io::Cursor::new(&mut buf);
+        let mut writer = std::io::Cursor::new(Vec::<u8>::new());
 
         let result = compile_to_buffer(&mut writer, &ts_node);
 
-        //        println!("{:02X?}", &buf.as_slice());
-        //        std::fs::write(format!("./test_data/output_{case}"), &buf);
         assert_eq!(result, Ok(()));
-        assert_eq!(buf.iter().as_slice(), &expected_data);
+        assert_eq!(writer.into_inner(), expected_data);
     }
 }
