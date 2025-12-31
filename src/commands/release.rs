@@ -4,9 +4,9 @@ use clap::{ArgAction, Args};
 use log::debug;
 
 use crate::{
-    commands::hash::SysVHasher,
+    commands::hash::ElfHasher,
     tr,
-    ts::{ContextNode, TSNode},
+    ts::{ContextNode, TSNode, TranslationNode, TranslationType},
 };
 
 #[derive(Args)]
@@ -78,7 +78,8 @@ const QM_HEADER: [u8; 16] = [
 
 ///
 /// The QM top level structure blocks.
-/// See [qm_file.md] for details.
+/// See [docs/qm_file.md] for details.
+///
 #[repr(u8)]
 enum BlockTag {
     /// Block for language encoding data (bcp47)
@@ -104,10 +105,19 @@ enum BlockTag {
 /// This structure expresses the tags to identify said components.
 #[repr(u8)]
 enum MessageTag {
+    /// Translated, utf-16
     Translation = 0x03,
+
+    /// Original, untranslated string, utf-8
     Source = 0x06,
+
+    // End of message
     End = 0x01,
+
+    // Context name to which this message is associated
     Context = 0x07,
+
+    // Comment associated with the message. Unsupported for now.
     Comment = 0x08,
 }
 
@@ -196,6 +206,25 @@ fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io:
     }
 }
 
+///
+/// Determines what message should be skipped or kept.
+/// Interestingly, QtLinguist keeps unfinished translations.
+///
+fn keep_message(translation: &Option<TranslationNode>) -> bool {
+    match translation {
+        None => true, // Qt Linguist keeps missing nodes too -- empty translation
+        Some(t) => match &t.translation_type {
+            Some(tt) => match tt {
+                TranslationType::Finished => true,
+                TranslationType::Unfinished => true,
+                TranslationType::Obsolete => false,
+                TranslationType::Vanished => false,
+            },
+            None => true,
+        },
+    }
+}
+
 fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
     let mut serialized: Vec<HashAndMessage> = vec![];
 
@@ -206,43 +235,41 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
 
     for context in &ordered_ctx {
         for message in &context.messages {
+            if !keep_message(&message.translation) {
+                continue;
+            }
+
             let mut buffer: Vec<u8> = vec![];
             buffer.extend(&[MessageTag::Translation as u8]);
 
-            let translation_utf16 = &message
-                .translation
-                .as_ref()
-                .expect("Supposed to have translation")
-                .translation_simple
-                .as_ref()
-                .expect("TODO: Supposed to have translation")
-                .encode_utf16()
-                .flat_map(|value| value.to_be_bytes())
-                .collect::<Vec<u8>>();
+            match &message.translation.as_ref() {
+                Some(node) => {
+                    let tdata = if let Some(translation) = node.translation_simple.as_ref() {
+                        translation
+                            .encode_utf16()
+                            .flat_map(|value| value.to_be_bytes())
+                            .collect::<Vec<u8>>()
+                    } else {
+                        // Check for numerus.
+                        todo!()
+                    };
 
-            buffer.extend(&(translation_utf16.len() as u32).to_be_bytes());
-            buffer.extend(translation_utf16.as_slice());
+                    buffer.extend(&(tdata.len() as u32).to_be_bytes());
+                    buffer.extend(tdata.as_slice());
+                }
+                None => buffer.extend(&[0xff, 0xff, 0xff, 0xff]),
+            }
 
             //
-            // COMMENT: TODO -- do not include comments until activated by flag ?
+            // COMMENT: QtLinguist does not seem to keep comments, so out of scope for first
+            // implementation
             //
             buffer.extend(&[MessageTag::Comment as u8]);
-            if let Some(comment) = &message.comment
-                && false
-            {
-                buffer.extend(
-                    &(message.comment.as_ref().unwrap_or(&String::new()).len() as u32)
-                        .to_be_bytes(),
-                );
-                buffer.extend(comment.as_bytes());
-            } else {
-                buffer.extend(&0u32.to_be_bytes());
-            }
+            buffer.extend(&0u32.to_be_bytes());
 
             //
             // SOURCE
             //
-
             buffer.extend(&[MessageTag::Source as u8]);
             buffer.extend(
                 &(message.source.as_ref().expect("TO HAVE A SOURCE").len() as u32).to_be_bytes(),
@@ -250,7 +277,7 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
             buffer.extend(message.source.as_ref().expect("have a source").as_bytes());
 
             //
-            // CONTEXT: TODO
+            // CONTEXT
             //
             buffer.extend(&[MessageTag::Context as u8]);
             if !context.name.is_empty() {
@@ -265,7 +292,7 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
             //
             buffer.extend(&[MessageTag::End as u8]);
             serialized.push(HashAndMessage {
-                hash: SysVHasher::new()
+                hash: ElfHasher::new()
                     .hash(message.source.as_ref().unwrap_or(&"".to_owned()).as_bytes())
                     .compute(),
                 msg: buffer,
@@ -321,6 +348,8 @@ mod release_tests {
     #[case::one_ctx_one_msg("simple")]
     #[case::one_ctx_many_msgs("one_ctx_many_msgs")]
     #[case::many_ctx_many_msgs("many_ctx_many_msgs")]
+    #[case::unfinished_translation("many_ctx_many_msgs_non_finished")]
+    #[case::missing_translation_tag("many_ctx_many_msgs_notranslation_tag")]
     fn compile_ts_to_qm(#[case] case: &str, #[allow(unused)] logs: ()) {
         let expected_data = std::fs::read(format!("./test_data/{case}.qm")).expect("File to exist");
         let base_ts_data =
