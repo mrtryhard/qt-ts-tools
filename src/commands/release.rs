@@ -4,12 +4,12 @@ use std::{
 };
 
 use clap::{ArgAction, Args};
-use log::{debug, error};
+use log::debug;
 
 use crate::{
     commands::hash::ElfHasher,
     tr,
-    ts::{ContextNode, MessageNode, TSNode, TranslationNode, TranslationType, YesNo},
+    ts::{ContextNode, MessageNode, TSNode, TranslationType, YesNo},
 };
 
 #[derive(Args)]
@@ -133,6 +133,41 @@ struct HashAndMessage {
     msg: Vec<u8>,
 }
 
+trait ToUtf16BytesBE {
+    fn to_utf16_be_u8(&self) -> Vec<u8>;
+}
+
+impl ToUtf16BytesBE for String {
+    fn to_utf16_be_u8(&self) -> Vec<u8> {
+        self.encode_utf16()
+            .flat_map(|u16char| u16char.to_be_bytes())
+            .collect::<Vec<u8>>()
+    }
+}
+
+impl From<BlockTag> for u8 {
+    fn from(val: BlockTag) -> u8 {
+        val as u8
+    }
+}
+
+impl From<MessageTag> for u8 {
+    fn from(val: MessageTag) -> u8 {
+        val as u8
+    }
+}
+
+fn write_block<W, T>(writer: &mut W, tag: T, data: &[u8]) -> Result<usize, std::io::Error>
+where
+    W: Write,
+    T: Into<u8>,
+{
+    writer
+        .write(&[tag.into()])
+        .and_then(|_| writer.write(&(data.len() as u32).to_be_bytes()))
+        .and_then(|_| writer.write(data))
+}
+
 fn write_hashes<W: Write>(
     writer: &mut W,
     hashed_messages: &[HashAndMessage],
@@ -168,10 +203,7 @@ fn write_hashes<W: Write>(
         buffer.extend(&ho.offset.to_be_bytes());
     }
 
-    writer
-        .write(&[BlockTag::Hashes as u8])
-        .and_then(|_| writer.write(&(buffer.len() as u32).to_be_bytes()))
-        .and_then(|_| writer.write(&buffer))
+    write_block(writer, BlockTag::Hashes, &buffer)
 }
 
 fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io::Error> {
@@ -180,10 +212,7 @@ fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io:
     match data.language.as_ref() {
         Some(value) => {
             debug!("Found language '{value}'");
-            writer
-                .write(&[BlockTag::Language as u8])
-                .and_then(|_| writer.write(&(value.len() as u32).to_be_bytes()))
-                .and_then(|_| writer.write(value.as_bytes()))
+            write_block(writer, BlockTag::Language, value.as_bytes())
         }
 
         None => Err(std::io::Error::other("No language set for TS file.")),
@@ -194,8 +223,8 @@ fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io:
 /// Determines what message should be skipped or kept.
 /// Interestingly, QtLinguist keeps unfinished translations.
 ///
-fn keep_message(translation: &Option<TranslationNode>) -> bool {
-    match translation {
+fn keep_message(message: &&MessageNode) -> bool {
+    match &message.translation {
         None => true, // Qt Linguist keeps missing nodes too -- empty translation
         Some(t) => match &t.translation_type {
             Some(tt) => match tt {
@@ -206,6 +235,16 @@ fn keep_message(translation: &Option<TranslationNode>) -> bool {
             },
             None => true,
         },
+    }
+}
+
+fn cmp_numerus(msg_left: &&MessageNode, msg_right: &&MessageNode) -> Ordering {
+    match (&msg_left.numerus, &msg_right.numerus) {
+        (Some(YesNo::Yes), Some(YesNo::No)) => Ordering::Less,
+        (Some(YesNo::Yes), None) => Ordering::Less,
+        (Some(YesNo::No), Some(YesNo::Yes)) => Ordering::Greater,
+        (None, Some(YesNo::Yes)) => Ordering::Greater,
+        _ => Ordering::Equal,
     }
 }
 
@@ -220,104 +259,51 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
     for context in &ordered_ctx {
         // Numerus messages are put first by Qt Linguist
         let mut ordered_msg: Vec<&MessageNode> = vec![];
-        context.messages.iter().for_each(|c| ordered_msg.push(c));
-        ordered_msg.sort_by(|m, m2| match (&m.numerus, &m2.numerus) {
-            (Some(YesNo::Yes), Some(YesNo::No)) => Ordering::Less,
-            (Some(YesNo::Yes), None) => Ordering::Less,
-            (Some(YesNo::No), Some(YesNo::Yes)) => Ordering::Greater,
-            (None, Some(YesNo::Yes)) => Ordering::Greater,
-            _ => Ordering::Equal,
-        });
+        context
+            .messages
+            .iter()
+            .filter(keep_message)
+            .for_each(|c| ordered_msg.push(c));
+        ordered_msg.sort_by(cmp_numerus);
 
         for message in &ordered_msg {
-            if !keep_message(&message.translation) {
-                continue;
-            }
-
-            let mut buffer: Vec<u8> = vec![];
+            let mut buffer = Cursor::new(Vec::<u8>::new());
 
             match &message.translation.as_ref() {
                 Some(node) => {
-                    match message.numerus {
-                        Some(YesNo::Yes) => {
-                            debug!("Processing {} numerus node", node.numerus_forms.len());
-                            let tdata = node
-                                .numerus_forms
-                                .iter()
-                                .map(|data| {
-                                    data.text
-                                        .encode_utf16()
-                                        .flat_map(|value| value.to_be_bytes())
-                                        .collect::<Vec<u8>>()
-                                })
-                                .flat_map(|d| {
-                                    let mut a = vec![MessageTag::Translation as u8];
-                                    a.extend((d.len() as u32).to_be_bytes());
-                                    a.extend(d);
-                                    a
-                                })
-                                .collect::<Vec<u8>>();
-
-                            buffer.extend(tdata.as_slice());
-                        }
-                        _ => {
-                            let tdata = if let Some(translation) = node.translation_simple.as_ref()
-                            {
-                                translation
-                                    .encode_utf16()
-                                    .flat_map(|value| value.to_be_bytes())
-                                    .collect::<Vec<u8>>()
-                            } else {
-                                // Invalid state.
-                                error!(
-                                    "Reached an invalid scenario: numerus is either absent or set to \"no\" and there is no translation node"
-                                );
-                                todo!("Handle error case")
-                            };
-
-                            buffer.extend(&[MessageTag::Translation as u8]);
-                            buffer.extend(&(tdata.len() as u32).to_be_bytes());
-                            buffer.extend(tdata.as_slice());
-                        }
-                    }
+                    // A valid TS file should not mhave a
+                    node.translation_simple
+                        .iter()
+                        .chain(node.numerus_forms.iter().map(|c| &c.text))
+                        .map(|c| {
+                            write_block(&mut buffer, MessageTag::Translation, &c.to_utf16_be_u8())
+                        })
+                        .find(|c| c.is_err())
+                        .unwrap_or(Ok(0))
                 }
                 // No translation, Qt Linguists puts 0xffffff
-                None => buffer.extend(&[MessageTag::Translation as u8, 0xff, 0xff, 0xff, 0xff]),
+                None => buffer.write(&[MessageTag::Translation as u8, 0xff, 0xff, 0xff, 0xff]),
             }
+            .and_then(|_| {
+                // QtLinguist does not seem to keep comments, so out of scope for first implementation
+                write_block(&mut buffer, MessageTag::Comment, &[])
+            })
+            .and_then(|_| {
+                // Original string is utf8 (or ascii?) probably to match C++ source files encoding
+                match message.source.as_ref() {
+                    Some(source) => write_block(&mut buffer, MessageTag::Source, source.as_bytes()),
+                    None => Err(std::io::Error::other("Could not find source for message !")),
+                }
+            })
+            .and_then(|_| write_block(&mut buffer, MessageTag::Context, context.name.as_bytes()))
+            .and_then(|_| buffer.write(&[MessageTag::End as u8]))
+            .map_or_else(|e| Err(e.to_string()), |_| Ok(Vec::<HashAndMessage>::new()))?;
 
-            //
-            // COMMENT: QtLinguist does not seem to keep comments, so out of scope for first
-            // implementation
-            //
-            buffer.extend(&[MessageTag::Comment as u8]);
-            buffer.extend(&0u32.to_be_bytes());
-
-            //
-            // SOURCE: Probably to match C++ source code encoding, it appears that default utf-8 strings
-            // works fine.
-            //
-            buffer.extend(&[MessageTag::Source as u8]);
-            buffer.extend(
-                &(message.source.as_ref().expect("TO HAVE A SOURCE").len() as u32).to_be_bytes(),
-            );
-            buffer.extend(message.source.as_ref().expect("have a source").as_bytes());
-
-            //
-            // CONTEXT
-            //
-            buffer.extend(&[MessageTag::Context as u8]);
-            buffer.extend(&(context.name.len() as u32).to_be_bytes());
-            buffer.extend(context.name.as_bytes());
-
-            //
-            // END
-            //
-            buffer.extend(&[MessageTag::End as u8]);
             serialized.push(HashAndMessage {
                 hash: ElfHasher::new()
                     .hash(message.source.as_ref().unwrap_or(&"".to_owned()).as_bytes())
                     .compute(),
-                msg: buffer,
+                msg: buffer.into_inner(),
             });
         }
     }
