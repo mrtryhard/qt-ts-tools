@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] unreleased
+This release is the [Twenty first](https://github.com/mrtryhard/qt-ts-tools/milestone/21) milestone.
+This release comes with **two** important changes. The first change is dropping the MIT license but keeping the Apache 2.0 license.
+The reasoning behind this change is to try to maximize the return to the community.
+  
+The second change is the introduction of QM files creation. This is still a minimal support, thus a warning is printed whenever you use it.
+Some features are not yet fully supported.
+
+### Added
+
+- Added minimal support for compiling TS files to QM file (known as releasing them). [#131](https://github.com/mrtryhard/qt-ts-tools/issues/271)
 
 ### Changed
 

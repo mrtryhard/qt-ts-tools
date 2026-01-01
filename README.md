@@ -7,21 +7,28 @@ This repository contains suite of tools for manipulating [Qt Framework](https://
 See `qt-ts-tools --help` for a list of operations in your version.
 
 ```shell
+# Extract only specific type of translation
+./qt-ts-tools extract my_file.ts -t obsolete -o extracted.ts
+# Merge translation files
+./qt-ts-tools merge base.ts changes.ts -o merged_file.ts 
+# Print the summary of the translation file
+./qt-ts-tools stat my_file.ts
+# Release (publish as qm file)
+./qt-ts-tools release my_file.ts -o my_file.qm
 # Sort
 ./qt-ts-tools sort my_file.ts -o my_file_sorted.ts
 # Strip symbols
 ./qt-ts-tools strip my_file.ts -t vanished -o my_file_stripped.ts
-# Merge translation files
-./qt-ts-tools merge base.ts changes.ts -o merged_file.ts 
-# Extract only specific type of translation
-./qt-ts-tools extract my_file.ts -t obsolete -o extracted.ts
-# Print the summary of the translation file
-./qt-ts-tools stat my_file.ts
 ```
 
 ## Limitations
 * The output format may change a little bit i.e. self-closing tags becomes full tags
 * QtLinguist full functionality might not be fully replicated
+
+### Publishing / releasing a translation source
+Publishing a TS file as a `qm` file is supported as far as Qt Linguist supports. Some features are not supported:
+- Comments
+- Numerus formulas (Qt should normally still resolve correctly)
 
 ## Philosophy
 This tool aims to be simple to use and conservative in its decision. Therefore, no command shall modify the input file.
