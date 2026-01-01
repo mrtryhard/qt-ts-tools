@@ -41,7 +41,7 @@ pub fn current_loader() -> &'static FluentLanguageLoader {
 /// * `text_id`: Identifier to look up into the `.ftl` translation file.
 /// * `args...`: Arbitrary list of tuples ("arg-id", value)
 ///
-/// ### Returns
+// ### Returns
 ///
 /// Returns the translation corresponding to `text_id` translated with corresponding arguments,
 /// otherwise falls back on the english translation.

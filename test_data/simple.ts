@@ -1,5 +1,5 @@
 <!DOCTYPE TS>
-<TS version="2.1" sourcelanguage="en" language="fr">
+<TS version="2.1" sourcelanguage="en" language="fr_FR">
     <context>
         <name></name>
         <message>

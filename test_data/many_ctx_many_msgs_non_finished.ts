@@ -1,5 +1,5 @@
 <!DOCTYPE TS>
-<TS version="2.1" sourcelanguage="en" language="sv">
+<TS version="2.1" sourcelanguage="en" language="sv_SE">
     <context>
         <name>kernel/navigationpart</name>
         <message>

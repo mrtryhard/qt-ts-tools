@@ -15,9 +15,6 @@ pub struct ReleaseArgs {
     /// File to release
     #[arg(help = tr!("cli-release-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input: String,
-    /// When true, keep comments in the QM file output.
-    #[arg(help = tr!("cli-release-keep-comments"), help_heading = tr!("cli-headers-arguments"), action = ArgAction::SetTrue)]
-    pub keep_comments: bool,
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-release-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
@@ -134,23 +131,6 @@ struct HashAndMessage {
     msg: Vec<u8>,
 }
 
-///
-/// Resolves the BCP47 code for the provided shorthand code
-/// e.g. "fr" -> "fr_FR"
-///
-/// TODO: This function is brittle and should be replaced by a crate.
-fn get_bcp47(input: &String) -> Option<String> {
-    debug!("Resolved language: {input}");
-    match input.to_lowercase().as_str() {
-        "fr" => Some("fr_FR".to_string()),
-        "sv" => Some("sv_SE".to_string()),
-        _ => {
-            debug!("No BCP47 correspondance found!");
-            None
-        }
-    }
-}
-
 fn write_hashes<W: Write>(
     writer: &mut W,
     hashed_messages: &[HashAndMessage],
@@ -194,15 +174,17 @@ fn write_hashes<W: Write>(
 
 fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io::Error> {
     debug!("Writing QM file language");
-    let bcp47 = data.language.as_ref().and_then(get_bcp47);
 
-    match bcp47 {
-        Some(value) => writer
-            .write(&[BlockTag::Language as u8])
-            .and_then(|_| writer.write(&(value.len() as u32).to_be_bytes()))
-            .and_then(|_| writer.write(value.as_bytes())),
+    match data.language.as_ref() {
+        Some(value) => {
+            debug!("Found language '{value}'");
+            writer
+                .write(&[BlockTag::Language as u8])
+                .and_then(|_| writer.write(&(value.len() as u32).to_be_bytes()))
+                .and_then(|_| writer.write(value.as_bytes()))
+        }
 
-        None => Err(std::io::Error::other("Invalid language set for TS file.")),
+        None => Err(std::io::Error::other("No language set for TS file.")),
     }
 }
 
@@ -251,7 +233,7 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
                             .collect::<Vec<u8>>()
                     } else {
                         // Check for numerus.
-                        todo!()
+                        todo!("Numerus are not implementedd yet")
                     };
 
                     buffer.extend(&(tdata.len() as u32).to_be_bytes());
