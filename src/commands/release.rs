@@ -94,10 +94,6 @@ enum BlockTag {
     /// Numerus rule block
     /// This is expressed as an encoded formula depending on the language.
     NumerusRules = 0x88,
-
-    // Below is unsupported.
-    _Contexts = 0x2f,
-    _Dependencies = 0x96,
 }
 
 /// A message entry in the messages table is split by its component.
