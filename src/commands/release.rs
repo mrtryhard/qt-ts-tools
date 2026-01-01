@@ -4,7 +4,7 @@ use std::{
 };
 
 use clap::{ArgAction, Args};
-use log::debug;
+use log::{debug, error};
 
 use crate::{
     commands::hash::ElfHasher,
@@ -250,15 +250,12 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
                                         .flat_map(|value| value.to_be_bytes())
                                         .collect::<Vec<u8>>()
                                 })
-                                .map(|d| {
-                                    debug!("Writing numerus: {} bytes", d.len());
-                                    debug!("\t{d:02X?}");
+                                .flat_map(|d| {
                                     let mut a = vec![MessageTag::Translation as u8];
                                     a.extend((d.len() as u32).to_be_bytes());
                                     a.extend(d);
                                     a
                                 })
-                                .flatten()
                                 .collect::<Vec<u8>>();
 
                             buffer.extend(tdata.as_slice());
@@ -271,7 +268,10 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
                                     .flat_map(|value| value.to_be_bytes())
                                     .collect::<Vec<u8>>()
                             } else {
-                                // Invalid state.                                 // Check for numerus.
+                                // Invalid state.
+                                error!(
+                                    "Reached an invalid scenario: numerus is either absent or set to \"no\" and there is no translation node"
+                                );
                                 todo!("Handle error case")
                             };
 
@@ -293,7 +293,8 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
             buffer.extend(&0u32.to_be_bytes());
 
             //
-            // SOURCE
+            // SOURCE: Probably to match C++ source code encoding, it appears that default utf-8 strings
+            // works fine.
             //
             buffer.extend(&[MessageTag::Source as u8]);
             buffer.extend(
@@ -305,12 +306,8 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
             // CONTEXT
             //
             buffer.extend(&[MessageTag::Context as u8]);
-            if !context.name.is_empty() {
-                buffer.extend(&(context.name.len() as u32).to_be_bytes());
-                buffer.extend(context.name.as_bytes());
-            } else {
-                buffer.extend(&0u32.to_be_bytes());
-            }
+            buffer.extend(&(context.name.len() as u32).to_be_bytes());
+            buffer.extend(context.name.as_bytes());
 
             //
             // END
@@ -386,7 +383,6 @@ mod release_tests {
 
         let result = compile_to_buffer(&mut writer, &ts_node);
 
-        std::fs::write("output.qm", writer.get_ref());
         assert_eq!(result, Ok(()));
         assert_eq!(writer.into_inner(), expected_data);
     }
