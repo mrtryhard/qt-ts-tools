@@ -1,4 +1,7 @@
-use std::io::{BufWriter, Cursor, Write};
+use std::{
+    cmp::Ordering,
+    io::{BufWriter, Cursor, Write},
+};
 
 use clap::{ArgAction, Args};
 use log::debug;
@@ -6,7 +9,7 @@ use log::debug;
 use crate::{
     commands::hash::ElfHasher,
     tr,
-    ts::{ContextNode, TSNode, TranslationNode, TranslationType},
+    ts::{ContextNode, MessageNode, TSNode, TranslationNode, TranslationType, YesNo},
 };
 
 #[derive(Args)]
@@ -90,7 +93,6 @@ enum BlockTag {
     Messages = 0x69,
     /// Numerus rule block
     /// This is expressed as an encoded formula depending on the language.
-    /// TODO: not supported yet.
     NumerusRules = 0x88,
 
     // Below is unsupported.
@@ -216,30 +218,71 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
     ordered_ctx.sort_by_key(|l| &l.name);
 
     for context in &ordered_ctx {
-        for message in &context.messages {
+        // Numerus messages are put first by Qt Linguist
+        let mut ordered_msg: Vec<&MessageNode> = vec![];
+        context.messages.iter().for_each(|c| ordered_msg.push(c));
+        ordered_msg.sort_by(|m, m2| match (&m.numerus, &m2.numerus) {
+            (Some(YesNo::Yes), Some(YesNo::No)) => Ordering::Less,
+            (Some(YesNo::Yes), None) => Ordering::Less,
+            (Some(YesNo::No), Some(YesNo::Yes)) => Ordering::Greater,
+            (None, Some(YesNo::Yes)) => Ordering::Greater,
+            _ => Ordering::Equal,
+        });
+
+        for message in &ordered_msg {
             if !keep_message(&message.translation) {
                 continue;
             }
 
             let mut buffer: Vec<u8> = vec![];
-            buffer.extend(&[MessageTag::Translation as u8]);
 
             match &message.translation.as_ref() {
                 Some(node) => {
-                    let tdata = if let Some(translation) = node.translation_simple.as_ref() {
-                        translation
-                            .encode_utf16()
-                            .flat_map(|value| value.to_be_bytes())
-                            .collect::<Vec<u8>>()
-                    } else {
-                        // Check for numerus.
-                        todo!("Numerus are not implementedd yet")
-                    };
+                    match message.numerus {
+                        Some(YesNo::Yes) => {
+                            debug!("Processing {} numerus node", node.numerus_forms.len());
+                            let tdata = node
+                                .numerus_forms
+                                .iter()
+                                .map(|data| {
+                                    data.text
+                                        .encode_utf16()
+                                        .flat_map(|value| value.to_be_bytes())
+                                        .collect::<Vec<u8>>()
+                                })
+                                .map(|d| {
+                                    debug!("Writing numerus: {} bytes", d.len());
+                                    debug!("\t{d:02X?}");
+                                    let mut a = vec![MessageTag::Translation as u8];
+                                    a.extend((d.len() as u32).to_be_bytes());
+                                    a.extend(d);
+                                    a
+                                })
+                                .flatten()
+                                .collect::<Vec<u8>>();
 
-                    buffer.extend(&(tdata.len() as u32).to_be_bytes());
-                    buffer.extend(tdata.as_slice());
+                            buffer.extend(tdata.as_slice());
+                        }
+                        _ => {
+                            let tdata = if let Some(translation) = node.translation_simple.as_ref()
+                            {
+                                translation
+                                    .encode_utf16()
+                                    .flat_map(|value| value.to_be_bytes())
+                                    .collect::<Vec<u8>>()
+                            } else {
+                                // Invalid state.                                 // Check for numerus.
+                                todo!("Handle error case")
+                            };
+
+                            buffer.extend(&[MessageTag::Translation as u8]);
+                            buffer.extend(&(tdata.len() as u32).to_be_bytes());
+                            buffer.extend(tdata.as_slice());
+                        }
+                    }
                 }
-                None => buffer.extend(&[0xff, 0xff, 0xff, 0xff]),
+                // No translation, Qt Linguists puts 0xffffff
+                None => buffer.extend(&[MessageTag::Translation as u8, 0xff, 0xff, 0xff, 0xff]),
             }
 
             //
@@ -332,6 +375,7 @@ mod release_tests {
     #[case::many_ctx_many_msgs("many_ctx_many_msgs")]
     #[case::unfinished_translation("many_ctx_many_msgs_non_finished")]
     #[case::missing_translation_tag("many_ctx_many_msgs_notranslation_tag")]
+    #[case::with_numerus("many_ctx_many_msgs_numerus")]
     fn compile_ts_to_qm(#[case] case: &str, #[allow(unused)] logs: ()) {
         let expected_data = std::fs::read(format!("./test_data/{case}.qm")).expect("File to exist");
         let base_ts_data =
@@ -342,6 +386,7 @@ mod release_tests {
 
         let result = compile_to_buffer(&mut writer, &ts_node);
 
+        std::fs::write("output.qm", writer.get_ref());
         assert_eq!(result, Ok(()));
         assert_eq!(writer.into_inner(), expected_data);
     }
