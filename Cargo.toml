@@ -14,7 +14,7 @@ clap = { version = "4.5.57", features = ["derive", "string"] }
 clap_complete = "4.5.65"
 clap_complete_nushell = "4.5.10"
 clap_complete_command = "0.6.1"
-env_logger = {  version = "0.11.8", default-features = false, features = ["humantime"] }
+env_logger = {  version = "0.11.9", default-features = false, features = ["humantime"] }
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.0"
 log = "0.4.29"
