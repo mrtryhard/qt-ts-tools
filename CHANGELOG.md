@@ -14,7 +14,7 @@ Some features are not yet fully supported.
 
 ### Added
 
-- Added minimal support for compiling TS files to QM file (known as releasing them). [#131](https://github.com/mrtryhard/qt-ts-tools/issues/271)
+- Added minimal support for compiling TS files to QM file (known as releasing them). [#131](https://github.com/mrtryhard/qt-ts-tools/issues/131) [#288](https://github.com/mrtryhard/qt-ts-tools/issues/288)
 
 ### Changed
 
