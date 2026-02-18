@@ -497,7 +497,7 @@ fn numerus_rule(lang: &str) -> Vec<u8> {
 fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), String> {
     let msgs = produce_messages(data)?;
     let msg_block: Vec<u8> = msgs.iter().flat_map(|hm| &hm.msg).copied().collect();
-    let lang = numerus_rule(&data.language.as_ref().unwrap_or(&String::new()));
+    let lang = numerus_rule(data.language.as_ref().unwrap_or(&String::new()));
 
     writer
         .write(&QM_HEADER)
