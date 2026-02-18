@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.0.0] unreleased
+## [1.0.0] 2026-02-18
 This release is the [Twenty first](https://github.com/mrtryhard/qt-ts-tools/milestone/21) milestone.
 This release comes with **two** important changes. The first change is dropping the MIT license but keeping the Apache 2.0 license.
 The reasoning behind this change is to try to maximize the return to the community.
@@ -19,6 +19,11 @@ Some features are not yet fully supported.
 ### Changed
 
 - MIT License support is dropped, now the project is fully licensed under Apache 2.0. [#271](https://github.com/mrtryhard/qt-ts-tools/issues/271)
+- Upgraded `clap` to version `4.5.58`
+- Upgraded `clap_complete` to version `4.5.66`
+- Upgraded `env_logger` to version `0.11.9`
+- Upgraded `quick-xml` to version `0.39.0`
+- Upgraded `rust-embed` to version `8.11.0`
 
 ## [0.10.0] 2025-12-08
 [Twentieth milestone](https://github.com/mrtryhard/qt-ts-tools/milestone/20).  

@@ -23,12 +23,11 @@ See `qt-ts-tools --help` for a list of operations in your version.
 
 ## Limitations
 * The output format may change a little bit i.e. self-closing tags becomes full tags
-* QtLinguist full functionality might not be fully replicated
+* QtLinguist full functionality and output might not be fully replicated
 
 ### Publishing / releasing a translation source
 Publishing a TS file as a `qm` file is supported as far as Qt Linguist supports. Some features are not supported:
 - Comments
-- Numerus formulas (Qt should normally still resolve correctly)
 
 ## Philosophy
 This tool aims to be simple to use and conservative in its decision. Therefore, no command shall modify the input file.
