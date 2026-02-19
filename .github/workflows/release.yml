@@ -160,10 +160,10 @@ jobs:
           mkdir qt-ts-tools-linux-arm-${{ env.VERSION }}
           mkdir qt-ts-tools-macos-${{ env.VERSION }}
           
-          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-windows-${{ env.VERSION }}/.
-          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-linux-${{ env.VERSION }}/.
-          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-linux-arm-${{ env.VERSION }}/.
-          cp LICENSE-MIT LICENSE-APACHE qt-ts-tools-macos-${{ env.VERSION }}/.
+          cp LICENSE-* qt-ts-tools-windows-${{ env.VERSION }}/.
+          cp LICENSE-* qt-ts-tools-linux-${{ env.VERSION }}/.
+          cp LICENSE-* qt-ts-tools-linux-arm-${{ env.VERSION }}/.
+          cp LICENSE-* qt-ts-tools-macos-${{ env.VERSION }}/.
           
           cp output-win/qt-ts-tools.exe qt-ts-tools-windows-${{ env.VERSION }}/.
           cp output-ub/qt-ts-tools-linux qt-ts-tools-linux-${{ env.VERSION }}/qt-ts-tools
