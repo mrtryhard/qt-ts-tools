@@ -55,7 +55,7 @@ pub fn strip_main(args: &StripArgs) -> Result<(), String> {
                 }
                 Err(e) => Err(tr!(
                     "error-ts-file-parse",
-                    input_path = args.input_path.as_str(),
+                    file = args.input_path.as_str(),
                     error = e.to_string()
                 )),
             }

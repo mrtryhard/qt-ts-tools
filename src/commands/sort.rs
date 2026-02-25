@@ -33,7 +33,7 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
                 }
                 Err(e) => Err(tr!(
                     "error-ts-file-parse",
-                    input_path = args.input_path.as_str(),
+                    file = args.input_path.as_str(),
                     error = e.to_string()
                 )),
             }

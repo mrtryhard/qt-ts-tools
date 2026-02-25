@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.x.y] unreleased
+
+### Fixed
+
+- Fixed an issue where translation variable would not be substituted correctly for stat. [#305](https://github.com/mrtryhard/qt-ts-tools/issues/305)
+- Fixed an issue where releasing an unexisting file would cause panic. [306](https://github.com/mrtryhard/qt-ts-tools/issues/306)
+
 ## [1.0.0] 2026-02-18
 This release is the [Twenty first](https://github.com/mrtryhard/qt-ts-tools/milestone/21) milestone.
 This release comes with **two** important changes. The first change is dropping the MIT license but keeping the Apache 2.0 license.
