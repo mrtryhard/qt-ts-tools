@@ -26,8 +26,19 @@ pub struct ReleaseArgs {
 }
 
 pub fn release_main(args: &ReleaseArgs) -> Result<(), String> {
-    let f = quick_xml::Reader::from_file(&args.input).expect("Couldn't open source file");
-    let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
+    let data: TSNode = quick_xml::Reader::from_file(&args.input)
+        .map_err(|e| e.to_string())
+        .and_then(|reader| {
+            quick_xml::de::from_reader(reader.into_inner()).map_err(|e| e.to_string())
+        })
+        .map_err(|e| {
+            tr!(
+                "error-ts-file-parse",
+                file = args.input.as_str(),
+                error = e.to_string()
+            )
+        })?;
+
     let mut writer = Cursor::new(Vec::<u8>::new());
 
     compile_to_buffer(&mut writer, &data)
