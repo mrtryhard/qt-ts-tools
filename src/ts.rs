@@ -220,7 +220,7 @@ pub struct LocationNode {
 }
 
 /// Represents a translation plural form.
-#[derive(Debug, Eq, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Eq, Clone, Deserialize, Serialize, PartialEq)]
 pub struct NumerusFormNode {
     #[serde(default, rename = "$value", skip_serializing_if = "String::is_empty")]
     pub text: String,
@@ -468,6 +468,27 @@ mod test {
         assert_eq!(
             translation.translation_type,
             Some(TranslationType::Obsolete)
+        );
+    }
+
+    #[test]
+    fn test_parse_with_embedded_bytes() {
+        // Test that having an xml tag in the source or translation does not cause
+        // parser to crash.
+        let f = quick_xml::Reader::from_file("./test_data/304_embedded_xml.ts")
+            .expect("Could not open test file.");
+        let data: Result<TSNode, _> = quick_xml::de::from_reader(f.into_inner());
+
+        //assert!(data.is_ok());
+        let data = data.expect("");
+
+        assert_eq!(
+            data.contexts[0].messages[0]
+                .source
+                .as_ref()
+                .unwrap()
+                .to_string(),
+            "source contains <byte value=\"xD\"/> some text.".to_owned()
         );
     }
 }
