@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt::Display;
@@ -26,10 +27,35 @@ pub enum TranslationType {
     Vanished,
 }
 
+impl<'a> From<Cow<'a, [u8]>> for TranslationType {
+    fn from(value: Cow<'a, [u8]>) -> Self {
+        let trimmed = value.trim_ascii();
+        if trimmed.eq_ignore_ascii_case(b"unfinished") {
+            TranslationType::Unfinished
+        } else if trimmed.eq_ignore_ascii_case(b"obsolete") {
+            TranslationType::Obsolete
+        } else if trimmed.eq_ignore_ascii_case(b"vanished") {
+            TranslationType::Vanished
+        } else {
+            TranslationType::Finished
+        }
+    }
+}
+
 #[derive(Debug, Eq, Clone, PartialEq)]
 pub enum YesNo {
     Yes,
     No,
+}
+
+impl<'a> From<Cow<'a, [u8]>> for YesNo {
+    fn from(value: Cow<'a, [u8]>) -> Self {
+        if value.eq_ignore_ascii_case(b"yes") {
+            YesNo::Yes
+        } else {
+            YesNo::No
+        }
+    }
 }
 
 /// Root node of the translation file.
@@ -441,6 +467,10 @@ fn parse_numerus_form_node(
     Ok(node)
 }
 
+fn parse_translation_node() -> Result<TranslationNode, String> {
+    Err("fuck".to_owned())
+}
+
 fn read_raw_string(
     reader: &mut quick_xml::reader::Reader<BufReader<File>>,
     element: &quick_xml::events::BytesStart,
@@ -594,5 +624,51 @@ mod test {
                 .to_string(),
             "source contains <byte value=\"xD\"/> some text.".to_owned()
         );
+    }
+}
+
+#[cfg(test)]
+mod test_yesno {
+    use rstest::rstest;
+
+    use crate::ts_next::YesNo;
+
+    #[rstest]
+    #[case(b"yes")]
+    #[case(b"YES")]
+    #[case(b"Yes")]
+    #[case(b"yEs")]
+    #[case(b"yeS")]
+    fn test_from_cow_should_match_yes(#[case] case: &[u8]) {
+        let actual = YesNo::from(std::borrow::Cow::Borrowed(case));
+        assert_eq!(YesNo::Yes, actual);
+    }
+
+    #[rstest]
+    #[case(b"no")]
+    #[case(b"NO")]
+    #[case(b"No")]
+    #[case(b"nO")]
+    #[case(b"")]
+    fn test_from_cow_should_match_no(#[case] case: &[u8]) {
+        let actual = YesNo::from(std::borrow::Cow::Borrowed(case));
+        assert_eq!(YesNo::No, actual);
+    }
+}
+
+#[cfg(test)]
+mod test_translation_type {
+    use rstest::rstest;
+
+    use crate::ts_next::TranslationType;
+
+    #[rstest]
+    #[case(b"unFinIshed", TranslationType::Unfinished)]
+    #[case(b"fiNIshed", TranslationType::Finished)]
+    #[case(b"VAnishEd", TranslationType::Vanished)]
+    #[case(b"obsoLETE", TranslationType::Obsolete)]
+    fn from_cow_should_return_correct_value(#[case] cow: &[u8], #[case] expected: TranslationType) {
+        let actual = TranslationType::from(std::borrow::Cow::Borrowed(cow));
+        assert_eq!(expected, actual);
     }
 }
