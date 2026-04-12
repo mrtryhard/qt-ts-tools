@@ -207,7 +207,7 @@ jobs:
           echo "MacOS: \`$m256\`  " >> CHANGES.md
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body_path: CHANGES.md
           files: |
