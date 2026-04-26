@@ -10,7 +10,7 @@ edition = "2024"
 description = "Small command line utility to manipulate Qt's translation files with diverse operations."
 
 [dependencies]
-clap = { version = "4.6.0", features = ["derive", "string"] }
+clap = { version = "4.6.1", features = ["derive", "string"] }
 clap_complete = "4.6.1"
 clap_complete_nushell = "4.6.0"
 clap_complete_command = "0.6.1"
