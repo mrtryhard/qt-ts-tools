@@ -8,6 +8,7 @@ mod cli;
 mod commands;
 mod locale;
 mod logging;
+mod parse_error;
 mod ts;
 mod ts_next;
 

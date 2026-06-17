@@ -1,13 +1,17 @@
-use std::borrow::Cow;
-use std::cmp::Ordering;
-use std::error::Error;
-use std::fmt::Display;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
-
+use log::debug;
 use quick_xml::events::Event;
+use std::borrow::Cow;
+use std::cell::RefCell;
+use std::cmp::Ordering;
+use std::fs::File;
+use std::io::{BufRead, BufReader, Cursor};
+use std::path::Path;
+use std::rc::Rc;
+use std::str::FromStr;
 
+use crate::parse_error::ParseError;
+
+type TsBytes<'a> = Cow<'a, [u8]>;
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.
 // For now they can't handle Qt's semi-weird XSD.
@@ -50,7 +54,7 @@ pub enum YesNo {
 
 impl<'a> From<Cow<'a, [u8]>> for YesNo {
     fn from(value: Cow<'a, [u8]>) -> Self {
-        if value.eq_ignore_ascii_case(b"yes") {
+        if value.trim_ascii().eq_ignore_ascii_case(b"yes") {
             YesNo::Yes
         } else {
             YesNo::No
@@ -59,69 +63,68 @@ impl<'a> From<Cow<'a, [u8]>> for YesNo {
 }
 
 /// Root node of the translation file.
-#[derive(Debug, PartialEq)]
-pub struct TSNode {
+#[derive(Debug, Default, PartialEq)]
+pub struct TSNode<'a> {
+    buf: Rc<Vec<u8>>,
     /// Defines the version of the TS format, although unused by this tool.
     /// attribute -- do not serialize if missing
-    pub version: Option<String>,
+    pub version: Option<TsBytes<'a>>,
     /// Source language on which this translation is based on.
     /// #[serde(rename = "@sourcelanguage", skip_serializing_if = "Option::is_none")]
-    pub source_language: Option<String>,
+    pub source_language: Option<TsBytes<'a>>,
     /// Language of this translation.
-    ///  #[serde(rename = "@language", skip_serializing_if = "Option::is_none")]
-    pub language: Option<String>,
-    /// Translations attached to a context
-    /// #[serde(rename = "context", skip_serializing_if = "Vec::is_empty", default)]
+    pub language: Option<TsBytes<'a>>,
+    //     /// Translations attached to a context
     pub contexts: Vec<ContextNode>,
-    /// #[serde(skip_serializing_if = "Option::is_none")]
-    pub dependencies: Option<DependenciesNode>,
-    /// Translation comment.
-    /// #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>,
-    /// Previous translation comment.
-    /// #[serde(rename = "oldcomment", skip_serializing_if = "Option::is_none")]
-    pub old_comment: Option<String>,
-    /// Other, extra comment
-    /// #[serde(rename = "extracomment", skip_serializing_if = "Option::is_none")]
-    pub extra_comment: Option<String>,
-    /// Translator comment
-    /// #[serde(rename = "translatorcomment", skip_serializing_if = "Option::is_none")]
-    pub translator_comment: Option<String>,
-    /*
-       Following section corresponds to `extra-something` in Qt's XSD. From documentation:
-       > extra elements may appear in TS and message elements. Each element may appear
-       > only once within each scope. The contents are preserved verbatim; any
-       > attributes are dropped.
-    */
-    /// #[serde(
-    ///    rename = "extra-po-msgid_plural",
-    ///    skip_serializing_if = "Option::is_none"
-    ///)]
-    pub po_msg_id_plural: Option<String>,
-    ///#[serde(
-    ///    rename = "extra-po-old_msgid_plural",
-    ///    skip_serializing_if = "Option::is_none"
-    ///)]
-    pub po_old_msg_id_plural: Option<String>,
-    /// Comma separated list
-    ///#[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
-    pub loc_flags: Option<String>,
-    ///#[serde(
-    ///  rename = "extra-loc-layout_id",
-    ///skip_serializing_if = "Option::is_none"
-    ///)]
-    pub loc_layout_id: Option<String>,
-    ///#[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
-    pub loc_feature: Option<String>,
-    ///#[serde(rename = "extra-loc-blank", skip_serializing_if = "Option::is_none")]
-    pub loc_blank: Option<String>,
+    //     /// #[serde(skip_serializing_if = "Option::is_none")]
+    //     pub dependencies: Option<DependenciesNode>,
+    //     /// Translation comment.
+    //     /// #[serde(skip_serializing_if = "Option::is_none")]
+    //     pub comment: Option<String>,
+    //     /// Previous translation comment.
+    //     /// #[serde(rename = "oldcomment", skip_serializing_if = "Option::is_none")]
+    //     pub old_comment: Option<String>,
+    //     /// Other, extra comment
+    //     /// #[serde(rename = "extracomment", skip_serializing_if = "Option::is_none")]
+    //     pub extra_comment: Option<String>,
+    //     /// Translator comment
+    //     /// #[serde(rename = "translatorcomment", skip_serializing_if = "Option::is_none")]
+    //     pub translator_comment: Option<String>,
+    //     /*
+    //        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
+    //        > extra elements may appear in TS and message elements. Each element may appear
+    //        > only once within each scope. The contents are preserved verbatim; any
+    //        > attributes are dropped.
+    //     */
+    //     /// #[serde(
+    //     ///    rename = "extra-po-msgid_plural",
+    //     ///    skip_serializing_if = "Option::is_none"
+    //     ///)]
+    //     pub po_msg_id_plural: Option<String>,
+    //     ///#[serde(
+    //     ///    rename = "extra-po-old_msgid_plural",
+    //     ///    skip_serializing_if = "Option::is_none"
+    //     ///)]
+    //     pub po_old_msg_id_plural: Option<String>,
+    //     /// Comma separated list
+    //     ///#[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
+    //     pub loc_flags: Option<String>,
+    //     ///#[serde(
+    //     ///  rename = "extra-loc-layout_id",
+    //     ///skip_serializing_if = "Option::is_none"
+    //     ///)]
+    //     pub loc_layout_id: Option<String>,
+    //     ///#[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
+    //     pub loc_feature: Option<String>,
+    //     ///#[serde(rename = "extra-loc-blank", skip_serializing_if = "Option::is_none")]
+    //     pub loc_blank: Option<String>,
 }
 
 /// Context and its associated translated message.
-#[derive(Debug, Eq, PartialEq)]
-pub struct ContextNode {
+#[derive(Debug, Default, Eq, PartialEq)]
+pub struct ContextNode<'a> {
     /// Unique name of the context
-    pub name: String,
+    pub name: Option<TsBytes<'a>>,
     /// List of translation messages
     ///#[serde(rename = "message")]
     pub messages: Vec<MessageNode>,
@@ -130,7 +133,7 @@ pub struct ContextNode {
     pub comment: Option<String>,
     /// Encoding of the messages within that context.
     ///#[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
-    pub encoding: Option<String>,
+    pub encoding: Option<TsBytes<'a>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -138,7 +141,7 @@ pub struct DependenciesNode {
     pub dependencies: Vec<Dependency>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Dependency {
     pub catalog: String,
 }
@@ -210,7 +213,7 @@ pub struct MessageNode {
 }
 
 /// Translation node that indicates an actual translation for a message.
-#[derive(Debug, Eq, Clone, PartialEq)]
+#[derive(Debug, Default, Eq, Clone, PartialEq)]
 pub struct TranslationNode {
     // Did not find a way to make it an enum
     // Therefore: either you have a `translation_simple` or a `numerus_forms`, but not both.
@@ -327,104 +330,81 @@ impl Ord for ContextNode {
     }
 }
 
-/// Writes the output TS file to the specified output (file or stdout).
-/// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
-/// `<name></name>` instead of `<name/>`.
-// pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<(), String> {
-//     debug!(
-//         "Writing output to '{output_path:?}': {} context nodes",
-//         node.contexts.len()
-//     );
+impl<'a> FromStr for TSNode<'a> {
+    type Err = ParseError;
 
-//     let mut inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
-//         None => BufWriter::new(Box::new(std::io::stdout().lock())),
-//         Some(output_path) => match std::fs::File::options()
-//             .create(true)
-//             .truncate(true)
-//             .write(true)
-//             .open(output_path)
-//         {
-//             Ok(file) => BufWriter::new(Box::new(file)),
-//             Err(e) => {
-//                 return Err(tr!(
-//                     "error-write-output-open",
-//                     output_path = output_path,
-//                     error = e.to_string()
-//                 ));
-//             }
-//         },
-//     };
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let cursor = Cursor::new(s);
+        let reader = quick_xml::Reader::from_reader(cursor);
+        TSNode::from_reader(reader)
+    }
+}
 
-//     let mut output_buffer =
-//         String::from("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE TS>\n");
-//     let mut ser = quick_xml::se::Serializer::new(&mut output_buffer);
-//     ser.indent(' ', 2).expand_empty_elements(true);
+impl<'a> TSNode<'a> {
+    fn from_file(path: &Path) -> Result<Self, ParseError> {
+        let reader = quick_xml::Reader::from_file(path)?;
+        TSNode::from_reader(reader)
+    }
 
-//     match node.serialize(ser) {
-//         Ok(_) => {
-//             debug!("Bytes to write: {}", output_buffer.len());
+    fn from_reader(reader: quick_xml::Reader<impl BufRead>) -> Result<Self, ParseError> {
+        let mut reader = quick_xml::Reader::from_reader(reader).into_inner();
+        let mut ts_node: TSNode<'a> = TSNode::default();
+        let buf: Rc<RefCell<Vec<u8>>> = Rc::new(RefCell::new(Vec::new()));
+        // TODO: does not work for ownership
+        {
+            match reader.read_event_into(buf.borrow_mut()) {
+                Ok(Event::Eof) => (),
+                Ok(Event::Start(e)) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
+                    println!("Found {:#?}", e.name());
 
-//             let res = inner_writer.write_all(output_buffer.as_bytes());
-//             match res {
-//                 Ok(_) => Ok(()),
-//                 Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
-//             }
-//         }
-//         Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
-//     }
-// }
-
-impl TSNode {
-    fn from_file(path: &Path) -> Result<TSNode, String> {
-        let mut reader = quick_xml::reader::Reader::from_file(path).map_err(|e| e.to_string())?;
-        let mut buf = Vec::new();
-
-        loop {
-            match reader.read_event_into(&mut buf) {
-                Ok(Event::Eof) => break,
-                Ok(Event::Start(element_start)) => {
-                    println!("Found {:#?}", element_start.name());
-
-                    match element_start.name().as_ref() {
-                        b"source" | b"oldsource" => {
-                            // TODO reuse global buff
-                            let mut shared_buf = vec![];
-                            let content =
-                                read_raw_string(&mut reader, &element_start, &mut shared_buf);
-                        }
-                        _ => (),
-                    };
+                    e.attributes()
+                        .flatten()
+                        .for_each(|attr| match attr.key.as_ref() {
+                            b"version" => ts_node.version = Some(attr.value),
+                            b"sourcelanguage" => ts_node.source_language = Some(attr.value),
+                            b"language" => ts_node.language = Some(attr.value),
+                            _ => debug!("Unknown attribute: {:?}", attr.key),
+                        });
                 }
-                Ok(Event::Empty(e)) => {
-                    match e.name().as_ref() {
-                        b"location" => {
-                            let node = parse_location_node(&e);
-
-                            println!("Location: {:#?}", node);
-                        }
-
-                        _ => {}
-                    };
-
-                    println!("SElf closing tag: {:#?}", e.name());
+                Ok(Event::Start(e)) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
+                    // todo: check we are in a TS.
+                    println!("Context");
+                    let mut ctx = ContextNode::default();
+                    e.attributes().flatten().for_each(|a| match a.key.as_ref() {
+                        b"name" => ctx.name = Some(a.value),
+                        b"encoding" => ctx.encoding = Some(a.value),
+                    });
                 }
-                Ok(Event::End(e)) => (),
-                Ok(Event::Text(e)) => {
-                    println!("Found text: {:?}", e.xml10_content());
-                }
-                Err(_todo) => break,
+                Err(_todo) => (),
                 _ => (),
             }
         }
 
-        Err("Not implemented!".to_string())
+        Ok(ts_node)
     }
+}
+
+fn parse_dependency_node(
+    element: &quick_xml::events::BytesStart,
+) -> Result<Dependency, ParseError> {
+    let mut node = Dependency::default();
+
+    for a in element.attributes() {
+        if let Ok(attr) = a {
+            match attr.key.as_ref() {
+                b"catalog" => node.catalog = String::from_utf8(attr.value.into_owned())?,
+                _ => (),
+            }
+        }
+    }
+
+    Ok(node)
 }
 
 /// OK
 fn parse_location_node(
     element: &quick_xml::events::BytesStart,
-) -> Result<LocationNode, Box<dyn Error>> {
+) -> Result<LocationNode, ParseError> {
     let mut node = LocationNode::default();
 
     for a in element.attributes() {
@@ -446,7 +426,7 @@ fn parse_location_node(
 fn parse_numerus_form_node(
     reader: &mut quick_xml::reader::Reader<BufReader<File>>,
     element: &quick_xml::events::BytesStart,
-) -> Result<NumerusFormNode, String> {
+) -> Result<NumerusFormNode, ParseError> {
     let mut node = NumerusFormNode::default();
 
     for a in element.attributes() {
@@ -467,27 +447,45 @@ fn parse_numerus_form_node(
     Ok(node)
 }
 
-fn parse_translation_node() -> Result<TranslationNode, String> {
-    Err("fuck".to_owned())
+fn parse_translation_node(
+    reader: &mut quick_xml::reader::Reader<BufReader<File>>,
+    element: &quick_xml::events::BytesStart,
+    shared_buf: &mut Vec<u8>,
+) -> Result<TranslationNode, ParseError> {
+    let mut node = TranslationNode::default();
+
+    if let Some(attr) = element.try_get_attribute("type")? {
+        node.translation_type = Some(TranslationType::from(attr.value));
+    }
+
+    match reader.read_event_into(shared_buf) {
+        Ok(Event::Text(text_element)) => {
+            node.translation_simple = Some(text_element.xml10_content()?.into_owned())
+        }
+        Ok(Event::Empty(start)) => {}
+        _ => {}
+    }
+    // TODO: handle complex
+    Ok(node)
 }
 
 fn read_raw_string(
     reader: &mut quick_xml::reader::Reader<BufReader<File>>,
     element: &quick_xml::events::BytesStart,
     shared_buf: &mut Vec<u8>,
-) -> Result<String, String> {
+) -> Result<String, ParseError> {
     let previous_name = reader.config_mut().check_end_names;
     reader.config_mut().check_end_names = false;
 
+    // TODO: proper restauration of configuration
     let content = reader
-        .read_text_into(element.to_end().name(), shared_buf)
-        .map_err(|e| e.to_string())
-        .and_then(|a| a.decode().map_err(|e| e.to_string()))
-        .map(|a| a.into_owned());
+        .read_text_into(element.to_end().name(), shared_buf)?
+        .decode()?
+        .into_owned();
 
     reader.config_mut().check_end_names = previous_name;
 
-    content
+    Ok(content)
 }
 
 // #[cfg(test)]
@@ -515,114 +513,25 @@ fn read_raw_string(
 // }
 
 #[cfg(test)]
-mod test {
-    use super::*;
+mod test_tsnode {
+    use rstest::rstest;
+    use std::str::FromStr;
 
-    // // TODO: Data set. https://github.com/qt/qttranslations/
-    // #[test]
-    // fn test_parse_with_numerus_forms() {
-    //     let f = quick_xml::Reader::from_file("./test_data/example1.xml")
-    //         .expect("Couldn't open example1 test file");
+    use crate::ts_next::TSNode;
 
-    //     let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
-    //     assert_eq!(data.contexts.len(), 2);
-    //     assert_eq!(data.version.unwrap(), "2.1");
-    //     assert_eq!(data.source_language.unwrap(), "en");
-    //     assert_eq!(data.language.unwrap(), "sv");
-
-    //     let context1 = &data.contexts[0];
-    //     assert_eq!(context1.name, "kernel/navigationpart");
-    //     assert_eq!(context1.messages.len(), 3);
-
-    //     let message_c1_2 = &context1.messages[1];
-    //     assert_eq!(message_c1_2.comment.as_ref().unwrap(), "Navigation part");
-    //     assert_eq!(message_c1_2.source.as_ref().unwrap(), "vztnewsletter");
-    //     assert_eq!(
-    //         message_c1_2
-    //             .translation
-    //             .as_ref()
-    //             .unwrap()
-    //             .translation_simple
-    //             .as_ref()
-    //             .unwrap(),
-    //         "vztnewsletter2"
-    //     );
-
-    //     let message_c1_3 = &context1.messages[2];
-    //     assert_eq!(message_c1_3.comment, None);
-    //     assert_eq!(
-    //         message_c1_3.source.as_ref().unwrap(),
-    //         "%1 takes at most %n argument(s). %2 is therefore invalid."
-    //     );
-    //     assert_eq!(
-    //         message_c1_3
-    //             .translation
-    //             .as_ref()
-    //             .unwrap()
-    //             .translation_simple,
-    //         None
-    //     );
-    //     let numerus_forms = &message_c1_3.translation.as_ref().unwrap().numerus_forms;
-    //     assert_eq!(numerus_forms.len(), 2);
-    //     assert_eq!(
-    //         numerus_forms[0].text,
-    //         "%1 prend au maximum %n argument. %2 est donc invalide."
-    //     );
-    //     assert_eq!(
-    //         numerus_forms[1].text,
-    //         "%1 prend au maximum %n arguments. %2 est donc invalide."
-    //     );
-    // }
-
-    // #[test]
-    // fn test_parse_with_locations() {
-    //     let f = quick_xml::Reader::from_file("./test_data/example_key_de.xml")
-    //         .expect("Couldn't open example1 test file");
-
-    //     let data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
-    //     assert_eq!(data.contexts.len(), 1);
-    //     assert_eq!(data.version.unwrap(), "1.1");
-    //     assert_eq!(data.source_language, None);
-    //     assert_eq!(data.language.unwrap(), "de");
-
-    //     let context1 = &data.contexts[0];
-    //     assert_eq!(context1.name, "tst_QKeySequence");
-    //     assert_eq!(context1.messages.len(), 11);
-    //     let message_c1_2 = &context1.messages[2];
-    //     let locations = &message_c1_2.locations;
-    //     assert_eq!(locations.len(), 2);
-    //     assert_eq!(
-    //         locations[0].filename.as_ref().unwrap(),
-    //         "tst_qkeysequence.cpp"
-    //     );
-    //     assert_eq!(locations[0].line.as_ref().unwrap(), &150u32);
-    //     assert_eq!(
-    //         locations[1].filename.as_ref().unwrap(),
-    //         "tst_qkeysequence.cpp"
-    //     );
-    //     assert_eq!(locations[1].line.as_ref().unwrap(), &371u32);
-    //     let translation = &message_c1_2.translation.as_ref().unwrap();
-    //     assert_eq!(translation.translation_simple.as_ref().unwrap(), "Alt+K");
-    //     assert_eq!(
-    //         translation.translation_type,
-    //         Some(TranslationType::Obsolete)
-    //     );
-    // }
-
-    #[test]
-    fn test_parse_with_embedded_bytes() {
-        // Test that having an xml tag in the source or translation does not cause
-        // parser to crash.
-        let data = TSNode::from_file(Path::new("./test_data/304_embedded_xml.ts"))
-            .expect("Could not open test file.");
+    #[rstest]
+    #[case("version=\"\"", Some(""))]
+    #[case("version=\"2.1\"", Some("2.1"))]
+    #[case("", None)]
+    fn test_parses_version(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+        let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
+        let node = TSNode::from_str(&raw).expect("Parses.");
 
         assert_eq!(
-            data.contexts[0].messages[0]
-                .source
+            node.version
                 .as_ref()
-                .unwrap()
-                .to_string(),
-            "source contains <byte value=\"xD\"/> some text.".to_owned()
+                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+            expected_parsed
         );
     }
 }
@@ -639,8 +548,9 @@ mod test_yesno {
     #[case(b"Yes")]
     #[case(b"yEs")]
     #[case(b"yeS")]
-    fn test_from_cow_should_match_yes(#[case] case: &[u8]) {
-        let actual = YesNo::from(std::borrow::Cow::Borrowed(case));
+    #[case(b" yes ")]
+    fn test_from_cow_should_match_yes(#[case] attr_value: &[u8]) {
+        let actual = YesNo::from(std::borrow::Cow::Borrowed(attr_value));
         assert_eq!(YesNo::Yes, actual);
     }
 
@@ -649,9 +559,10 @@ mod test_yesno {
     #[case(b"NO")]
     #[case(b"No")]
     #[case(b"nO")]
+    #[case(b" no ")]
     #[case(b"")]
-    fn test_from_cow_should_match_no(#[case] case: &[u8]) {
-        let actual = YesNo::from(std::borrow::Cow::Borrowed(case));
+    fn test_from_cow_should_match_no(#[case] attr_value: &[u8]) {
+        let actual = YesNo::from(std::borrow::Cow::Borrowed(attr_value));
         assert_eq!(YesNo::No, actual);
     }
 }
@@ -667,8 +578,11 @@ mod test_translation_type {
     #[case(b"fiNIshed", TranslationType::Finished)]
     #[case(b"VAnishEd", TranslationType::Vanished)]
     #[case(b"obsoLETE", TranslationType::Obsolete)]
-    fn from_cow_should_return_correct_value(#[case] cow: &[u8], #[case] expected: TranslationType) {
-        let actual = TranslationType::from(std::borrow::Cow::Borrowed(cow));
+    fn from_cow_should_return_correct_value(
+        #[case] attr_value: &[u8],
+        #[case] expected: TranslationType,
+    ) {
+        let actual = TranslationType::from(std::borrow::Cow::Borrowed(attr_value));
         assert_eq!(expected, actual);
     }
 }
