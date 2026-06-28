@@ -1,15 +1,11 @@
+use crate::parse_error::ParseError;
 use log::debug;
-use quick_xml::events::Event;
+use quick_xml::Reader;
+use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Cursor};
-use std::path::Path;
-use std::rc::Rc;
-use std::str::FromStr;
-
-use crate::parse_error::ParseError;
 
 type TsBytes<'a> = Cow<'a, [u8]>;
 // This file defines the schema matching (or trying to match?) Qt's XSD
@@ -62,20 +58,66 @@ impl<'a> From<Cow<'a, [u8]>> for YesNo {
     }
 }
 
+pub struct TsParser {
+    buf: Vec<u8>,
+}
+
+impl TsParser {
+    pub fn new(buf: Vec<u8>) -> Self {
+        Self { buf }
+    }
+
+    // Zero-copy extraction linked directly to the original input buffer lifetime 'a
+    pub fn parse(&mut self) -> TSNode<'_> {
+        let mut reader = Reader::from_reader(self.buf.as_slice());
+        let mut ts_node: TSNode<'_> = TSNode::default();
+        let mut inner_buf = Vec::new();
+
+        loop {
+            // TODO: does not work for ownership
+            {
+                let event = reader
+                    .read_event_into(&mut inner_buf)
+                    .expect("Error reading event");
+                match event {
+                    Event::Eof => break,
+                    Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
+                        println!("Found {:#?}", e.name());
+
+                        ts_node.set_attributes(e);
+                    }
+                    // Ok(Event::Start(e)) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
+                    //     // todo: check we are in a TS.
+                    //     println!("Context");
+                    //     let mut ctx = ContextNode::default();
+                    //     e.attributes().flatten().for_each(|a| match a.key.as_ref() {
+                    //         b"name" => ctx.name = Some(a.value),
+                    //         b"encoding" => ctx.encoding = Some(a.value),
+                    //         _ => debug!("Unknown attribute: {:?}", a.key),
+                    //     });
+                    // }
+                    // Err(_todo) => (),
+                    _ => (),
+                }
+            }
+        }
+
+        ts_node
+    }
+}
+
 /// Root node of the translation file.
 #[derive(Debug, Default, PartialEq)]
 pub struct TSNode<'a> {
-    buf: Rc<Vec<u8>>,
     /// Defines the version of the TS format, although unused by this tool.
     /// attribute -- do not serialize if missing
     pub version: Option<TsBytes<'a>>,
     /// Source language on which this translation is based on.
-    /// #[serde(rename = "@sourcelanguage", skip_serializing_if = "Option::is_none")]
     pub source_language: Option<TsBytes<'a>>,
     /// Language of this translation.
     pub language: Option<TsBytes<'a>>,
-    //     /// Translations attached to a context
-    pub contexts: Vec<ContextNode>,
+    /// Translations attached to a context
+    pub contexts: Vec<ContextNode<'a>>,
     //     /// #[serde(skip_serializing_if = "Option::is_none")]
     //     pub dependencies: Option<DependenciesNode>,
     //     /// Translation comment.
@@ -118,6 +160,20 @@ pub struct TSNode<'a> {
     //     pub loc_feature: Option<String>,
     //     ///#[serde(rename = "extra-loc-blank", skip_serializing_if = "Option::is_none")]
     //     pub loc_blank: Option<String>,
+}
+
+impl<'a> TSNode<'a> {
+    fn set_attributes(&mut self, element: &BytesStart) {
+        element
+            .attributes()
+            .flatten()
+            .for_each(|a| match a.key.as_ref() {
+                b"version" => self.version = Some(Cow::Owned(a.value.into_owned())),
+                b"sourcelanguage" => self.source_language = Some(Cow::Owned(a.value.into_owned())),
+                b"language" => self.language = Some(Cow::Owned(a.value.into_owned())),
+                _ => debug!("Unknown attribute: {:?}", a.key),
+            });
+    }
 }
 
 /// Context and its associated translated message.
@@ -317,70 +373,20 @@ impl PartialOrd<Self> for LocationNode {
     }
 }
 
-impl PartialOrd<Self> for ContextNode {
+impl<'a> PartialOrd<Self> for ContextNode<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for ContextNode {
+impl<'a> Ord for ContextNode<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
-        self.name.to_lowercase().cmp(&other.name.to_lowercase())
-    }
-}
-
-impl<'a> FromStr for TSNode<'a> {
-    type Err = ParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let cursor = Cursor::new(s);
-        let reader = quick_xml::Reader::from_reader(cursor);
-        TSNode::from_reader(reader)
-    }
-}
-
-impl<'a> TSNode<'a> {
-    fn from_file(path: &Path) -> Result<Self, ParseError> {
-        let reader = quick_xml::Reader::from_file(path)?;
-        TSNode::from_reader(reader)
-    }
-
-    fn from_reader(reader: quick_xml::Reader<impl BufRead>) -> Result<Self, ParseError> {
-        let mut reader = quick_xml::Reader::from_reader(reader).into_inner();
-        let mut ts_node: TSNode<'a> = TSNode::default();
-        let buf: Rc<RefCell<Vec<u8>>> = Rc::new(RefCell::new(Vec::new()));
-        // TODO: does not work for ownership
-        {
-            match reader.read_event_into(buf.borrow_mut()) {
-                Ok(Event::Eof) => (),
-                Ok(Event::Start(e)) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
-                    println!("Found {:#?}", e.name());
-
-                    e.attributes()
-                        .flatten()
-                        .for_each(|attr| match attr.key.as_ref() {
-                            b"version" => ts_node.version = Some(attr.value),
-                            b"sourcelanguage" => ts_node.source_language = Some(attr.value),
-                            b"language" => ts_node.language = Some(attr.value),
-                            _ => debug!("Unknown attribute: {:?}", attr.key),
-                        });
-                }
-                Ok(Event::Start(e)) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
-                    // todo: check we are in a TS.
-                    println!("Context");
-                    let mut ctx = ContextNode::default();
-                    e.attributes().flatten().for_each(|a| match a.key.as_ref() {
-                        b"name" => ctx.name = Some(a.value),
-                        b"encoding" => ctx.encoding = Some(a.value),
-                    });
-                }
-                Err(_todo) => (),
-                _ => (),
-            }
-        }
-
-        Ok(ts_node)
+        self.name
+            .as_ref()
+            .unwrap()
+            .to_ascii_lowercase()
+            .cmp(&other.name.as_ref().unwrap().to_ascii_lowercase())
     }
 }
 
@@ -515,9 +521,8 @@ fn read_raw_string(
 #[cfg(test)]
 mod test_tsnode {
     use rstest::rstest;
-    use std::str::FromStr;
 
-    use crate::ts_next::TSNode;
+    use crate::ts_next::{TSNode, TsParser};
 
     #[rstest]
     #[case("version=\"\"", Some(""))]
@@ -525,10 +530,47 @@ mod test_tsnode {
     #[case("", None)]
     fn test_parses_version(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
         let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
-        let node = TSNode::from_str(&raw).expect("Parses.");
+        let mut parser = TsParser::new(raw.as_bytes().into());
+        let node = parser.parse();
 
         assert_eq!(
             node.version
+                .as_ref()
+                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+            expected_parsed
+        );
+    }
+
+    #[rstest]
+    #[case("sourcelanguage=\"\"", Some(""))]
+    #[case("sourcelanguage=\"en\"", Some("en"))]
+    #[case("sourcelanguage=\"en_US\"", Some("en_US"))]
+    #[case("", None)]
+    fn test_parses_sourcelanguage(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+        let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
+        let mut parser = TsParser::new(raw.as_bytes().into());
+        let node = parser.parse();
+
+        assert_eq!(
+            node.source_language
+                .as_ref()
+                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+            expected_parsed
+        );
+    }
+
+    #[rstest]
+    #[case("language=\"\"", Some(""))]
+    #[case("language=\"en\"", Some("en"))]
+    #[case("language=\"en_US\"", Some("en_US"))]
+    #[case("", None)]
+    fn test_parses_language(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+        let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
+        let mut parser = TsParser::new(raw.as_bytes().into());
+        let node = parser.parse();
+
+        assert_eq!(
+            node.language
                 .as_ref()
                 .map(|s| str::from_utf8(&s).expect("valid utf8")),
             expected_parsed
