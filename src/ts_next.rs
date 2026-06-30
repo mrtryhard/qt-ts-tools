@@ -1,11 +1,8 @@
-use crate::parse_error::ParseError;
 use log::debug;
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Cursor};
 
 type TsBytes<'a> = Cow<'a, [u8]>;
 // This file defines the schema matching (or trying to match?) Qt's XSD
@@ -74,31 +71,22 @@ impl TsParser {
         let mut inner_buf = Vec::new();
 
         loop {
-            // TODO: does not work for ownership
-            {
-                let event = reader
-                    .read_event_into(&mut inner_buf)
-                    .expect("Error reading event");
-                match event {
-                    Event::Eof => break,
-                    Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
-                        println!("Found {:#?}", e.name());
+            let event = reader
+                .read_event_into(&mut inner_buf)
+                .expect("Error reading event");
+            if let Event::Start(ref ev) = event {
+                debug!("Found {:#?}", ev.name());
+            }
 
-                        ts_node.set_attributes(e);
-                    }
-                    // Ok(Event::Start(e)) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
-                    //     // todo: check we are in a TS.
-                    //     println!("Context");
-                    //     let mut ctx = ContextNode::default();
-                    //     e.attributes().flatten().for_each(|a| match a.key.as_ref() {
-                    //         b"name" => ctx.name = Some(a.value),
-                    //         b"encoding" => ctx.encoding = Some(a.value),
-                    //         _ => debug!("Unknown attribute: {:?}", a.key),
-                    //     });
-                    // }
-                    // Err(_todo) => (),
-                    _ => (),
+            match event {
+                Event::Eof => {
+                    debug!("EOF detected");
+                    break;
                 }
+                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
+                    ts_node.parse(&mut reader, e);
+                }
+                _ => (),
             }
         }
 
@@ -118,8 +106,7 @@ pub struct TSNode<'a> {
     pub language: Option<TsBytes<'a>>,
     /// Translations attached to a context
     pub contexts: Vec<ContextNode<'a>>,
-    //     /// #[serde(skip_serializing_if = "Option::is_none")]
-    //     pub dependencies: Option<DependenciesNode>,
+    //pub dependencies: Option<DependenciesNode>,
     //     /// Translation comment.
     //     /// #[serde(skip_serializing_if = "Option::is_none")]
     //     pub comment: Option<String>,
@@ -163,7 +150,38 @@ pub struct TSNode<'a> {
 }
 
 impl<'a> TSNode<'a> {
-    fn set_attributes(&mut self, element: &BytesStart) {
+    fn parse(&mut self, reader: &mut Reader<&[u8]>, element: &BytesStart) {
+        self.set_attr(element);
+
+        let mut inner_buf = Vec::new();
+
+        loop {
+            let event = reader
+                .read_event_into(&mut inner_buf)
+                .expect("Error reading event");
+            if let Event::Start(ref ev) = event {
+                debug!("Found {:#?}", ev.name());
+            }
+
+            match event {
+                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
+                    debug!("Found context");
+                    let mut context_node = ContextNode::default();
+                    e.attributes().flatten().for_each(|a| match a.key.as_ref() {
+                        b"encoding" => {
+                            context_node.encoding = Some(Cow::Owned(a.value.into_owned()))
+                        }
+                        _ => debug!("Unknown attribute: {:?}", a.key),
+                    });
+                    self.contexts.push(context_node);
+                }
+                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => break,
+                _ => debug!("Unknown event: {:?}", event),
+            }
+        }
+    }
+
+    fn set_attr(&mut self, element: &BytesStart) {
         element
             .attributes()
             .flatten()
@@ -390,139 +408,60 @@ impl<'a> Ord for ContextNode<'a> {
     }
 }
 
-fn parse_dependency_node(
-    element: &quick_xml::events::BytesStart,
-) -> Result<Dependency, ParseError> {
-    let mut node = Dependency::default();
-
-    for a in element.attributes() {
-        if let Ok(attr) = a {
-            match attr.key.as_ref() {
-                b"catalog" => node.catalog = String::from_utf8(attr.value.into_owned())?,
-                _ => (),
-            }
-        }
-    }
-
-    Ok(node)
-}
-
-/// OK
-fn parse_location_node(
-    element: &quick_xml::events::BytesStart,
-) -> Result<LocationNode, ParseError> {
-    let mut node = LocationNode::default();
-
-    for a in element.attributes() {
-        if let Ok(attr) = a {
-            match attr.key.as_ref() {
-                b"filename" => node.filename = Some(String::from_utf8(attr.value.into_owned())?),
-                b"line" => {
-                    node.line = Some(std::str::from_utf8(&attr.value.into_owned())?.parse::<u32>()?)
-                }
-
-                _ => (),
-            }
-        }
-    }
-
-    Ok(node)
-}
-
-fn parse_numerus_form_node(
-    reader: &mut quick_xml::reader::Reader<BufReader<File>>,
-    element: &quick_xml::events::BytesStart,
-) -> Result<NumerusFormNode, ParseError> {
-    let mut node = NumerusFormNode::default();
-
-    for a in element.attributes() {
-        if let Ok(attr) = a {
-            match attr.key.as_ref() {
-                b"variants" => match attr.value.to_ascii_lowercase().as_slice() {
-                    b"yes" => node.variants = Some(YesNo::Yes),
-                    _ => node.variants = Some(YesNo::No),
-                },
-                _ => (),
-            }
-        }
-    }
-
-    let mut buf = vec![];
-    node.text = read_raw_string(reader, element, &mut buf)?;
-
-    Ok(node)
-}
-
-fn parse_translation_node(
-    reader: &mut quick_xml::reader::Reader<BufReader<File>>,
-    element: &quick_xml::events::BytesStart,
-    shared_buf: &mut Vec<u8>,
-) -> Result<TranslationNode, ParseError> {
-    let mut node = TranslationNode::default();
-
-    if let Some(attr) = element.try_get_attribute("type")? {
-        node.translation_type = Some(TranslationType::from(attr.value));
-    }
-
-    match reader.read_event_into(shared_buf) {
-        Ok(Event::Text(text_element)) => {
-            node.translation_simple = Some(text_element.xml10_content()?.into_owned())
-        }
-        Ok(Event::Empty(start)) => {}
-        _ => {}
-    }
-    // TODO: handle complex
-    Ok(node)
-}
-
-fn read_raw_string(
-    reader: &mut quick_xml::reader::Reader<BufReader<File>>,
-    element: &quick_xml::events::BytesStart,
-    shared_buf: &mut Vec<u8>,
-) -> Result<String, ParseError> {
-    let previous_name = reader.config_mut().check_end_names;
-    reader.config_mut().check_end_names = false;
-
-    // TODO: proper restauration of configuration
-    let content = reader
-        .read_text_into(element.to_end().name(), shared_buf)?
-        .decode()?
-        .into_owned();
-
-    reader.config_mut().check_end_names = previous_name;
-
-    Ok(content)
-}
-
-// #[cfg(test)]
-// mod write_file_test {
-//     use super::*;
-
-//     #[test]
-//     fn test_write_to_output_file() {
-//         const OUTPUT_TEST_FILE: &str = "./test_data/test_result_write_to_ts.xml";
-
-//         let reader = quick_xml::Reader::from_file("./test_data/example1.xml")
-//             .expect("Couldn't open example1 test file");
-
-//         let data: TSNode = quick_xml::de::from_reader(reader.into_inner()).expect("Parsable");
-
-//         write_to_output(&Some(OUTPUT_TEST_FILE.to_owned()), &data).expect("Output");
-
-//         let f =
-//             quick_xml::Reader::from_file(OUTPUT_TEST_FILE).expect("Couldn't open output test file");
-
-//         let output_data: TSNode = quick_xml::de::from_reader(f.into_inner()).expect("Parsable");
-//         std::fs::remove_file(OUTPUT_TEST_FILE).expect("Test should clean test file.");
-//         assert_eq!(data, output_data);
-//     }
+//
+// fn read_raw_string(
+//     reader: &mut quick_xml::reader::Reader<BufReader<File>>,
+//     element: &quick_xml::events::BytesStart,
+//     shared_buf: &mut Vec<u8>,
+// ) -> Result<String, ParseError> {
+//     let previous_name = reader.config_mut().check_end_names;
+//     reader.config_mut().check_end_names = false;
+//
+//     // TODO: proper restauration of configuration
+//     let content = reader
+//         .read_text_into(element.to_end().name(), shared_buf)?
+//         .decode()?
+//         .into_owned();
+//
+//     reader.config_mut().check_end_names = previous_name;
+//
+//     Ok(content)
 // }
 
 #[cfg(test)]
 mod test_tsnode {
     use rstest::rstest;
 
-    use crate::ts_next::{TSNode, TsParser};
+    use crate::ts_next::TsParser;
+
+    fn init() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
+
+    mod test_context_node {
+        use crate::ts_next::TsParser;
+        use crate::ts_next::test_tsnode::init;
+        use rstest::rstest;
+
+        #[rstest]
+        #[case("", None)]
+        #[case("encoding=\"\"", Some(""))]
+        #[case("encoding=\"utf-8\"", Some("utf-8"))]
+        fn test_context_node_encoding(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(r#"<!DOCTYPE TS><ts><context {}></context></ts>"#, raw);
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse();
+            assert!(!node.contexts.is_empty());
+            assert_eq!(
+                node.contexts[0]
+                    .encoding
+                    .as_ref()
+                    .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                expected_parsed
+            );
+        }
+    }
 
     #[rstest]
     #[case("version=\"\"", Some(""))]
