@@ -166,19 +166,51 @@ impl<'a> TSNode<'a> {
             match event {
                 Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
                     debug!("Found context");
-                    let mut context_node = ContextNode::default();
-                    e.attributes().flatten().for_each(|a| match a.key.as_ref() {
-                        b"encoding" => {
-                            context_node.encoding = Some(Cow::Owned(a.value.into_owned()))
-                        }
-                        _ => debug!("Unknown attribute: {:?}", a.key),
-                    });
+                    let context_node =  TSNode::parse_context_node(reader, e);
                     self.contexts.push(context_node);
                 }
                 Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => break,
                 _ => debug!("Unknown event: {:?}", event),
             }
         }
+    }
+
+    fn parse_context_node(reader: &mut Reader<&[u8]>, element: &BytesStart) -> ContextNode<'a> {
+        let mut context_node = ContextNode::default();
+        let mut inner_buf = Vec::new();
+        let mut current_tag = 1; // NAME
+        loop {
+            let event = reader
+                .read_event_into(&mut inner_buf)
+                .expect("Error reading event");
+            if let Event::Start(ref ev) = event {
+                debug!("Found {:#?}", ev.name());
+            }
+
+            match event {
+                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"name") => {
+                    debug!("Found name");
+                    current_tag = 1;
+                }
+                Event::Text(ref e) => {
+                    match current_tag {
+                        1 => context_node.name = Some(TsBytes::Owned(e.to_vec())),
+                        _ => {}
+                    }
+                }
+                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => break,
+                _ => debug!("Unknown event: {:?}", event),
+            }
+        }
+
+        element.attributes().flatten().for_each(|a| match a.key.as_ref() {
+            b"encoding" => {
+                context_node.encoding = Some(Cow::Owned(a.value.into_owned()))
+            }
+            _ => debug!("Unknown attribute: {:?}", a.key),
+        });
+
+        context_node
     }
 
     fn set_attr(&mut self, element: &BytesStart) {
@@ -461,6 +493,24 @@ mod test_tsnode {
                 expected_parsed
             );
         }
+    }
+
+    #[rstest]
+    #[case("", None)]
+    #[case("some_name", Some("some_name"))]
+    fn test_context_node_name(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+        init();
+        let raw = format!(r#"<!DOCTYPE TS><ts><context>{}</context></ts>"#, raw);
+        let mut parser = TsParser::new(raw.as_bytes().into());
+        let node = parser.parse();
+        assert!(!node.contexts.is_empty());
+        assert_eq!(
+            node.contexts[0]
+                .name
+                .as_ref()
+                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+            expected_parsed
+        );
     }
 
     #[rstest]
