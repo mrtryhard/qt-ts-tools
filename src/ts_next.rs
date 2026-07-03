@@ -178,7 +178,7 @@ impl<'a> TSNode<'a> {
     fn parse_context_node(reader: &mut Reader<&[u8]>, element: &BytesStart) -> ContextNode<'a> {
         let mut context_node = ContextNode::default();
         let mut inner_buf = Vec::new();
-        let mut current_tag = 1; // NAME
+        let mut current_tag = 0; // NAME
         loop {
             let event = reader
                 .read_event_into(&mut inner_buf)
@@ -192,13 +192,25 @@ impl<'a> TSNode<'a> {
                     debug!("Found name");
                     current_tag = 1;
                 }
+                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"comment") => {
+                    debug!("Found comment");
+                    current_tag = 2;
+                }
                 Event::Text(ref e) => {
+                    debug!("Found text: {:#?}", e);
                     match current_tag {
                         1 => context_node.name = Some(TsBytes::Owned(e.to_vec())),
+                        2 => context_node.comment = Some(TsBytes::Owned(e.to_vec())),
                         _ => {}
                     }
                 }
                 Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => break,
+                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"name") => {
+                    current_tag = 0;
+                },
+                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"comment") => {
+                    current_tag = 0;
+                }
                 _ => debug!("Unknown event: {:?}", event),
             }
         }
@@ -236,7 +248,7 @@ pub struct ContextNode<'a> {
     pub messages: Vec<MessageNode>,
     /// Comment describing information about the context
     ///#[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>,
+    pub comment: Option<TsBytes<'a>>,
     /// Encoding of the messages within that context.
     ///#[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
     pub encoding: Option<TsBytes<'a>>,
@@ -440,26 +452,6 @@ impl<'a> Ord for ContextNode<'a> {
     }
 }
 
-//
-// fn read_raw_string(
-//     reader: &mut quick_xml::reader::Reader<BufReader<File>>,
-//     element: &quick_xml::events::BytesStart,
-//     shared_buf: &mut Vec<u8>,
-// ) -> Result<String, ParseError> {
-//     let previous_name = reader.config_mut().check_end_names;
-//     reader.config_mut().check_end_names = false;
-//
-//     // TODO: proper restauration of configuration
-//     let content = reader
-//         .read_text_into(element.to_end().name(), shared_buf)?
-//         .decode()?
-//         .into_owned();
-//
-//     reader.config_mut().check_end_names = previous_name;
-//
-//     Ok(content)
-// }
-
 #[cfg(test)]
 mod test_tsnode {
     use rstest::rstest;
@@ -493,24 +485,44 @@ mod test_tsnode {
                 expected_parsed
             );
         }
-    }
 
-    #[rstest]
-    #[case("", None)]
-    #[case("some_name", Some("some_name"))]
-    fn test_context_node_name(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
-        init();
-        let raw = format!(r#"<!DOCTYPE TS><ts><context>{}</context></ts>"#, raw);
-        let mut parser = TsParser::new(raw.as_bytes().into());
-        let node = parser.parse();
-        assert!(!node.contexts.is_empty());
-        assert_eq!(
-            node.contexts[0]
-                .name
-                .as_ref()
-                .map(|s| str::from_utf8(&s).expect("valid utf8")),
-            expected_parsed
-        );
+        #[rstest]
+        #[case("", None)]
+        #[case("<name></name>", None)]
+        #[case("<name>some_name</name>", Some("some_name"))]
+        fn test_context_node_name(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(r#"<!DOCTYPE TS><ts><context>{}</context></ts>"#, raw);
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse();
+            assert!(!node.contexts.is_empty());
+            assert_eq!(
+                node.contexts[0]
+                    .name
+                    .as_ref()
+                    .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<comment></comment>", None)]
+        #[case("<comment>commentaire</comment>", Some("commentaire"))]
+        fn test_context_node_comment(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(r#"<!DOCTYPE TS><ts><context>{}</context></ts>"#, raw);
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse();
+            assert!(!node.contexts.is_empty());
+            assert_eq!(
+                node.contexts[0]
+                    .comment
+                    .as_ref()
+                    .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                expected_parsed
+            );
+        }
     }
 
     #[rstest]
