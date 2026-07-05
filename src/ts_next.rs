@@ -1,4 +1,5 @@
-use log::debug;
+use crate::parse_error::ParseError;
+use log::{debug, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
@@ -151,7 +152,7 @@ pub struct TSNode<'a> {
 
 impl<'a> TSNode<'a> {
     fn parse(&mut self, reader: &mut Reader<&[u8]>, element: &BytesStart) {
-        self.set_attr(element);
+        self.assign_attributes(element);
 
         let mut inner_buf = Vec::new();
 
@@ -166,8 +167,10 @@ impl<'a> TSNode<'a> {
             match event {
                 Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
                     debug!("Found context");
-                    let context_node =  TSNode::parse_context_node(reader, e);
-                    self.contexts.push(context_node);
+                    ContextNode::from_reader(reader, e)
+                        .map(|n| self.contexts.push(n))
+                        .map_err(|e| debug!("Error parsing context node: {:?}", e))
+                        .expect("Expected to succeed"); // TODO: improve that.
                 }
                 Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => break,
                 _ => debug!("Unknown event: {:?}", event),
@@ -175,57 +178,7 @@ impl<'a> TSNode<'a> {
         }
     }
 
-    fn parse_context_node(reader: &mut Reader<&[u8]>, element: &BytesStart) -> ContextNode<'a> {
-        let mut context_node = ContextNode::default();
-        let mut inner_buf = Vec::new();
-        let mut current_tag = 0; // NAME
-        loop {
-            let event = reader
-                .read_event_into(&mut inner_buf)
-                .expect("Error reading event");
-            if let Event::Start(ref ev) = event {
-                debug!("Found {:#?}", ev.name());
-            }
-
-            match event {
-                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"name") => {
-                    debug!("Found name");
-                    current_tag = 1;
-                }
-                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"comment") => {
-                    debug!("Found comment");
-                    current_tag = 2;
-                }
-                Event::Text(ref e) => {
-                    debug!("Found text: {:#?}", e);
-                    match current_tag {
-                        1 => context_node.name = Some(TsBytes::Owned(e.to_vec())),
-                        2 => context_node.comment = Some(TsBytes::Owned(e.to_vec())),
-                        _ => {}
-                    }
-                }
-                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => break,
-                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"name") => {
-                    current_tag = 0;
-                },
-                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"comment") => {
-                    current_tag = 0;
-                }
-                _ => debug!("Unknown event: {:?}", event),
-            }
-        }
-
-        element.attributes().flatten().for_each(|a| match a.key.as_ref() {
-            b"encoding" => {
-                context_node.encoding = Some(Cow::Owned(a.value.into_owned()))
-            }
-            _ => debug!("Unknown attribute: {:?}", a.key),
-        });
-
-        context_node
-    }
-
-    fn set_attr(&mut self, element: &BytesStart) {
+    fn assign_attributes(&mut self, element: &BytesStart) {
         element
             .attributes()
             .flatten()
@@ -449,6 +402,84 @@ impl<'a> Ord for ContextNode<'a> {
             .unwrap()
             .to_ascii_lowercase()
             .cmp(&other.name.as_ref().unwrap().to_ascii_lowercase())
+    }
+}
+
+impl<'a> ContextNode<'a> {
+    fn from_reader(
+        reader: &mut Reader<&[u8]>,
+        element: &BytesStart,
+    ) -> Result<ContextNode<'a>, ParseError> {
+        #[derive(Debug)]
+        enum Tag {
+            None,
+            Name,
+            Comment,
+            Messages,
+        }
+        let mut context_node = ContextNode::default();
+        let mut inner_buf = Vec::new();
+        let mut current_tag = Tag::None;
+        loop {
+            let event = reader
+                .read_event_into(&mut inner_buf)
+                .expect("Error reading event");
+            if let Event::Start(ref ev) = event {
+                debug!("Found {:#?}", ev.name());
+            }
+
+            match event {
+                Event::Start(ref e) => {
+                    debug!("Found element \"{e:#?}\"");
+
+                    if let Tag::None = current_tag {
+                        // TODO: better logging or error message?
+                        return Err(ParseError::from("Unexpected tag opening"));
+                    }
+
+                    current_tag = match e.name().as_ref() {
+                        b"name" => Tag::Name,
+                        b"comment" => Tag::Comment,
+                        b"messages" => Tag::Messages,
+                        _ => {
+                            warn!("Unknown field: {e:#?}");
+                            Tag::None
+                        }
+                    };
+
+                    debug!("Found tag {current_tag:#?}");
+                }
+                Event::Text(ref e) => {
+                    debug!("Found text: {:#?}", e);
+                    let text = Some(TsBytes::Owned(e.to_vec()));
+                    match current_tag {
+                        Tag::Name => context_node.name = text,
+                        Tag::Comment => context_node.comment = text,
+                        Tag::Messages => {}
+                        _ => {} // TODO: better logging or error message?
+                    }
+                }
+
+                Event::End(ref e) => {
+                    if e.name().as_ref().eq_ignore_ascii_case(b"context") {
+                        break;
+                    }
+                    // TODO: detect malformed XML by validating against current_tag vs what ended.
+                    current_tag = Tag::None;
+                }
+                _ => debug!("Unknown event: {:?}", event),
+            }
+        }
+
+        element
+            .attributes()
+            .flatten()
+            .for_each(|a| match a.key.as_ref() {
+                b"encoding" => context_node.encoding = Some(Cow::Owned(a.value.into_owned())),
+                _ => debug!("Unknown attribute: {:?}", a.key),
+            });
+
+        Ok(context_node)
     }
 }
 

@@ -12,6 +12,12 @@ pub struct ParseError {
     err: String,
 }
 
+impl From<&str> for ParseError {
+    fn from(value: &str) -> Self {
+        ParseError { err: value.to_string() }
+    }
+}
+
 impl From<FromUtf8Error> for ParseError {
     fn from(value: FromUtf8Error) -> Self {
         ParseError {
