@@ -1,5 +1,5 @@
 use crate::parse_error::ParseError;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
@@ -70,6 +70,7 @@ impl TsParser {
         let mut reader = Reader::from_reader(self.buf.as_slice());
         let mut ts_node: TSNode<'_> = TSNode::default();
         let mut inner_buf = Vec::new();
+        reader.config_mut().expand_empty_elements = true;
 
         loop {
             let event = reader
@@ -173,7 +174,7 @@ impl<'a> TSNode<'a> {
                         .expect("Expected to succeed"); // TODO: improve that.
                 }
                 Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => break,
-                _ => debug!("Unknown event: {:?}", event),
+                _ => debug!("TsNode: unknown event: {:?}", event),
             }
         }
     }
@@ -197,13 +198,10 @@ pub struct ContextNode<'a> {
     /// Unique name of the context
     pub name: Option<TsBytes<'a>>,
     /// List of translation messages
-    ///#[serde(rename = "message")]
-    pub messages: Vec<MessageNode>,
+    pub messages: Vec<MessageNode<'a>>,
     /// Comment describing information about the context
-    ///#[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<TsBytes<'a>>,
     /// Encoding of the messages within that context.
-    ///#[serde(rename = "@encoding", skip_serializing_if = "Option::is_none")]
     pub encoding: Option<TsBytes<'a>>,
 }
 
@@ -218,69 +216,43 @@ pub struct Dependency {
 }
 
 /// Translation message node.
-#[derive(Debug, Eq, Clone, PartialEq)]
-pub struct MessageNode {
+#[derive(Debug, Default, Eq, Clone, PartialEq)]
+pub struct MessageNode<'a> {
     /// Original string to translate
-    ///    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<String>,
+    pub source: Option<TsBytes<'a>>,
     /// Old source before a merge. Merging will set that field.
-    ///  #[serde(rename = "oldsource", skip_serializing_if = "Option::is_none")]
-    pub old_source: Option<String>,
+    pub old_source: Option<TsBytes<'a>>,
     /// Translation in the target language.
-    ///#[serde(skip_serializing_if = "Option::is_none")]
     pub translation: Option<TranslationNode>,
     /// Lines and files in which the translation message is used.
-    ///#[serde(skip_serializing_if = "Vec::is_empty", rename = "location", default)]
     pub locations: Vec<LocationNode>,
     /// This is "disambiguation" in the (new) API, or "msgctxt" in gettext speak
-    ///#[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>,
+    pub comment: Option<TsBytes<'a>>,
     /// Previous content of comment (result of merge)
-    ///#[serde(rename = "oldcomment", skip_serializing_if = "Option::is_none")]
-    pub old_comment: Option<String>,
+    pub old_comment: Option<TsBytes<'a>>,
     /// The real comment (added by developer/designer)
-    ///#[serde(rename = "extracomment", skip_serializing_if = "Option::is_none")]
-    pub extra_comment: Option<String>,
+    pub extra_comment: Option<TsBytes<'a>>,
     /// Comment added by translator
-    ///#[serde(rename = "translatorcomment", skip_serializing_if = "Option::is_none")]
-    pub translator_comment: Option<String>,
+    pub translator_comment: Option<TsBytes<'a>>,
     /// Support for the plural forms
-    ///#[serde(rename = "@numerus", skip_serializing_if = "Option::is_none")]
     pub numerus: Option<YesNo>,
     /// Message unique id (not guaranteed to be existant)
-    ///#[serde(rename = "@id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
+    pub id: Option<TsBytes<'a>>,
     /// Extra information
-    ///#[serde(skip_serializing_if = "Option::is_none")]
-    pub userdata: Option<String>,
+    pub userdata: Option<TsBytes<'a>>,
     /*
        Following section corresponds to `extra-something` in Qt's XSD. From documentation:
        > extra elements may appear in TS and message elements. Each element may appear
        > only once within each scope. The contents are preserved verbatim; any
        > attributes are dropped.
     */
-    ///#[serde(
-    ///  rename = "extra-po-msgid_plural",
-    ///skip_serializing_if = "Option::is_none"
-    ///)]
-    pub po_msg_id_plural: Option<String>,
-    ///#[serde(
-    ///  rename = "extra-po-old_msgid_plural",
-    ///skip_serializing_if = "Option::is_none"
-    ///)]
-    pub po_old_msg_id_plural: Option<String>,
+    pub po_msg_id_plural: Option<TsBytes<'a>>,
+    pub po_old_msg_id_plural: Option<TsBytes<'a>>,
     /// Comma separated list
-    ///#[serde(rename = "extra-po-flags", skip_serializing_if = "Option::is_none")]
-    pub loc_flags: Option<String>,
-    ///#[serde(
-    ///  rename = "extra-loc-layout_id",
-    ///skip_serializing_if = "Option::is_none"
-    ///)]
-    pub loc_layout_id: Option<String>,
-    ///#[serde(rename = "extra-loc-feature", skip_serializing_if = "Option::is_none")]
-    pub loc_feature: Option<String>,
-    ///#[serde(rename = "extra-loc-blank", skip_serializing_if = "Option::is_none")]
-    pub loc_blank: Option<String>,
+    pub loc_flags: Option<TsBytes<'a>>,
+    pub loc_layout_id: Option<TsBytes<'a>>,
+    pub loc_feature: Option<TsBytes<'a>>,
+    pub loc_blank: Option<TsBytes<'a>>,
 }
 
 /// Translation node that indicates an actual translation for a message.
@@ -324,13 +296,13 @@ pub struct NumerusFormNode {
     pub variants: Option<YesNo>,
 }
 
-impl PartialOrd<Self> for MessageNode {
+impl<'a> PartialOrd<Self> for MessageNode<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for MessageNode {
+impl<'a> Ord for MessageNode<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
         let id_cmp = other.id.cmp(&self.id);
 
@@ -410,29 +382,29 @@ impl<'a> ContextNode<'a> {
         reader: &mut Reader<&[u8]>,
         element: &BytesStart,
     ) -> Result<ContextNode<'a>, ParseError> {
-        #[derive(Debug)]
+        #[derive(Debug, Eq, PartialEq)]
         enum Tag {
             None,
             Name,
             Comment,
-            Messages,
+            Message,
         }
         let mut context_node = ContextNode::default();
         let mut inner_buf = Vec::new();
         let mut current_tag = Tag::None;
+
         loop {
             let event = reader
                 .read_event_into(&mut inner_buf)
                 .expect("Error reading event");
             if let Event::Start(ref ev) = event {
-                debug!("Found {:#?}", ev.name());
+                debug!("ContextNode: found {:#?}", ev.name());
             }
-
             match event {
                 Event::Start(ref e) => {
-                    debug!("Found element \"{e:#?}\"");
+                    debug!("ContextNode: Found element \"{e:#?}\"");
 
-                    if let Tag::None = current_tag {
+                    if Tag::None != current_tag {
                         // TODO: better logging or error message?
                         return Err(ParseError::from("Unexpected tag opening"));
                     }
@@ -440,34 +412,43 @@ impl<'a> ContextNode<'a> {
                     current_tag = match e.name().as_ref() {
                         b"name" => Tag::Name,
                         b"comment" => Tag::Comment,
-                        b"messages" => Tag::Messages,
+                        b"message" => {
+                            // Note: Better to start parsing here to ensure access to element attributes.
+                            info!("ContextNode: Parsing message node.");
+                            MessageNode::from_reader(reader, e)
+                                .map(|n| context_node.messages.push(n))
+                                .expect("To be parsed");
+                            Tag::Message
+                        }
                         _ => {
-                            warn!("Unknown field: {e:#?}");
+                            warn!("ContextNode: Unknown field: {e:#?}");
                             Tag::None
                         }
                     };
 
-                    debug!("Found tag {current_tag:#?}");
+                    debug!("ContextNode: found tag {current_tag:#?}");
                 }
                 Event::Text(ref e) => {
-                    debug!("Found text: {:#?}", e);
+                    debug!("ContextNode: found text: {:#?}", e);
                     let text = Some(TsBytes::Owned(e.to_vec()));
                     match current_tag {
                         Tag::Name => context_node.name = text,
                         Tag::Comment => context_node.comment = text,
-                        Tag::Messages => {}
-                        _ => {} // TODO: better logging or error message?
+                        _ => {
+                            warn!("ContextNode: what is going on")
+                        } // TODO: better logging or error message?
                     }
                 }
 
                 Event::End(ref e) => {
-                    if e.name().as_ref().eq_ignore_ascii_case(b"context") {
-                        break;
+                    debug!("ContextNode: Found END element \"{e:#?}\"");
+                    match e.name().as_ref() {
+                        b"context" => break,
+                        b"comment" | b"message" | b"name" => current_tag = Tag::None,
+                        _ => debug!("ContextNode: ending unknown field: {e:#?}"),
                     }
-                    // TODO: detect malformed XML by validating against current_tag vs what ended.
-                    current_tag = Tag::None;
                 }
-                _ => debug!("Unknown event: {:?}", event),
+                _ => debug!("Context node: unknown event: {:?}", event),
             }
         }
 
@@ -476,10 +457,140 @@ impl<'a> ContextNode<'a> {
             .flatten()
             .for_each(|a| match a.key.as_ref() {
                 b"encoding" => context_node.encoding = Some(Cow::Owned(a.value.into_owned())),
-                _ => debug!("Unknown attribute: {:?}", a.key),
+                _ => debug!("ContextNode: unknown attribute: {:?}", a.key),
             });
 
         Ok(context_node)
+    }
+}
+
+impl<'a> MessageNode<'a> {
+    fn from_reader(reader: &mut Reader<&[u8]>, element: &BytesStart) -> Result<Self, ParseError> {
+        #[derive(Debug, Eq, PartialEq)]
+        enum Tag {
+            None,
+            Id,
+            Comment,
+            ExtraComment,
+            LocBlank,
+            Locations,
+            LocFeature,
+            LocFlags,
+            LocLayoutId,
+            Numerus,
+            OldComment,
+            OldSource,
+            PoMsgIdPlural,
+            PoOldMsgIdPlural,
+            Source,
+            Translation,
+            TranslatorComment,
+            UserData,
+        }
+        let mut message_node = MessageNode::default();
+        let mut inner_buf = Vec::new();
+        let mut current_tag = Tag::None;
+        info!("Message node");
+
+        loop {
+            let event = reader
+                .read_event_into(&mut inner_buf)
+                .expect("Error reading event");
+            if let Event::Start(ref ev) = event {
+                debug!("MessageNode: found {:#?}", ev.name());
+            }
+
+            match event {
+                Event::Start(ref e) => {
+                    debug!("MessageNode: Found element \"{e:#?}\"");
+
+                    if Tag::None != current_tag {
+                        // TODO: better logging or error message?
+                        return Err(ParseError::from("Unexpected tag opening"));
+                    }
+
+                    current_tag = match e.name().as_ref() {
+                        b"comment" => Tag::Comment,
+                        b"location" => Tag::Locations,
+                        b"oldsource" => Tag::OldSource, // TODO: check string if not old_source
+                        b"source" => Tag::Source,
+
+                        b"translation" => Tag::Translation,
+
+                        // None,
+                        // Id,
+                        // Comment,
+                        // ExtraComment,
+                        // LocBlank,
+                        // Locations,
+                        // LocFeature,
+                        // LocFlags,
+                        // LocLayoutId,
+                        // Numerus,
+                        // OldComment,
+                        // OldSource,
+                        // PoMsgIdPlural,
+                        // PoOldMsgIdPlural,
+                        // Source,
+                        // Translation,
+                        // TranslatorComment,
+                        // UserData
+                        _ => {
+                            warn!("ContextNode: Unknown field: {e:#?}");
+                            Tag::None
+                        }
+                    };
+
+                    debug!("Found tag {current_tag:#?}");
+                }
+                Event::Text(ref e) => {
+                    debug!("MessageNode: found text: {:#?}", e);
+                    let text = Some(TsBytes::Owned(e.to_vec()));
+                    match current_tag {
+                        Tag::None => {}
+                        Tag::Id => {}
+                        Tag::Comment => message_node.comment = text,
+                        Tag::ExtraComment => {}
+                        Tag::LocBlank => {}
+                        Tag::Locations => {}
+                        Tag::LocFeature => {}
+                        Tag::LocFlags => {}
+                        Tag::LocLayoutId => {}
+                        Tag::OldComment => {}
+                        Tag::OldSource => {}
+                        Tag::PoMsgIdPlural => {}
+                        Tag::PoOldMsgIdPlural => {}
+                        Tag::Source => message_node.source = text,
+                        Tag::Translation => {}
+                        Tag::TranslatorComment => {}
+                        Tag::UserData => {}
+                        _ => {} // TODO: error message?
+                    }
+                }
+
+                Event::End(ref e) => {
+                    debug!("MessageNode: Found END element \"{e:#?}\"");
+                    match e.name().as_ref() {
+                        b"message" => break,
+                        b"comment" | b"translation" | b"oldsource" | b"source" => {
+                            current_tag = Tag::None
+                        }
+                        _ => debug!("MessageNode: ending unknown field: {e:#?}"),
+                    }
+                }
+                _ => debug!("MessageNode: unknown event: {:?}", event),
+            }
+        }
+
+        element.attributes().flatten().for_each(|a| {
+            match a.key.as_ref() {
+                b"numerus" => message_node.numerus = Some(YesNo::from(a.value)),
+                _ => debug!("MessageNode: unknown attribute: {:?}", a.key),
+            }
+        });
+
+        println!("{message_node:#?}");
+        Ok(message_node)
     }
 }
 
@@ -491,6 +602,39 @@ mod test_tsnode {
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
+    }
+
+    mod test_message_node {
+        use crate::ts_next::TsParser;
+        use crate::ts_next::YesNo;
+        use crate::ts_next::test_tsnode::init;
+        use rstest::rstest;
+
+        #[rstest]
+        #[case("", None)]
+        #[case("numerus=\"\"", Some(YesNo::No))]
+        #[case("numerus=\"yes\"", Some(YesNo::Yes))]
+        #[case("numerus=\"no\"", Some(YesNo::No))]
+        fn test_message_node_numerus(#[case] raw: &str, #[case] expected_parsed: Option<YesNo>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message {}>
+                        <source>This is a test</source>
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse();
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(node.contexts[0].messages[0].numerus, expected_parsed);
+        }
     }
 
     mod test_context_node {
