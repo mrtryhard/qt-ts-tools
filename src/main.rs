@@ -8,9 +8,8 @@ mod cli;
 mod commands;
 mod locale;
 mod logging;
-mod parse_error;
+mod parser;
 mod ts;
-mod ts_next;
 
 fn main() {
     initialize_locale();

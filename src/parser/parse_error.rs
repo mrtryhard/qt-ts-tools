@@ -14,7 +14,9 @@ pub struct ParseError {
 
 impl From<&str> for ParseError {
     fn from(value: &str) -> Self {
-        ParseError { err: value.to_string() }
+        ParseError {
+            err: value.to_string(),
+        }
     }
 }
 
