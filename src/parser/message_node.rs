@@ -1,12 +1,12 @@
-use std::cmp::Ordering;
+use crate::parser::location_node::LocationNode;
 use crate::parser::parse_error::ParseError;
+use crate::parser::translation_node::TranslationNode;
 use crate::parser::ts_bytes::TsBytes;
 use crate::parser::yesno::YesNo;
 use log::{debug, info, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
-use crate::parser::location_node::LocationNode;
-use crate::parser::translation_node::TranslationNode;
+use std::cmp::Ordering;
 
 /// Translation message node.
 #[derive(Debug, Default, Eq, Clone, PartialEq)]
@@ -94,7 +94,6 @@ impl<'a> MessageNode<'a> {
         #[derive(Debug, Eq, PartialEq)]
         enum Tag {
             None,
-            Id,
             Comment,
             ExtraComment,
             LocBlank,
@@ -136,11 +135,14 @@ impl<'a> MessageNode<'a> {
 
                     current_tag = match e.name().as_ref() {
                         b"comment" => Tag::Comment,
+                        b"extracomment" => Tag::ExtraComment,
                         b"location" => Tag::Locations,
-                        b"oldsource" => Tag::OldSource, // TODO: check string if not old_source
+                        b"oldcomment" => Tag::OldComment,
+                        b"oldsource" => Tag::OldSource,
                         b"source" => Tag::Source,
-
+                        b"translatorcomment" => Tag::TranslatorComment,
                         b"translation" => Tag::Translation,
+                        b"userdata" => Tag::UserData,
 
                         // None,
                         // Id,
@@ -173,22 +175,21 @@ impl<'a> MessageNode<'a> {
                     let text = Some(TsBytes::Owned(e.to_vec()));
                     match current_tag {
                         Tag::None => {}
-                        Tag::Id => {}
                         Tag::Comment => message_node.comment = text,
-                        Tag::ExtraComment => {}
+                        Tag::ExtraComment => message_node.extra_comment = text,
                         Tag::LocBlank => {}
                         Tag::Locations => {}
                         Tag::LocFeature => {}
                         Tag::LocFlags => {}
                         Tag::LocLayoutId => {}
-                        Tag::OldComment => {}
-                        Tag::OldSource => {}
+                        Tag::OldComment => message_node.old_comment = text,
+                        Tag::OldSource => message_node.old_source = text,
                         Tag::PoMsgIdPlural => {}
                         Tag::PoOldMsgIdPlural => {}
                         Tag::Source => message_node.source = text,
                         Tag::Translation => {}
-                        Tag::TranslatorComment => {}
-                        Tag::UserData => {}
+                        Tag::TranslatorComment => message_node.translator_comment = text,
+                        Tag::UserData => message_node.userdata = text,
                         _ => {} // TODO: error message?
                     }
                 }
@@ -197,7 +198,8 @@ impl<'a> MessageNode<'a> {
                     debug!("MessageNode: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
                         b"message" => break,
-                        b"comment" | b"translation" | b"oldsource" | b"source" => {
+                        b"comment" | b"translation" | b"oldsource" | b"extracomment"
+                        | b"oldcomment" | b"source" | b"translatorcomment" | b"userdata" => {
                             current_tag = Tag::None
                         }
                         _ => debug!("MessageNode: ending unknown field: {e:#?}"),
@@ -211,11 +213,11 @@ impl<'a> MessageNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
+                b"id" => message_node.id = Some(TsBytes::Owned(a.value.into_owned())),
                 b"numerus" => message_node.numerus = Some(YesNo::from(a.value)),
                 _ => debug!("MessageNode: unknown attribute: {:?}", a.key),
             });
 
-        println!("{message_node:#?}");
         Ok(message_node)
     }
 }

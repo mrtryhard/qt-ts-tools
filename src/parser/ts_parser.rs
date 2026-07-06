@@ -1,5 +1,5 @@
 use crate::parser::parse_error::ParseError;
-use crate::parser::ts_node::TSNode;
+use crate::parser::ts_node::TsNode;
 use log::debug;
 use quick_xml::Reader;
 use quick_xml::events::Event;
@@ -13,9 +13,9 @@ impl TsParser {
         Self { buf }
     }
 
-    pub fn parse(&mut self) -> Result<TSNode<'_>, ParseError> {
+    pub fn parse(&mut self) -> Result<TsNode<'_>, ParseError> {
         let mut reader = Reader::from_reader(self.buf.as_slice());
-        let mut ts_node: TSNode<'_> = TSNode::default();
+        let mut ts_node: Result<TsNode<'_>, ParseError> = Err(ParseError::from("Not parsed."));
         let mut inner_buf = Vec::new();
         reader.config_mut().expand_empty_elements = true;
 
@@ -32,31 +32,30 @@ impl TsParser {
                     break;
                 }
                 Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
-                    ts_node.from_reader(&mut reader, e);
+                    ts_node = TsNode::from_reader(&mut reader, e);
                 }
-                _ => (),
+                _ => (), // TODO: Better handling here
             }
         }
 
-        Ok(ts_node)
+        ts_node
     }
 }
 
-
 #[cfg(test)]
 mod test_tsnode {
-    use rstest::rstest;
     use crate::parser::ts_parser::TsParser;
+    use rstest::rstest;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
     mod test_message_node {
-        use rstest::rstest;
-        use crate::parser::ts_parser::test_tsnode::init;
         use crate::parser::ts_parser::TsParser;
+        use crate::parser::ts_parser::test_tsnode::init;
         use crate::parser::yesno::YesNo;
+        use rstest::rstest;
 
         #[rstest]
         #[case("", None)]
@@ -83,12 +82,266 @@ mod test_tsnode {
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(node.contexts[0].messages[0].numerus, expected_parsed);
         }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("id=\"\"", Some(""))]
+        #[case("id=\"test\"", Some("test"))]
+        fn test_message_node_id(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message {}>
+                        <source>This is a test</source>
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .id
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<source></source>", None)]
+        #[case("<source>a/b/c.cpp</source>", Some("a/b/c.cpp"))]
+        fn test_message_node_source(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .source
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<extracomment></extracomment>", None)]
+        #[case("<extracomment>test</extracomment>", Some("test"))]
+        fn test_message_node_extracomment(
+            #[case] raw: &str,
+            #[case] expected_parsed: Option<&str>,
+        ) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .extra_comment
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<oldsource></oldsource>", None)]
+        #[case("<oldsource>a/b/c.cpp</oldsource>", Some("a/b/c.cpp"))]
+        fn test_message_node_oldsource(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .old_source
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<oldcomment></oldcomment>", None)]
+        #[case("<oldcomment>a/b/c.cpp</oldcomment>", Some("a/b/c.cpp"))]
+        fn test_message_node_oldcomment(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .old_comment
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<translatorcomment></translatorcomment>", None)]
+        #[case("<translatorcomment>a/b/c.cpp</translatorcomment>", Some("a/b/c.cpp"))]
+        fn test_message_node_translatorcomment(
+            #[case] raw: &str,
+            #[case] expected_parsed: Option<&str>,
+        ) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .translator_comment
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<userdata></userdata>", None)]
+        #[case("<userdata>a/b/c.cpp</userdata>", Some("a/b/c.cpp"))]
+        fn test_message_node_userdata(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .userdata
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("<comment></comment>", None)]
+        #[case("<comment>a/b/c.cpp</comment>", Some("a/b/c.cpp"))]
+        fn test_message_node_comment(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        {}
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .comment
+                    .as_ref()
+                    .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
     }
 
     mod test_context_node {
-        use rstest::rstest;
-        use crate::parser::ts_parser::test_tsnode::init;
         use crate::parser::ts_parser::TsParser;
+        use crate::parser::ts_parser::test_tsnode::init;
+        use rstest::rstest;
 
         #[rstest]
         #[case("", None)]

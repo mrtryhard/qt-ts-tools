@@ -116,7 +116,7 @@ impl<'a> ContextNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
-                b"encoding" => context_node.encoding = Some(Cow::Owned(a.value.into_owned())),
+                b"encoding" => context_node.encoding = Some(TsBytes::Owned(a.value.into_owned())),
                 _ => debug!("ContextNode: unknown attribute: {:?}", a.key),
             });
 
