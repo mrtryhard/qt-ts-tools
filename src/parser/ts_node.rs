@@ -1,5 +1,5 @@
 use crate::parser::context_node::ContextNode;
-use crate::parser::dependency_node::{DependenciesNode};
+use crate::parser::dependency_node::DependenciesNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::ts_bytes::TsBytes;
 use log::debug;
@@ -53,7 +53,10 @@ impl<'a> TsNode<'a> {
             }
         }
 
-        let mut node = TsNode::<'_> { contexts: contexts, ..Default::default() };
+        let mut node = TsNode::<'_> {
+            contexts: contexts,
+            ..Default::default()
+        };
         node.assign_attributes(element);
 
         Ok(node)

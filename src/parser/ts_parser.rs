@@ -97,12 +97,13 @@ mod test_tsnode {
         use rstest::rstest;
 
         #[rstest]
-        #[case("", None)]
-        #[case("type=\"\"", None)]
-        #[case("type=\"finished\"", Some(TranslationType::Finished))]
-        #[case("type=\"unfinished\"", Some(TranslationType::Unfinished))]
-        #[case("type=\"obsolete\"", Some(TranslationType::Obsolete))]
-        #[case("type=\"vanished\"", Some(TranslationType::Vanished))]
+        #[case::no_attribute("", None)]
+        // TODO: determine if we should throw error instead.
+        #[case::empty("type=\"\"", Some(TranslationType::Finished))]
+        #[case::finished("type=\"finished\"", Some(TranslationType::Finished))]
+        #[case::unfinished("type=\"unfinished\"", Some(TranslationType::Unfinished))]
+        #[case::obsolete("type=\"obsolete\"", Some(TranslationType::Obsolete))]
+        #[case::vanished("type=\"vanished\"", Some(TranslationType::Vanished))]
         fn test_translation_node_type(
             #[case] raw: &str,
             #[case] expected_parsed: Option<TranslationType>,
@@ -114,11 +115,10 @@ mod test_tsnode {
                 <context>
                     <message>
                         <source>This is a test</source>
-                        <translation type="{}"></translation>
+                        <translation {raw}></translation>
                     </message>
                 </context>
-            </ts>"#,
-                raw
+            </ts>"#
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
