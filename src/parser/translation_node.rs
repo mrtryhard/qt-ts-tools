@@ -1,4 +1,3 @@
-use crate::parser::message_node::MessageNode;
 use crate::parser::numerus_form_node::NumerusFormNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::translation_type::TranslationType;

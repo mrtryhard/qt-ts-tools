@@ -4,7 +4,6 @@ use crate::parser::ts_bytes::TsBytes;
 use log::{debug, info, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
-use std::borrow::Cow;
 use std::cmp::Ordering;
 
 /// Context and its associated translated message.

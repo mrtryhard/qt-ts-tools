@@ -75,7 +75,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
 
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
@@ -94,7 +94,6 @@ mod test_tsnode {
         use crate::parser::translation_type::TranslationType;
         use crate::parser::ts_parser::TsParser;
         use crate::parser::ts_parser::test_tsnode::init;
-        use crate::parser::yesno::YesNo;
         use rstest::rstest;
 
         #[rstest]
@@ -123,10 +122,10 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
-            assert!(!node.contexts[0].messages[0].translation.is_some());
+            assert!(node.contexts[0].messages[0].translation.is_some());
             assert_eq!(
                 node.contexts[0].messages[0]
                     .translation
@@ -164,7 +163,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(node.contexts[0].messages[0].numerus, expected_parsed);
@@ -189,7 +188,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -220,7 +219,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -254,7 +253,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -285,7 +284,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -316,7 +315,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -350,7 +349,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -381,7 +380,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -412,7 +411,7 @@ mod test_tsnode {
             );
 
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
@@ -438,13 +437,13 @@ mod test_tsnode {
             init();
             let raw = format!(r#"<!DOCTYPE TS><ts><context {}></context></ts>"#, raw);
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert_eq!(
                 node.contexts[0]
                     .encoding
                     .as_ref()
-                    .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                    .map(|s| str::from_utf8(s).expect("valid utf8")),
                 expected_parsed
             );
         }
@@ -457,13 +456,13 @@ mod test_tsnode {
             init();
             let raw = format!(r#"<!DOCTYPE TS><ts><context>{}</context></ts>"#, raw);
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert_eq!(
                 node.contexts[0]
                     .name
                     .as_ref()
-                    .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                    .map(|s| str::from_utf8(s).expect("valid utf8")),
                 expected_parsed
             );
         }
@@ -476,13 +475,13 @@ mod test_tsnode {
             init();
             let raw = format!(r#"<!DOCTYPE TS><ts><context>{}</context></ts>"#, raw);
             let mut parser = TsParser::new(raw.as_bytes().into());
-            let node = parser.parse().expect(&format!("{:?}", raw));
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
             assert!(!node.contexts.is_empty());
             assert_eq!(
                 node.contexts[0]
                     .comment
                     .as_ref()
-                    .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                    .map(|s| str::from_utf8(s).expect("valid utf8")),
                 expected_parsed
             );
         }
@@ -495,12 +494,12 @@ mod test_tsnode {
     fn test_parses_version(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
         let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
         let mut parser = TsParser::new(raw.as_bytes().into());
-        let node = parser.parse().expect(&format!("{:?}", raw));
+        let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
 
         assert_eq!(
             node.version
                 .as_ref()
-                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                .map(|s| str::from_utf8(s).expect("valid utf8")),
             expected_parsed
         );
     }
@@ -513,12 +512,12 @@ mod test_tsnode {
     fn test_parses_sourcelanguage(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
         let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
         let mut parser = TsParser::new(raw.as_bytes().into());
-        let node = parser.parse().expect(&format!("{:?}", raw));
+        let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
 
         assert_eq!(
             node.source_language
                 .as_ref()
-                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                .map(|s| str::from_utf8(s).expect("valid utf8")),
             expected_parsed
         );
     }
@@ -531,12 +530,12 @@ mod test_tsnode {
     fn test_parses_language(#[case] raw: &str, #[case] expected_parsed: Option<&str>) {
         let raw = format!(r#"<!DOCTYPE TS><TS {} ></TS>"#, raw);
         let mut parser = TsParser::new(raw.as_bytes().into());
-        let node = parser.parse().expect(&format!("{:?}", raw));
+        let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
 
         assert_eq!(
             node.language
                 .as_ref()
-                .map(|s| str::from_utf8(&s).expect("valid utf8")),
+                .map(|s| str::from_utf8(s).expect("valid utf8")),
             expected_parsed
         );
     }

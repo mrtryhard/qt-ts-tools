@@ -1,6 +1,5 @@
 use crate::parser::parse_error::ParseError;
 use crate::parser::ts_bytes::TsBytes;
-use clap::builder::TypedValueParser;
 use log::{debug, info};
 use quick_xml::Reader;
 use quick_xml::events::BytesStart;
@@ -19,7 +18,7 @@ pub struct LocationNode<'a> {
 
 impl<'a> LocationNode<'a> {
     pub fn from_reader(
-        reader: &mut Reader<&[u8]>,
+        _reader: &mut Reader<&[u8]>,
         element: &BytesStart,
     ) -> Result<Self, ParseError> {
         let mut location_node = LocationNode::default();
