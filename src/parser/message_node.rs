@@ -24,6 +24,7 @@ pub struct MessageNode<'a> {
     /// Previous content of comment (result of merge)
     pub old_comment: Option<TsBytes<'a>>,
     /// Old source before a merge. Merging will set that field.
+    /// TODO: merging should set that field.
     pub old_source: Option<TsBytes<'a>>,
     /// Original string to translate
     pub source: Option<TsBytes<'a>>,

@@ -13,7 +13,7 @@ pub struct LocationNode<'a> {
     pub filename: Option<TsBytes<'a>>,
     /// Line where the source of the translation message is located in the file.
     // #[serde(rename = "@line", skip_serializing_if = "Option::is_none")]
-    pub line: Option<u32>,
+    pub line: Option<i32>,
 }
 
 impl<'a> LocationNode<'a> {
@@ -32,7 +32,7 @@ impl<'a> LocationNode<'a> {
                 b"line" => {
                     location_node.line = str::from_utf8(&a.value)
                         .ok()
-                        .and_then(|s| s.parse::<u32>().ok())
+                        .and_then(|s| s.parse().ok())
                 }
                 _ => debug!("LocationNode: unknown attribute: {:?}", a.key),
             }
@@ -57,6 +57,10 @@ impl<'a> Ord for LocationNode<'a> {
     }
 }
 
+// TODO: Review location ordering
+//       as location may have offset referencing previous
+//       file. You cannot just arrange the file in disorder.
+
 #[cfg(test)]
 mod test_location_node_ord {
     use crate::parser::location_node::LocationNode;
@@ -71,9 +75,10 @@ mod test_location_node_ord {
     #[case::some1_some1(Some(1), Some(1), Ordering::Equal)]
     #[case::some0_some1(Some(0), Some(1), Ordering::Less)]
     #[case::some1_some0(Some(1), Some(0), Ordering::Greater)]
+    #[case::some1_some0(Some(-1), Some(0), Ordering::Less)]
     fn test_ord_diff_by_line(
-        #[case] left_line: Option<u32>,
-        #[case] right_line: Option<u32>,
+        #[case] left_line: Option<i32>,
+        #[case] right_line: Option<i32>,
         #[case] ordering: Ordering,
     ) {
         let left = LocationNode {
