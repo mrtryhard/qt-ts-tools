@@ -31,8 +31,8 @@ impl<'a> From<Cow<'a, [u8]>> for TranslationType {
 
 #[cfg(test)]
 mod test_translation_type {
-    use rstest::rstest;
     use crate::parser::translation_type::TranslationType;
+    use rstest::rstest;
 
     #[rstest]
     #[case(b"unFinIshed", TranslationType::Unfinished)]

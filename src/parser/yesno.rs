@@ -18,8 +18,8 @@ impl<'a> From<Cow<'a, [u8]>> for YesNo {
 
 #[cfg(test)]
 mod test_yesno {
-    use rstest::rstest;
     use crate::parser::yesno::YesNo;
+    use rstest::rstest;
 
     #[rstest]
     #[case(b"yes")]

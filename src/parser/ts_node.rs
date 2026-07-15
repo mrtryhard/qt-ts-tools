@@ -1,11 +1,11 @@
 use crate::parser::context_node::ContextNode;
 use crate::parser::dependency_node::{DependenciesNode, DependencyNode};
+use crate::parser::parse_error::ParseError;
 use crate::parser::ts_bytes::TsBytes;
 use log::debug;
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
-use crate::parser::parse_error::ParseError;
 
 /// Root node of the translation file.
 #[derive(Debug, Default, PartialEq)]
@@ -21,11 +21,14 @@ pub struct TsNode<'a> {
     pub contexts: Vec<ContextNode<'a>>, // Context[0..*] or message[0..*] TODO: support that.
     /// Catalogs dependencies
     pub dependencies: Option<DependenciesNode>, // TODO: parse them
-    // TODO: support extra-something
+                                                // TODO: support extra-something
 }
 
 impl<'a> TsNode<'a> {
-    pub fn from_reader(reader: &mut Reader<&[u8]>, element: &BytesStart) -> Result<Self, ParseError> {
+    pub fn from_reader(
+        reader: &mut Reader<&[u8]>,
+        element: &BytesStart,
+    ) -> Result<Self, ParseError> {
         let mut contexts = vec![];
         let mut inner_buf = Vec::new();
 

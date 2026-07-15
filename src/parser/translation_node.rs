@@ -1,12 +1,12 @@
-use log::{debug, info, warn};
-use quick_xml::events::{BytesStart, Event};
-use quick_xml::Reader;
 use crate::parser::message_node::MessageNode;
 use crate::parser::numerus_form_node::NumerusFormNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_bytes::TsBytes;
 use crate::parser::yesno::YesNo;
+use log::{debug, info, warn};
+use quick_xml::Reader;
+use quick_xml::events::{BytesStart, Event};
 
 /// Translation node that indicates an actual translation for a message.
 #[derive(Debug, Default, Eq, Clone, PartialEq)]
@@ -32,7 +32,7 @@ impl<'a> TranslationNode<'a> {
         #[derive(Debug, Eq, PartialEq)]
         enum Tag {
             None,
-            Translation,// enums
+            Translation, // enums
             NumerusForms,
             UserData,
         }
@@ -85,9 +85,7 @@ impl<'a> TranslationNode<'a> {
                     debug!("TranslationNode: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
                         b"translation" => break,
-                        b"numerusform" | b"userdata" => {
-                            current_tag = Tag::None
-                        }
+                        b"numerusform" | b"userdata" => current_tag = Tag::None,
                         _ => debug!("TranslationNode: ending unknown field: {e:#?}"),
                     }
                 }

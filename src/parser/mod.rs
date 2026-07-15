@@ -5,14 +5,14 @@
 // https://doc.qt.io/qt-6/linguist-ts-file-format.html
 pub mod parse_error;
 
-mod ts_parser;
-mod ts_node;
-mod ts_bytes;
 mod context_node;
-mod message_node;
-mod translation_type;
-mod yesno;
-mod translation_node;
-mod location_node;
 mod dependency_node;
+mod location_node;
+mod message_node;
 mod numerus_form_node;
+mod translation_node;
+mod translation_type;
+mod ts_bytes;
+mod ts_node;
+mod ts_parser;
+mod yesno;

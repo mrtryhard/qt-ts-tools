@@ -1,3 +1,4 @@
+use crate::parser::message_node::MessageNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::ts_bytes::TsBytes;
 use log::{debug, info, warn};
@@ -5,7 +6,6 @@ use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use crate::parser::message_node::MessageNode;
 
 /// Context and its associated translated message.
 #[derive(Debug, Default, Eq, PartialEq)]
