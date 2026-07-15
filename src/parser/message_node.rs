@@ -137,18 +137,21 @@ impl<'a> MessageNode<'a> {
                         b"comment" => Tag::Comment,
                         b"extracomment" => Tag::ExtraComment,
                         b"location" => {
-                            LocationNode::from_reader(reader, e).map(|l| message_node.locations.push(l))?;
+                            LocationNode::from_reader(reader, e)
+                                .map(|l| message_node.locations.push(l))
+                                .expect("to parse");
                             Tag::Locations
-                        },
+                        }
                         b"oldcomment" => Tag::OldComment,
                         b"oldsource" => Tag::OldSource,
                         b"source" => Tag::Source,
                         b"translatorcomment" => Tag::TranslatorComment,
                         b"translation" => {
                             // Todo: clean
-                            message_node.translation = Some(TranslationNode::from_reader(reader, e)?);
+                            message_node.translation =
+                                Some(TranslationNode::from_reader(reader, e)?);
                             Tag::Translation
-                        },
+                        }
                         b"userdata" => Tag::UserData,
                         _ => {
                             warn!("MessageNode: Unknown field: {e:#?}");
@@ -167,12 +170,12 @@ impl<'a> MessageNode<'a> {
                         Tag::ExtraComment => message_node.extra_comment = text,
                         Tag::LocBlank => {} // not for now
                         Tag::Locations => {}
-                        Tag::LocFeature => {} // not for now
-                        Tag::LocFlags => {} // not for now
+                        Tag::LocFeature => {}  // not for now
+                        Tag::LocFlags => {}    // not for now
                         Tag::LocLayoutId => {} // not for now
                         Tag::OldComment => message_node.old_comment = text,
                         Tag::OldSource => message_node.old_source = text,
-                        Tag::PoMsgIdPlural => {} // not for now
+                        Tag::PoMsgIdPlural => {}    // not for now
                         Tag::PoOldMsgIdPlural => {} // not for now
                         Tag::Source => message_node.source = text,
                         Tag::Translation => {}
@@ -186,10 +189,9 @@ impl<'a> MessageNode<'a> {
                     debug!("MessageNode: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
                         b"message" => break,
-                        b"comment" | b"translation" | b"oldsource" | b"extracomment"
-                        | b"oldcomment" | b"source" | b"translatorcomment" | b"userdata" => {
-                            current_tag = Tag::None
-                        }
+                        b"comment" | b"location" | b"translation" | b"oldsource"
+                        | b"extracomment" | b"oldcomment" | b"source" | b"translatorcomment"
+                        | b"userdata" => current_tag = Tag::None,
                         _ => debug!("MessageNode: ending unknown field: {e:#?}"),
                     }
                 }

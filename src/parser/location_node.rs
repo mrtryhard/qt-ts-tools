@@ -28,12 +28,16 @@ impl<'a> LocationNode<'a> {
         element
             .attributes()
             .flatten()
-            .for_each(|a| match a.key.as_ref() {
-                b"filename" => location_node.filename = Some(TsBytes::Owned(a.value.into_owned())),
-                // TODO better parsing management?
-                b"line" => location_node.line = str::from_utf8(&a.value).ok().and_then(|s| s.parse::<u32>().ok()),
-                _ => debug!("LocationNode: unknown attribute: {:?}", a.key),
-            });
+            .for_each(|a| {
+                println!("{:?}", a);
+                match a.key.as_ref() {
+                    b"filename" => location_node.filename = Some(TsBytes::Owned(a.value.into_owned())),
+                    // TODO better parsing management?
+                    b"line" => location_node.line = str::from_utf8(&a.value).ok().and_then(|s| s.parse::<u32>().ok()),
+                    _ => debug!("LocationNode: unknown attribute: {:?}", a.key),
+                }
+            }
+    );
 
         Ok(location_node)
     }
