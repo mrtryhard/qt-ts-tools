@@ -51,6 +51,54 @@ mod test_tsnode {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
+    mod test_translation_node {
+        use crate::parser::translation_type::TranslationType;
+        use crate::parser::ts_parser::TsParser;
+        use crate::parser::ts_parser::test_tsnode::init;
+        use crate::parser::yesno::YesNo;
+        use rstest::rstest;
+
+        #[rstest]
+        #[case("", None)]
+        #[case("type=\"\"", None)]
+        #[case("type=\"finished\"", Some(TranslationType::Finished))]
+        #[case("type=\"unfinished\"", Some(TranslationType::Unfinished))]
+        #[case("type=\"obsolete\"", Some(TranslationType::Obsolete))]
+        #[case("type=\"vanished\"", Some(TranslationType::Vanished))]
+        fn test_translation_node_type(
+            #[case] raw: &str,
+            #[case] expected_parsed: Option<TranslationType>,
+        ) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        <source>This is a test</source>
+                        <translation type="{}"></translation>
+                    </message>
+                </context>
+            </ts>"#,
+                raw
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().expect(&format!("{:?}", raw));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert!(!node.contexts[0].messages[0].translation.is_some());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .translation
+                    .as_ref()
+                    .expect("to have translation")
+                    .translation_type,
+                expected_parsed
+            );
+        }
+    }
+
     mod test_message_node {
         use crate::parser::ts_parser::TsParser;
         use crate::parser::ts_parser::test_tsnode::init;

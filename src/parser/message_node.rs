@@ -11,26 +11,26 @@ use std::cmp::Ordering;
 /// Translation message node.
 #[derive(Debug, Default, Eq, Clone, PartialEq)]
 pub struct MessageNode<'a> {
-    /// Original string to translate
-    pub source: Option<TsBytes<'a>>,
-    /// Old source before a merge. Merging will set that field.
-    pub old_source: Option<TsBytes<'a>>,
-    /// Translation in the target language.
-    pub translation: Option<TranslationNode>,
-    /// Lines and files in which the translation message is used.
-    pub locations: Vec<LocationNode>,
     /// This is "disambiguation" in the (new) API, or "msgctxt" in gettext speak
     pub comment: Option<TsBytes<'a>>,
-    /// Previous content of comment (result of merge)
-    pub old_comment: Option<TsBytes<'a>>,
-    /// The real comment (added by developer/designer)
-    pub extra_comment: Option<TsBytes<'a>>,
-    /// Comment added by translator
-    pub translator_comment: Option<TsBytes<'a>>,
-    /// Support for the plural forms
-    pub numerus: Option<YesNo>,
     /// Message unique id (not guaranteed to be existant)
     pub id: Option<TsBytes<'a>>,
+    /// The real comment (added by developer/designer)
+    pub extra_comment: Option<TsBytes<'a>>,
+    /// Lines and files in which the translation message is used.
+    pub locations: Vec<LocationNode<'a>>,
+    /// Support for the plural forms
+    pub numerus: Option<YesNo>,
+    /// Previous content of comment (result of merge)
+    pub old_comment: Option<TsBytes<'a>>,
+    /// Old source before a merge. Merging will set that field.
+    pub old_source: Option<TsBytes<'a>>,
+    /// Original string to translate
+    pub source: Option<TsBytes<'a>>,
+    /// Translation in the target language.
+    pub translation: Option<TranslationNode<'a>>,
+    /// Comment added by translator
+    pub translator_comment: Option<TsBytes<'a>>,
     /// Extra information
     pub userdata: Option<TsBytes<'a>>,
     /*
@@ -136,34 +136,22 @@ impl<'a> MessageNode<'a> {
                     current_tag = match e.name().as_ref() {
                         b"comment" => Tag::Comment,
                         b"extracomment" => Tag::ExtraComment,
-                        b"location" => Tag::Locations,
+                        b"location" => {
+                            LocationNode::from_reader(reader, e).map(|l| message_node.locations.push(l))?;
+                            Tag::Locations
+                        },
                         b"oldcomment" => Tag::OldComment,
                         b"oldsource" => Tag::OldSource,
                         b"source" => Tag::Source,
                         b"translatorcomment" => Tag::TranslatorComment,
-                        b"translation" => Tag::Translation,
+                        b"translation" => {
+                            // Todo: clean
+                            message_node.translation = Some(TranslationNode::from_reader(reader, e)?);
+                            Tag::Translation
+                        },
                         b"userdata" => Tag::UserData,
-
-                        // None,
-                        // Id,
-                        // Comment,
-                        // ExtraComment,
-                        // LocBlank,
-                        // Locations,
-                        // LocFeature,
-                        // LocFlags,
-                        // LocLayoutId,
-                        // Numerus,
-                        // OldComment,
-                        // OldSource,
-                        // PoMsgIdPlural,
-                        // PoOldMsgIdPlural,
-                        // Source,
-                        // Translation,
-                        // TranslatorComment,
-                        // UserData
                         _ => {
-                            warn!("ContextNode: Unknown field: {e:#?}");
+                            warn!("MessageNode: Unknown field: {e:#?}");
                             Tag::None
                         }
                     };
@@ -177,15 +165,15 @@ impl<'a> MessageNode<'a> {
                         Tag::None => {}
                         Tag::Comment => message_node.comment = text,
                         Tag::ExtraComment => message_node.extra_comment = text,
-                        Tag::LocBlank => {}
+                        Tag::LocBlank => {} // not for now
                         Tag::Locations => {}
-                        Tag::LocFeature => {}
-                        Tag::LocFlags => {}
-                        Tag::LocLayoutId => {}
+                        Tag::LocFeature => {} // not for now
+                        Tag::LocFlags => {} // not for now
+                        Tag::LocLayoutId => {} // not for now
                         Tag::OldComment => message_node.old_comment = text,
                         Tag::OldSource => message_node.old_source = text,
-                        Tag::PoMsgIdPlural => {}
-                        Tag::PoOldMsgIdPlural => {}
+                        Tag::PoMsgIdPlural => {} // not for now
+                        Tag::PoOldMsgIdPlural => {} // not for now
                         Tag::Source => message_node.source = text,
                         Tag::Translation => {}
                         Tag::TranslatorComment => message_node.translator_comment = text,
