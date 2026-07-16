@@ -54,7 +54,7 @@ impl<'a> TsNode<'a> {
         }
 
         let mut node = TsNode::<'_> {
-            contexts: contexts,
+            contexts,
             ..Default::default()
         };
         node.assign_attributes(element);

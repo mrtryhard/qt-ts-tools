@@ -139,9 +139,8 @@ impl<'a> MessageNode<'a> {
                         b"extracomment" => Tag::ExtraComment,
                         b"location" => {
                             LocationNode::from_reader(reader, e)
-                                .map(|l| message_node.locations.push(l))
-                                .expect("to parse");
-                            Tag::Locations
+                                .map(|l| message_node.locations.push(l))?;
+                            Tag::None
                         }
                         b"oldcomment" => Tag::OldComment,
                         b"oldsource" => Tag::OldSource,
@@ -169,8 +168,7 @@ impl<'a> MessageNode<'a> {
                         Tag::None => {}
                         Tag::Comment => message_node.comment = text,
                         Tag::ExtraComment => message_node.extra_comment = text,
-                        Tag::LocBlank => {} // not for now
-                        Tag::Locations => {}
+                        Tag::LocBlank => {}    // not for now
                         Tag::LocFeature => {}  // not for now
                         Tag::LocFlags => {}    // not for now
                         Tag::LocLayoutId => {} // not for now

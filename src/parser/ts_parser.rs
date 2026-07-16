@@ -55,6 +55,7 @@ mod test_tsnode {
         use crate::parser::ts_parser::TsParser;
         use crate::parser::ts_parser::test_tsnode::init;
         use rstest::rstest;
+
         #[rstest]
         #[case("", None)]
         #[case("filename=\"root/file/path\"", Some("root/file/path"))]
@@ -85,6 +86,37 @@ mod test_tsnode {
                     .filename
                     .as_ref()
                     .map(|s| str::from_utf8(s).expect("to parse")),
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case("", None)]
+        #[case("line=\"\"", None)]
+        #[case("line=\"2\"", Some(2))]
+        #[case("line=\"-3\"", Some(-3))]
+        fn test_location_node_line(#[case] raw: &str, #[case] expected_parsed: Option<i32>) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        <source>This is a test</source>
+                        <location {raw} />
+                    </message>
+                </context>
+            </ts>"#
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
+
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert!(!node.contexts[0].messages[0].locations.is_empty());
+            assert_eq!(
+                node.contexts[0].messages[0].locations[0].line,
                 expected_parsed
             );
         }

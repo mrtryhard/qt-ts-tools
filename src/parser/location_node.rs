@@ -30,9 +30,7 @@ impl<'a> LocationNode<'a> {
                 b"filename" => location_node.filename = Some(TsBytes::Owned(a.value.into_owned())),
                 // TODO better parsing management?
                 b"line" => {
-                    location_node.line = str::from_utf8(&a.value)
-                        .ok()
-                        .and_then(|s| s.parse().ok())
+                    location_node.line = str::from_utf8(&a.value).ok().and_then(|s| s.parse().ok())
                 }
                 _ => debug!("LocationNode: unknown attribute: {:?}", a.key),
             }
