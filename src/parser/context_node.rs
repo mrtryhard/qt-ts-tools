@@ -75,8 +75,7 @@ impl<'a> ContextNode<'a> {
                             // Note: Better to start parsing here to ensure access to element attributes.
                             info!("ContextNode: Parsing message node.");
                             MessageNode::from_reader(reader, e)
-                                .map(|n| context_node.messages.push(n))
-                                .expect("To be parsed");
+                                .map(|n| context_node.messages.push(n))?;
                             Tag::Message
                         }
                         _ => {

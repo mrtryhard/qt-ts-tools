@@ -98,7 +98,6 @@ impl<'a> MessageNode<'a> {
             Comment,
             ExtraComment,
             LocBlank,
-            Locations,
             LocFeature,
             LocFlags,
             LocLayoutId,
