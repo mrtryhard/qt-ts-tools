@@ -124,6 +124,7 @@ mod test_tsnode {
 
     mod test_translation_node {
         use crate::parser::translation_type::TranslationType;
+        use crate::parser::ts_bytes::TsBytes;
         use crate::parser::ts_parser::TsParser;
         use crate::parser::ts_parser::test_tsnode::init;
         use rstest::rstest;
@@ -164,6 +165,86 @@ mod test_tsnode {
                     .as_ref()
                     .expect("to have translation")
                     .translation_type,
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case::nothing("", vec![])]
+        #[case::empty("<numerusform></numerusform>", vec![])] // TODO: confirm behaviour
+        #[case::with_text("<numerusform>%n text</numerusform>", vec![TsBytes::from(b"%n text")])]
+        //TODO: #[case::with_text_with_bytes("<numerusform>text <byte value=\"xD\"/> test</numerusform>", vec![TsBytes::from(b"text test")])]
+        #[case::with_many("<numerusform>text: %n</numerusform><lengthvariant>text single</lengthvariant>", vec![TsBytes::from(b"text: %n"), TsBytes::from(b"text single")])]
+        fn test_translation_node_numerusform(
+            #[case] raw: &str,
+            #[case] expected_parsed: Vec<TsBytes<'_>>,
+        ) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        <source>This is a test</source>
+                        <translation>
+                            {raw}
+                        </translation>
+                    </message>
+                </context>
+            </ts>"#
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert!(node.contexts[0].messages[0].translation.is_some());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .translation
+                    .as_ref()
+                    .expect("to have translation")
+                    .length_variants,
+                expected_parsed
+            );
+        }
+
+        #[rstest]
+        #[case::nothing("", vec![])]
+        #[case::empty("<lengthvariant></lengthvariant>", vec![])] // TODO: confirm behaviour
+        #[case::with_text("<lengthvariant>text</lengthvariant>", vec![TsBytes::from(b"text")])]
+        //TODO: #[case::with_text_with_bytes("<lengthvariant>text <byte value=\"xD\"/> test</lengthvariant>", vec![TsBytes::from(b"text test")])]
+        #[case::with_many("<lengthvariant>text</lengthvariant><lengthvariant>text second</lengthvariant>", vec![TsBytes::from(b"text"), TsBytes::from(b"text second")])]
+        fn test_translation_node_lengthvariants(
+            #[case] raw: &str,
+            #[case] expected_parsed: Vec<TsBytes<'_>>,
+        ) {
+            init();
+            let raw = format!(
+                r#"<!DOCTYPE TS>
+            <ts>
+                <context>
+                    <message>
+                        <source>This is a test</source>
+                        <translation>
+                            {raw}
+                        </translation>
+                    </message>
+                </context>
+            </ts>"#
+            );
+
+            let mut parser = TsParser::new(raw.as_bytes().into());
+            let node = parser.parse().unwrap_or_else(|_| panic!("{raw:?}"));
+            assert!(!node.contexts.is_empty());
+            assert!(!node.contexts[0].messages.is_empty());
+            assert!(node.contexts[0].messages[0].translation.is_some());
+            assert_eq!(
+                node.contexts[0].messages[0]
+                    .translation
+                    .as_ref()
+                    .expect("to have translation")
+                    .length_variants,
                 expected_parsed
             );
         }
