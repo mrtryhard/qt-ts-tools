@@ -21,31 +21,8 @@ impl<'a> NumerusFormNode<'a> {
         let mut inner_buf = Vec::new();
         info!("NumerusFormNode");
 
-        loop {
-            let event = reader
-                .read_event_into(&mut inner_buf)
-                .expect("Error reading event");
-            if let Event::Start(ref ev) = event {
-                debug!("NumerusFormNode: found {:#?}", ev.name());
-            }
-
-            match event {
-                Event::Text(ref e) => {
-                    debug!("NumerusFormNode: found text: {:#?}", e);
-                    node.text = TsBytes::Owned(e.to_vec());
-                }
-
-                Event::End(ref e) => {
-                    debug!("NumerusFormNode: Found END element \"{e:#?}\"");
-                    match e.name().as_ref() {
-                        b"numerusform" => break,
-                        _ => debug!("NumerusFormNode: ending unknown field: {e:#?}"),
-                    }
-                }
-                _ => debug!("NumerusFormNode: unknown event: {:?}", event),
-            }
-        }
-
+        let g = reader.read_text_into(element.name(), &mut inner_buf)?;
+        node.text = TsBytes::Owned(g.to_vec());
         element
             .attributes()
             .flatten()
