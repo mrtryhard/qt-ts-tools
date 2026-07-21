@@ -19,7 +19,7 @@ impl<'a> NumerusFormNode<'a> {
     ) -> Result<Self, ParseError> {
         let mut node = Self::default();
         let mut inner_buf = Vec::new();
-        info!("NumerusFormNode  ");
+        info!("NumerusFormNode");
 
         loop {
             let event = reader

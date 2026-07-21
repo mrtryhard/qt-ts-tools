@@ -126,6 +126,7 @@ mod test_tsnode {
         use crate::parser::translation_type::TranslationType;
         use crate::parser::ts_bytes::TsBytes;
         use crate::parser::ts_parser::TsParser;
+        use crate::parser::numerus_form_node::NumerusFormNode;
         use crate::parser::ts_parser::test_tsnode::init;
         use rstest::rstest;
 
@@ -171,13 +172,13 @@ mod test_tsnode {
 
         #[rstest]
         #[case::nothing("", vec![])]
-        #[case::empty("<numerusform></numerusform>", vec![])] // TODO: confirm behaviour
-        #[case::with_text("<numerusform>%n text</numerusform>", vec![TsBytes::from(b"%n text")])]
+        #[case::empty("<numerusform></numerusform>", vec![NumerusFormNode::default()])] // TODO: confirm behaviour
+        #[case::with_text("<numerusform>%n text</numerusform>", vec![NumerusFormNode { text: TsBytes::from(b"%n text"), ..Default::default() }])]
         //TODO: #[case::with_text_with_bytes("<numerusform>text <byte value=\"xD\"/> test</numerusform>", vec![TsBytes::from(b"text test")])]
-        #[case::with_many("<numerusform>text: %n</numerusform><lengthvariant>text single</lengthvariant>", vec![TsBytes::from(b"text: %n"), TsBytes::from(b"text single")])]
+        #[case::with_many("<numerusform>text: %n</numerusform><numerusform>text single</numerusform>", vec![NumerusFormNode { text: TsBytes::from(b"text: %n"), ..Default::default() }, NumerusFormNode { text: TsBytes::from(b"text single"), ..Default::default() }])]
         fn test_translation_node_numerusform(
             #[case] raw: &str,
-            #[case] expected_parsed: Vec<TsBytes<'_>>,
+            #[case] expected_parsed: Vec<NumerusFormNode<'_>>,
         ) {
             init();
             let raw = format!(
@@ -204,7 +205,7 @@ mod test_tsnode {
                     .translation
                     .as_ref()
                     .expect("to have translation")
-                    .length_variants,
+                    .numerus_forms,
                 expected_parsed
             );
         }
