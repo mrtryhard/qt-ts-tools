@@ -3,7 +3,7 @@ use crate::parser::ts_bytes::TsBytes;
 use crate::parser::yesno::YesNo;
 use log::{debug, info};
 use quick_xml::Reader;
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::BytesStart;
 
 /// Represents a translation plural form.
 #[derive(Debug, Default, Eq, Clone, PartialEq)]

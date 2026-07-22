@@ -9,10 +9,8 @@ use std::cmp::Ordering;
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct LocationNode<'a> {
     /// File from which the translation source originates from.
-    // #[serde(rename = "@filename", skip_serializing_if = "Option::is_none")]
     pub filename: Option<TsBytes<'a>>,
     /// Line where the source of the translation message is located in the file.
-    // #[serde(rename = "@line", skip_serializing_if = "Option::is_none")]
     pub line: Option<i32>,
 }
 

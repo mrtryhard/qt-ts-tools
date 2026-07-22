@@ -111,15 +111,13 @@ impl<'a> MessageNode<'a> {
             TranslatorComment,
             UserData,
         }
-        let mut message_node = MessageNode::default();
-        let mut inner_buf = Vec::new();
+        let mut node = MessageNode::default();
+        let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
         info!("Message node");
 
         loop {
-            let event = reader
-                .read_event_into(&mut inner_buf)
-                .expect("Error reading event");
+            let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
                 debug!("MessageNode: found {:#?}", ev.name());
             }
@@ -138,7 +136,7 @@ impl<'a> MessageNode<'a> {
                         b"extracomment" => Tag::ExtraComment,
                         b"location" => {
                             LocationNode::from_reader(reader, e)
-                                .map(|l| message_node.locations.push(l))?;
+                                .map(|l| node.locations.push(l))?;
                             Tag::None
                         }
                         b"oldcomment" => Tag::OldComment,
@@ -147,7 +145,7 @@ impl<'a> MessageNode<'a> {
                         b"translatorcomment" => Tag::TranslatorComment,
                         b"translation" => {
                             // Todo: clean
-                            message_node.translation =
+                            node.translation =
                                 Some(TranslationNode::from_reader(reader, e)?);
                             Tag::Translation
                         }
@@ -165,20 +163,20 @@ impl<'a> MessageNode<'a> {
                     let text = Some(TsBytes::Owned(e.to_vec()));
                     match current_tag {
                         Tag::None => {}
-                        Tag::Comment => message_node.comment = text,
-                        Tag::ExtraComment => message_node.extra_comment = text,
+                        Tag::Comment => node.comment = text,
+                        Tag::ExtraComment => node.extra_comment = text,
                         Tag::LocBlank => {}    // not for now
                         Tag::LocFeature => {}  // not for now
                         Tag::LocFlags => {}    // not for now
                         Tag::LocLayoutId => {} // not for now
-                        Tag::OldComment => message_node.old_comment = text,
-                        Tag::OldSource => message_node.old_source = text,
+                        Tag::OldComment => node.old_comment = text,
+                        Tag::OldSource => node.old_source = text,
                         Tag::PoMsgIdPlural => {}    // not for now
                         Tag::PoOldMsgIdPlural => {} // not for now
-                        Tag::Source => message_node.source = text,
+                        Tag::Source => node.source = text,
                         Tag::Translation => {}
-                        Tag::TranslatorComment => message_node.translator_comment = text,
-                        Tag::UserData => message_node.userdata = text,
+                        Tag::TranslatorComment => node.translator_comment = text,
+                        Tag::UserData => node.userdata = text,
                         _ => {} // TODO: error message?
                     }
                 }
@@ -201,11 +199,11 @@ impl<'a> MessageNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
-                b"id" => message_node.id = Some(TsBytes::Owned(a.value.into_owned())),
-                b"numerus" => message_node.numerus = Some(YesNo::from(a.value)),
+                b"id" => node.id = Some(TsBytes::Owned(a.value.into_owned())),
+                b"numerus" => node.numerus = Some(YesNo::from(a.value)),
                 _ => debug!("MessageNode: unknown attribute: {:?}", a.key),
             });
 
-        Ok(message_node)
+        Ok(node)
     }
 }

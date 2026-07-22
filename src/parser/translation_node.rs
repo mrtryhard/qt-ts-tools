@@ -37,15 +37,13 @@ impl<'a> TranslationNode<'a> {
             LengthVariant,
             UserData,
         }
-        let mut translation_node = Self::default();
-        let mut inner_buf = Vec::new();
+        let mut node = Self::default();
+        let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
         info!("Translation node");
 
         loop {
-            let event = reader
-                .read_event_into(&mut inner_buf)
-                .expect("Error reading event");
+            let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
                 debug!("TranslationNode: found {:#?}", ev.name());
             }
@@ -62,7 +60,7 @@ impl<'a> TranslationNode<'a> {
                     current_tag = match e.name().as_ref() {
                         b"translation" => Tag::Translation,
                         b"numerusform" => NumerusFormNode::from_reader(reader, e).map(|n| {
-                            translation_node.numerus_forms.push(n);
+                            node.numerus_forms.push(n);
                             Tag::None
                         })?,
                         b"lengthvariant" => Tag::LengthVariant,
@@ -77,11 +75,11 @@ impl<'a> TranslationNode<'a> {
                 }
                 Event::Text(ref e) => {
                     debug!("TranslationNode: found text: {:#?}", e);
-                    let text = Some(TsBytes::Owned(e.to_vec()));
+                    let text = TsBytes::Owned(e.to_vec());
                     match current_tag {
-                        Tag::None => translation_node.translation_simple = text,
-                        Tag::LengthVariant => translation_node.length_variants.push(text.unwrap()),
-                        Tag::UserData => translation_node.userdata = text,
+                        Tag::None => node.translation_simple = Some(text),
+                        Tag::LengthVariant => node.length_variants.push(text),
+                        Tag::UserData => node.userdata = Some(text),
                         _ => {} // TODO: error message?
                     }
                 }
@@ -102,11 +100,11 @@ impl<'a> TranslationNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
-                b"type" => translation_node.translation_type = Some(TranslationType::from(a.value)),
-                b"variants" => translation_node.variants = Some(YesNo::from(a.value)),
+                b"type" => node.translation_type = Some(TranslationType::from(a.value)),
+                b"variants" => node.variants = Some(YesNo::from(a.value)),
                 _ => debug!("TranslationNode: unknown attribute: {:?}", a.key),
             });
 
-        Ok(translation_node)
+        Ok(node)
     }
 }

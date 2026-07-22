@@ -48,14 +48,12 @@ impl<'a> ContextNode<'a> {
             Comment,
             Message,
         }
-        let mut context_node = ContextNode::default();
-        let mut inner_buf = Vec::new();
+        let mut node = ContextNode::default();
+        let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
 
         loop {
-            let event = reader
-                .read_event_into(&mut inner_buf)
-                .expect("Error reading event");
+            let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
                 debug!("ContextNode: found {:#?}", ev.name());
             }
@@ -74,8 +72,7 @@ impl<'a> ContextNode<'a> {
                         b"message" => {
                             // Note: Better to start parsing here to ensure access to element attributes.
                             info!("ContextNode: Parsing message node.");
-                            MessageNode::from_reader(reader, e)
-                                .map(|n| context_node.messages.push(n))?;
+                            MessageNode::from_reader(reader, e).map(|n| node.messages.push(n))?;
                             Tag::Message
                         }
                         _ => {
@@ -90,8 +87,8 @@ impl<'a> ContextNode<'a> {
                     debug!("ContextNode: found text: {:#?}", e);
                     let text = Some(TsBytes::Owned(e.to_vec()));
                     match current_tag {
-                        Tag::Name => context_node.name = text,
-                        Tag::Comment => context_node.comment = text,
+                        Tag::Name => node.name = text,
+                        Tag::Comment => node.comment = text,
                         _ => {
                             warn!("ContextNode: what is going on")
                         } // TODO: better logging or error message?
@@ -114,10 +111,10 @@ impl<'a> ContextNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
-                b"encoding" => context_node.encoding = Some(TsBytes::Owned(a.value.into_owned())),
+                b"encoding" => node.encoding = Some(TsBytes::Owned(a.value.into_owned())),
                 _ => debug!("ContextNode: unknown attribute: {:?}", a.key),
             });
 
-        Ok(context_node)
+        Ok(node)
     }
 }

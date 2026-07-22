@@ -2,7 +2,7 @@ use crate::parser::context_node::ContextNode;
 use crate::parser::dependency_node::DependenciesNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::ts_bytes::TsBytes;
-use log::debug;
+use log::{debug, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::borrow::Cow;
@@ -11,7 +11,6 @@ use std::borrow::Cow;
 #[derive(Debug, Default, PartialEq)]
 pub struct TsNode<'a> {
     /// Defines the version of the TS format, although unused by this tool.
-    /// attribute -- do not serialize if missing
     pub version: Option<TsBytes<'a>>,
     /// Source language on which this translation is based on.
     pub source_language: Option<TsBytes<'a>>,
@@ -30,23 +29,24 @@ impl<'a> TsNode<'a> {
         element: &BytesStart,
     ) -> Result<Self, ParseError> {
         let mut contexts = vec![];
-        let mut inner_buf = Vec::new();
+        let mut buffer = Vec::new();
 
         loop {
-            let event = reader
-                .read_event_into(&mut inner_buf)
-                .expect("Error reading event");
+            let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
                 debug!("Found {:#?}", ev.name());
             }
 
             match event {
-                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"context") => {
-                    debug!("Found context");
-                    ContextNode::from_reader(reader, e)
-                        .map(|n| contexts.push(n))
-                        .map_err(|e| debug!("Error parsing context node: {:?}", e))
-                        .expect("Expected to succeed"); // TODO: improve that.
+                Event::Start(ref e) => {
+                    match e.name().as_ref() {
+                        b"context" => {
+                            ContextNode::from_reader(reader, e).map(|n| contexts.push(n))?
+                        }
+                        _ => {
+                            warn!("TsNode: unknown start event: {:?}", event);
+                        }
+                    }
                 }
                 Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => break,
                 _ => debug!("TsNode: unknown event: {:?}", event),

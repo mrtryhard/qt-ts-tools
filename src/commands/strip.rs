@@ -77,12 +77,8 @@ fn strip_nodes(nodes: &mut TSNode, translation_type_filter: &[TranslationType]) 
                 && translation_type_filter.contains(&translation_type)
             {
                 debug!(
-                    "Stripping translation {:?} from message `{}`",
-                    &translation.translation_simple,
-                    &message
-                        .source
-                        .as_ref()
-                        .unwrap_or(&"Unknown source text".to_owned())
+                    "Stripping translation {:?} from message `{:?}`",
+                    translation.translation_simple, message.source
                 );
                 message.translation = None;
                 count += 1;
