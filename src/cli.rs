@@ -1,6 +1,6 @@
 use clap::{ArgAction, Parser, Subcommand};
 
-use crate::commands::extract::{ExtractArgs, extract_main};
+use crate::commands::extract::{ExtractArgs, extract};
 use crate::commands::merge::{MergeArgs, merge_main};
 use crate::commands::release::{ReleaseArgs, release_main};
 use crate::commands::shell_completion::{ShellCompletionArgs, shell_completion_main};

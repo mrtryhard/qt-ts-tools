@@ -2,7 +2,7 @@ use crate::parser::parse_error::ParseError;
 use crate::parser::translation_node::TranslationNode;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_parser::{TsDocument, TsParser};
-use crate::{tr, ts};
+use crate::{tr};
 use clap::{ArgAction, Args};
 use log::debug;
 use std::error::Error;
@@ -32,7 +32,7 @@ pub struct ExtractArgs {
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.
-pub fn extract_main(extract_args: &ExtractArgs) -> Result<TsDocument, impl Error> {
+pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument, impl Error> {
     // TODO: extract file read logic, requires refactoring all commands args.
     std::fs::read(&extract_args.input_path)
         .map_err(|err| {
@@ -93,7 +93,6 @@ fn retain_ts_node(mut doc: TsDocument, wanted_types: Vec<TranslationType>) -> Ts
 mod extract_test {
     use super::*;
     use crate::commands::test_utils::read_test_file;
-    use crate::logging::initialize_logging;
 
     fn get_expected_extracted(filename: &str) -> TsDocument<'_> {
         TsParser::from_buffer(read_test_file(filename).into_bytes())
@@ -102,7 +101,6 @@ mod extract_test {
 
     #[test]
     fn test_extract_ts_node() {
-        initialize_logging();
         let expected_extracted = get_expected_extracted("example_extract_extracted.xml");
         let args = ExtractArgs {
             input_path: "./test_data/example_extract.xml".to_string(),
@@ -110,7 +108,7 @@ mod extract_test {
             output_path: None, // ignore, we no longer write to file
             help: None,
         };
-        let doc = extract_main(&args).expect("Retain node to be successful");
+        let doc = extract(&args).expect("Retain node to be successful");
 
         assert_eq!(doc.root, expected_extracted.root);
     }

@@ -358,7 +358,7 @@ pub fn write_to_output_parser(output_path: &Option<String>, node: &TsNode) -> Re
         node.contexts.len()
     );
 
-    let mut inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
+    let inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
         None => BufWriter::new(Box::new(std::io::stdout().lock())),
         Some(output_path) => match std::fs::File::options()
             .create(true)
