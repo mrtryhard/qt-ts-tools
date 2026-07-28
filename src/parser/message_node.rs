@@ -97,6 +97,7 @@ impl<'a> MessageNode<'a> {
             None,
             Comment,
             ExtraComment,
+            Location,
             LocBlank,
             LocFeature,
             LocFlags,
@@ -114,21 +115,20 @@ impl<'a> MessageNode<'a> {
         let mut node = MessageNode::default();
         let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
-        info!("Message node");
+        info!("MessageNode");
 
         loop {
             let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
-                debug!("MessageNode: found {:#?}", ev.name());
+                debug!("MessageNode::{current_tag:?}: found {:#?}", ev.name());
             }
 
             match event {
                 Event::Start(ref e) => {
-                    debug!("MessageNode: Found element \"{e:#?}\"");
+                    debug!("MessageNode::{current_tag:?}: Found element \"{:#?}\"", e.name());
 
                     if Tag::None != current_tag {
-                        // TODO: better logging or error message?
-                        return Err(ParseError::from("Unexpected tag opening"));
+                        return Err(ParseError::from(format!("MessageNode::{current_tag:?}: Unexpected tag opening: ${e:?}")));
                     }
 
                     current_tag = match e.name().as_ref() {
@@ -137,29 +137,26 @@ impl<'a> MessageNode<'a> {
                         b"location" => {
                             LocationNode::from_reader(reader, e)
                                 .map(|l| node.locations.push(l))?;
-                            Tag::None
+                            Tag::Location
                         }
                         b"oldcomment" => Tag::OldComment,
                         b"oldsource" => Tag::OldSource,
                         b"source" => Tag::Source,
                         b"translatorcomment" => Tag::TranslatorComment,
                         b"translation" => {
-                            // Todo: clean
                             node.translation =
                                 Some(TranslationNode::from_reader(reader, e)?);
-                            Tag::Translation
+                            Tag::None
                         }
                         b"userdata" => Tag::UserData,
                         _ => {
-                            warn!("MessageNode: Unknown field: {e:#?}");
+                            warn!("MessageNode::{current_tag:?}: Unknown field: {e:#?}");
                             Tag::None
                         }
                     };
-
-                    debug!("Found tag {current_tag:#?}");
                 }
                 Event::Text(ref e) => {
-                    debug!("MessageNode: found text: {:#?}", e);
+                    debug!("MessageNode::{current_tag:?}: found text: {e:#?}");
                     let text = Some(TsBytes::Owned(e.to_vec()));
                     match current_tag {
                         Tag::None => {}
@@ -182,16 +179,16 @@ impl<'a> MessageNode<'a> {
                 }
 
                 Event::End(ref e) => {
-                    debug!("MessageNode: Found END element \"{e:#?}\"");
+                    debug!("MessageNode::{current_tag:?}: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
                         b"message" => break,
                         b"comment" | b"location" | b"translation" | b"oldsource"
                         | b"extracomment" | b"oldcomment" | b"source" | b"translatorcomment"
                         | b"userdata" => current_tag = Tag::None,
-                        _ => debug!("MessageNode: ending unknown field: {e:#?}"),
+                        _ => debug!("MessageNode::{current_tag:?}: ending unknown field: {e:#?}"),
                     }
                 }
-                _ => debug!("MessageNode: unknown event: {:?}", event),
+                _ => debug!("MessageNode::{current_tag:?}: unknown event: {event:?}"),
             }
         }
 

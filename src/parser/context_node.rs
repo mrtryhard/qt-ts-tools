@@ -1,7 +1,7 @@
 use crate::parser::message_node::MessageNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::ts_bytes::TsBytes;
-use log::{debug, info, warn};
+use log::{debug, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::cmp::Ordering;
@@ -28,11 +28,7 @@ impl<'a> PartialOrd<Self> for ContextNode<'a> {
 impl<'a> Ord for ContextNode<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
-        self.name
-            .as_ref()
-            .unwrap()
-            .to_ascii_lowercase()
-            .cmp(&other.name.as_ref().unwrap().to_ascii_lowercase())
+        self.name.cmp(&other.name)
     }
 }
 
@@ -46,64 +42,61 @@ impl<'a> ContextNode<'a> {
             None,
             Name,
             Comment,
-            Message,
         }
         let mut node = ContextNode::default();
         let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
-
+        debug!("ContextNode");
+        
         loop {
             let event = reader.read_event_into(&mut buffer)?;
+
             if let Event::Start(ref ev) = event {
                 debug!("ContextNode: found {:#?}", ev.name());
             }
+
             match event {
                 Event::Start(ref e) => {
-                    debug!("ContextNode: Found element \"{e:#?}\"");
+                    debug!("ContextNode::{current_tag:#?}: Found element \"{e:#?}\"");
 
                     if Tag::None != current_tag {
-                        // TODO: better logging or error message?
-                        return Err(ParseError::from("Unexpected tag opening"));
+                        return Err(ParseError::from(format!(
+                            "ContextNode::{current_tag:#?}: Unexpected tag opening: ${e:?}"
+                        )));
                     }
 
                     current_tag = match e.name().as_ref() {
                         b"name" => Tag::Name,
                         b"comment" => Tag::Comment,
                         b"message" => {
-                            // Note: Better to start parsing here to ensure access to element attributes.
-                            info!("ContextNode: Parsing message node.");
                             MessageNode::from_reader(reader, e).map(|n| node.messages.push(n))?;
-                            Tag::Message
+                            Tag::None
                         }
                         _ => {
-                            warn!("ContextNode: Unknown field: {e:#?}");
+                            warn!("ContextNode::{current_tag:#?}: Unknown field: {e:#?}");
                             Tag::None
                         }
                     };
-
-                    debug!("ContextNode: found tag {current_tag:#?}");
                 }
                 Event::Text(ref e) => {
-                    debug!("ContextNode: found text: {:#?}", e);
+                    debug!("ContextNode::{current_tag:#?}: found text: {:#?}", e);
                     let text = Some(TsBytes::Owned(e.to_vec()));
                     match current_tag {
                         Tag::Name => node.name = text,
                         Tag::Comment => node.comment = text,
-                        _ => {
-                            warn!("ContextNode: what is going on")
-                        } // TODO: better logging or error message?
+                        _ => {} // TODO: better logging or error message?
                     }
                 }
 
                 Event::End(ref e) => {
-                    debug!("ContextNode: Found END element \"{e:#?}\"");
+                    debug!("ContextNode::{current_tag:#?}: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
                         b"context" => break,
                         b"comment" | b"message" | b"name" => current_tag = Tag::None,
-                        _ => debug!("ContextNode: ending unknown field: {e:#?}"),
+                        _ => debug!("ContextNode::{current_tag:#?}: unknown closing field: {e:#?}"),
                     }
                 }
-                _ => debug!("Context node: unknown event: {:?}", event),
+                _ => debug!("ContextNode::{current_tag:#?}: unknown event: {event:?}"),
             }
         }
 

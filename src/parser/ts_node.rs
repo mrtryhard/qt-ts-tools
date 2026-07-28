@@ -34,7 +34,7 @@ impl<'a> TsNode<'a> {
         loop {
             let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
-                debug!("Found {:#?}", ev.name());
+                debug!("TsNode: Found {:#?}", ev.name());
             }
 
             match event {

@@ -50,12 +50,13 @@ pub fn get_cli_result() -> Result<(), String> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Extract(args) => extract_main(&args),
+        // TODO: Commands::Extract(args) => extract_main(&args),
         Commands::Merge(args) => merge_main(&args),
         Commands::Release(args) => release_main(&args),
         Commands::Sort(args) => sort_main(&args),
         Commands::Stat(args) => stat_main(&args),
         Commands::Strip(args) => strip_main(&args),
         Commands::ShellCompletion(args) => shell_completion_main(&args),
+        _ => todo!(),
     }
 }

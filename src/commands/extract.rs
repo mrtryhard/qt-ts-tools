@@ -1,9 +1,11 @@
-use clap::{ArgAction, Args};
-use i18n_embed_fl::fl;
-use log::debug;
-
-use crate::ts::{TSNode, TranslationNode, TranslationType};
+use crate::parser::parse_error::ParseError;
+use crate::parser::translation_node::TranslationNode;
+use crate::parser::translation_type::TranslationType;
+use crate::parser::ts_parser::{TsDocument, TsParser};
 use crate::{tr, ts};
+use clap::{ArgAction, Args};
+use log::debug;
+use std::error::Error;
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
 pub enum TranslationTypeArg {
@@ -30,34 +32,25 @@ pub struct ExtractArgs {
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.
-pub fn extract_main(extract_args: &ExtractArgs) -> Result<(), String> {
-    match quick_xml::Reader::from_file(&extract_args.input_path) {
-        Ok(file) => {
-            let nodes: Result<TSNode, _> = quick_xml::de::from_reader(file.into_inner());
-            match nodes {
-                Ok(mut ts_node) => {
-                    let wanted_types = extract_args
-                        .translation_type
-                        .iter()
-                        .map(to_translation_type)
-                        .collect::<Vec<TranslationType>>();
-                    retain_ts_node(&mut ts_node, &wanted_types);
-                    ts::write_to_output(&extract_args.output_path, &ts_node)
-                }
-                Err(e) => Err(fl!(
-                    crate::locale::current_loader(),
-                    "error-open-or-parse",
-                    file = extract_args.input_path.as_str(),
-                    error = e.to_string()
-                )),
-            }
-        }
-        Err(e) => Err(tr!(
-            "error-open-or-parse",
-            file = extract_args.input_path.as_str(),
-            error = e.to_string()
-        )),
-    }
+pub fn extract_main(extract_args: &ExtractArgs) -> Result<TsDocument, impl Error> {
+    // TODO: extract file read logic, requires refactoring all commands args.
+    std::fs::read(&extract_args.input_path)
+        .map_err(|err| {
+            ParseError::from(tr!(
+                "error-open-or-parse",
+                file = extract_args.input_path.as_str(),
+                error = err.to_string()
+            ))
+        })
+        .and_then(|buf| TsParser::from_buffer(buf))
+        .map(|doc| {
+            let types = extract_args
+                .translation_type
+                .iter()
+                .map(to_translation_type)
+                .collect();
+            retain_ts_node(doc, types)
+        })
 }
 
 fn to_translation_type(value: &TranslationTypeArg) -> TranslationType {
@@ -86,35 +79,39 @@ fn translation_is_wanted(
 }
 
 /// Keep only the desired translation type from the node (if it matches one in `wanted_types`).
-fn retain_ts_node(ts_node: &mut TSNode, wanted_types: &[TranslationType]) {
-    ts_node.contexts.retain_mut(|context| {
+fn retain_ts_node(mut doc: TsDocument, wanted_types: Vec<TranslationType>) -> TsDocument {
+    doc.root.contexts.retain_mut(|context| {
         context
             .messages
-            .retain(|message| translation_is_wanted(message.translation.as_ref(), wanted_types));
+            .retain(|message| translation_is_wanted(message.translation.as_ref(), &wanted_types));
         !context.messages.is_empty()
     });
+    doc
 }
 
 #[cfg(test)]
 mod extract_test {
-    use crate::commands::test_utils::{node_to_formatted_string, read_test_file};
-
     use super::*;
+    use crate::commands::test_utils::read_test_file;
+    use crate::logging::initialize_logging;
+
+    fn get_expected_extracted(filename: &str) -> TsDocument<'_> {
+        TsParser::from_buffer(read_test_file(filename).into_bytes())
+            .expect("Should be reading test file")
+    }
 
     #[test]
     fn test_extract_ts_node() {
-        let expected_extracted = read_test_file("example_extract_extracted.xml");
+        initialize_logging();
+        let expected_extracted = get_expected_extracted("example_extract_extracted.xml");
+        let args = ExtractArgs {
+            input_path: "./test_data/example_extract.xml".to_string(),
+            translation_type: vec![TranslationTypeArg::Obsolete],
+            output_path: None, // ignore, we no longer write to file
+            help: None,
+        };
+        let doc = extract_main(&args).expect("Retain node to be successful");
 
-        let reader_nosort = quick_xml::Reader::from_file("./test_data/example_extract.xml")
-            .expect("File to be openable");
-        let mut extracted_node: TSNode =
-            quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable");
-
-        let types = vec![TranslationType::Obsolete];
-        retain_ts_node(&mut extracted_node, &types);
-
-        let extracted = node_to_formatted_string(&extracted_node);
-
-        assert_eq!(expected_extracted, extracted);
+        assert_eq!(doc.root, expected_extracted.root);
     }
 }

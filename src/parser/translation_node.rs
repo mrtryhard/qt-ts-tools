@@ -40,21 +40,20 @@ impl<'a> TranslationNode<'a> {
         let mut node = Self::default();
         let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
-        info!("Translation node");
+        info!("TranslationNode");
 
         loop {
             let event = reader.read_event_into(&mut buffer)?;
             if let Event::Start(ref ev) = event {
-                debug!("TranslationNode: found {:#?}", ev.name());
+                debug!("TranslationNode::{current_tag:?}: found {:#?}", ev.name());
             }
 
             match event {
                 Event::Start(ref e) => {
-                    debug!("TranslationNode: Found element \"{e:#?}\"");
+                    debug!("TranslationNode::{current_tag:?}: Found element \"{e:#?}\"");
 
                     if Tag::None != current_tag {
-                        // TODO: better logging or error message?
-                        return Err(ParseError::from("Unexpected tag opening"));
+                        return Err(ParseError::from(format!("TranslationNode::{current_tag:?}: Unexpected tag opening: ${e:?}")));
                     }
 
                     current_tag = match e.name().as_ref() {
@@ -66,15 +65,13 @@ impl<'a> TranslationNode<'a> {
                         b"lengthvariant" => Tag::LengthVariant,
                         b"userdata" => Tag::UserData,
                         _ => {
-                            warn!("TranslationNode: Unknown field: {e:#?}");
+                            warn!("TranslationNode::{current_tag:?}: Unknown field: {e:#?}");
                             Tag::None
                         }
                     };
-
-                    debug!("Found tag {current_tag:#?}");
                 }
                 Event::Text(ref e) => {
-                    debug!("TranslationNode: found text: {:#?}", e);
+                    debug!("TranslationNode::{current_tag:?}: found text: {e:#?}");
                     let text = TsBytes::Owned(e.to_vec());
                     match current_tag {
                         Tag::None => node.translation_simple = Some(text),
@@ -85,14 +82,14 @@ impl<'a> TranslationNode<'a> {
                 }
 
                 Event::End(ref e) => {
-                    debug!("TranslationNode: Found END element \"{e:#?}\"");
+                    debug!("TranslationNode::{current_tag:?}: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
                         b"translation" => break,
                         b"lengthvariant" | b"userdata" => current_tag = Tag::None,
-                        _ => debug!("TranslationNode: ending unknown field: {e:#?}"),
+                        _ => debug!("TranslationNode::{current_tag:?}: ending unknown field: {e:#?}"),
                     }
                 }
-                _ => debug!("TranslationNode: unknown event: {:?}", event),
+                _ => debug!("TranslationNode::{current_tag:?}: unknown event: {:?}", event),
             }
         }
 

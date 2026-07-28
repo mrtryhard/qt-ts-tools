@@ -20,13 +20,11 @@ impl<'a> LocationNode<'a> {
         element: &BytesStart,
     ) -> Result<Self, ParseError> {
         let mut location_node = LocationNode::default();
-        info!("Location node");
+        info!("LocationNode");
 
         element.attributes().flatten().for_each(|a| {
-            println!("{:?}", a);
             match a.key.as_ref() {
                 b"filename" => location_node.filename = Some(TsBytes::Owned(a.value.into_owned())),
-                // TODO better parsing management?
                 b"line" => {
                     location_node.line = str::from_utf8(&a.value).ok().and_then(|s| s.parse().ok())
                 }

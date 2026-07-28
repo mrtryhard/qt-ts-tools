@@ -20,6 +20,14 @@ impl From<&str> for ParseError {
     }
 }
 
+impl From<String> for ParseError {
+    fn from(value: String) -> Self {
+        ParseError {
+            err: value,
+        }
+    }
+}
+
 impl From<FromUtf8Error> for ParseError {
     fn from(value: FromUtf8Error) -> Self {
         ParseError {
