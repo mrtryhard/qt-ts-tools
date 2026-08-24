@@ -16,3 +16,4 @@ pub mod ts_bytes;
 pub mod ts_node;
 pub mod ts_parser;
 pub mod yesno;
+pub mod serializer;

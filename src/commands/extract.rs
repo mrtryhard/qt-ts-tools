@@ -2,7 +2,7 @@ use crate::parser::parse_error::ParseError;
 use crate::parser::translation_node::TranslationNode;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_parser::{TsDocument, TsParser};
-use crate::{tr};
+use crate::tr;
 use clap::{ArgAction, Args};
 use log::debug;
 use std::error::Error;
@@ -32,7 +32,7 @@ pub struct ExtractArgs {
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.
-pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument, impl Error> {
+pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument<'_>, Box<dyn Error>> {
     // TODO: extract file read logic, requires refactoring all commands args.
     std::fs::read(&extract_args.input_path)
         .map_err(|err| {
@@ -42,7 +42,7 @@ pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument, impl Error> {
                 error = err.to_string()
             ))
         })
-        .and_then(|buf| TsParser::from_buffer(buf))
+        .and_then(TsParser::from_buffer)
         .map(|doc| {
             let types = extract_args
                 .translation_type
@@ -51,6 +51,7 @@ pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument, impl Error> {
                 .collect();
             retain_ts_node(doc, types)
         })
+        .map_err(|err| err.into())
 }
 
 fn to_translation_type(value: &TranslationTypeArg) -> TranslationType {

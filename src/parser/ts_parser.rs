@@ -6,7 +6,6 @@ use quick_xml::events::Event;
 
 pub struct TsParser {}
 pub struct TsDocument<'a> {
-    buf: Vec<u8>,
     pub root: TsNode<'a>,
 }
 
@@ -37,7 +36,6 @@ impl TsParser {
         }
 
         Ok(TsDocument {
-            buf,
             root: ts_node?,
         })
     }

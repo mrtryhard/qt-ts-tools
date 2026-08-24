@@ -3,7 +3,6 @@ use std::io::{BufWriter, Write};
 
 use log::debug;
 use serde::{Deserialize, Serialize};
-use crate::parser::ts_node::TsNode;
 use crate::tr;
 
 // This file defines the schema matching (or trying to match?) Qt's XSD
@@ -350,52 +349,6 @@ pub fn write_to_output(output_path: &Option<String>, node: &TSNode) -> Result<()
         }
         Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
     }
-}
-
-pub fn write_to_output_parser(output_path: &Option<String>, node: &TsNode) -> Result<(), String> {
-    debug!(
-        "Writing output to '{output_path:?}': {} context nodes",
-        node.contexts.len()
-    );
-
-    let inner_writer: BufWriter<Box<dyn Write>> = match &output_path {
-        None => BufWriter::new(Box::new(std::io::stdout().lock())),
-        Some(output_path) => match std::fs::File::options()
-            .create(true)
-            .truncate(true)
-            .write(true)
-            .open(output_path)
-        {
-            Ok(file) => BufWriter::new(Box::new(file)),
-            Err(e) => {
-                return Err(tr!(
-                    "error-write-output-open",
-                    output_path = output_path,
-                    error = e.to_string()
-                ));
-            }
-        },
-    };
-
-    let mut output_buffer =
-        String::from("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE TS>\n");
-    let mut ser = quick_xml::se::Serializer::new(&mut output_buffer);
-    ser.indent(' ', 2).expand_empty_elements(true);
-
-    // TODO: Implement serialization of TsNode
-    // match node.serialize(ser) {
-    //     Ok(_) => {
-    //         debug!("Bytes to write: {}", output_buffer.len());
-    //
-    //         let res = inner_writer.write_all(output_buffer.as_bytes());
-    //         match res {
-    //             Ok(_) => Ok(()),
-    //             Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
-    //         }
-    //     }
-    //     Err(e) => Err(tr!("error-ts-write-serialize", error = e.to_string())),
-    // }
-    todo!("Implement the serialization logic of Ts nodes.")
 }
 
 #[cfg(test)]

@@ -162,14 +162,14 @@ impl<'a> MessageNode<'a> {
                         Tag::None => {}
                         Tag::Comment => node.comment = text,
                         Tag::ExtraComment => node.extra_comment = text,
-                        Tag::LocBlank => {}    // not for now
-                        Tag::LocFeature => {}  // not for now
-                        Tag::LocFlags => {}    // not for now
-                        Tag::LocLayoutId => {} // not for now
+                        Tag::LocBlank => node.loc_blank = text,
+                        Tag::LocFeature => node.loc_feature = text,
+                        Tag::LocFlags => node.loc_flags = text,
+                        Tag::LocLayoutId => node.loc_layout_id = text,
                         Tag::OldComment => node.old_comment = text,
                         Tag::OldSource => node.old_source = text,
-                        Tag::PoMsgIdPlural => {}    // not for now
-                        Tag::PoOldMsgIdPlural => {} // not for now
+                        Tag::PoMsgIdPlural => node.po_msg_id_plural = text,
+                        Tag::PoOldMsgIdPlural => node.po_old_msg_id_plural = text,
                         Tag::Source => node.source = text,
                         Tag::Translation => {}
                         Tag::TranslatorComment => node.translator_comment = text,
