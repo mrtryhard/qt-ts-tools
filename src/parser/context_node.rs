@@ -1,6 +1,5 @@
 use crate::parser::message_node::MessageNode;
 use crate::parser::parse_error::ParseError;
-use crate::parser::ts_bytes::TsBytes;
 use log::{debug, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
@@ -8,35 +7,35 @@ use std::cmp::Ordering;
 
 /// Context and its associated translated message.
 #[derive(Debug, Default, Eq, PartialEq)]
-pub struct ContextNode<'a> {
+pub struct ContextNode {
     /// Unique name of the context
-    pub name: Option<TsBytes<'a>>,
+    pub name: Option<String>,
     /// List of translation messages
-    pub messages: Vec<MessageNode<'a>>,
+    pub messages: Vec<MessageNode>,
     /// Comment describing information about the context
-    pub comment: Option<TsBytes<'a>>,
+    pub comment: Option<String>,
     /// Encoding of the messages within that context.
-    pub encoding: Option<TsBytes<'a>>,
+    pub encoding: Option<String>,
 }
 
-impl<'a> PartialOrd<Self> for ContextNode<'a> {
+impl<'a> PartialOrd<Self> for ContextNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> Ord for ContextNode<'a> {
+impl<'a> Ord for ContextNode {
     fn cmp(&self, other: &Self) -> Ordering {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
         self.name.cmp(&other.name)
     }
 }
 
-impl<'a> ContextNode<'a> {
+impl ContextNode {
     pub fn from_reader(
         reader: &mut Reader<&[u8]>,
         element: &BytesStart,
-    ) -> Result<ContextNode<'a>, ParseError> {
+    ) -> Result<Self, ParseError> {
         #[derive(Debug, Eq, PartialEq)]
         enum Tag {
             None,
@@ -44,12 +43,11 @@ impl<'a> ContextNode<'a> {
             Comment,
         }
         let mut node = ContextNode::default();
-        let mut buffer = Vec::new();
         let mut current_tag = Tag::None;
         debug!("ContextNode");
-        
+
         loop {
-            let event = reader.read_event_into(&mut buffer)?;
+            let event = reader.read_event()?;
 
             if let Event::Start(ref ev) = event {
                 debug!("ContextNode: found {:#?}", ev.name());
@@ -66,9 +64,9 @@ impl<'a> ContextNode<'a> {
                     }
 
                     current_tag = match e.name().as_ref() {
-                        b"name" => Tag::Name,
-                        b"comment" => Tag::Comment,
-                        b"message" => {
+                        "name" => Tag::Name,
+                        "comment" => Tag::Comment,
+                        "message" => {
                             MessageNode::from_reader(reader, e).map(|n| node.messages.push(n))?;
                             Tag::None
                         }
@@ -80,7 +78,7 @@ impl<'a> ContextNode<'a> {
                 }
                 Event::Text(ref e) => {
                     debug!("ContextNode::{current_tag:#?}: found text: {:#?}", e);
-                    let text = Some(TsBytes::Owned(e.to_vec()));
+                    let text = Some(e.to_string());
                     match current_tag {
                         Tag::Name => node.name = text,
                         Tag::Comment => node.comment = text,
@@ -91,8 +89,8 @@ impl<'a> ContextNode<'a> {
                 Event::End(ref e) => {
                     debug!("ContextNode::{current_tag:#?}: Found END element \"{e:#?}\"");
                     match e.name().as_ref() {
-                        b"context" => break,
-                        b"comment" | b"message" | b"name" => current_tag = Tag::None,
+                        "context" => break,
+                        "comment" | "message" | "name" => current_tag = Tag::None,
                         _ => debug!("ContextNode::{current_tag:#?}: unknown closing field: {e:#?}"),
                     }
                 }
@@ -104,7 +102,7 @@ impl<'a> ContextNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
-                b"encoding" => node.encoding = Some(TsBytes::Owned(a.value.into_owned())),
+                "encoding" => node.encoding = Some(a.value.to_string()),
                 _ => debug!("ContextNode: unknown attribute: {:?}", a.key),
             });
 

@@ -6,9 +6,9 @@ pub enum YesNo {
     No,
 }
 
-impl<'a> From<Cow<'a, [u8]>> for YesNo {
-    fn from(value: Cow<'a, [u8]>) -> Self {
-        if value.trim_ascii().eq_ignore_ascii_case(b"yes") {
+impl<'a> From<Cow<'a, str>> for YesNo {
+    fn from(value: Cow<'a, str>) -> Self {
+        if value.trim_ascii().eq_ignore_ascii_case("yes") {
             YesNo::Yes
         } else {
             YesNo::No
@@ -22,25 +22,25 @@ mod test_yesno {
     use rstest::rstest;
 
     #[rstest]
-    #[case(b"yes")]
-    #[case(b"YES")]
-    #[case(b"Yes")]
-    #[case(b"yEs")]
-    #[case(b"yeS")]
-    #[case(b" yes ")]
-    fn test_from_cow_should_match_yes(#[case] attr_value: &[u8]) {
+    #[case("yes")]
+    #[case("YES")]
+    #[case("Yes")]
+    #[case("yEs")]
+    #[case("yeS")]
+    #[case(" yes ")]
+    fn test_from_cow_should_match_yes(#[case] attr_value: &str) {
         let actual = YesNo::from(std::borrow::Cow::Borrowed(attr_value));
         assert_eq!(YesNo::Yes, actual);
     }
 
     #[rstest]
-    #[case(b"no")]
-    #[case(b"NO")]
-    #[case(b"No")]
-    #[case(b"nO")]
-    #[case(b" no ")]
-    #[case(b"")]
-    fn test_from_cow_should_match_no(#[case] attr_value: &[u8]) {
+    #[case("no")]
+    #[case("NO")]
+    #[case("No")]
+    #[case("nO")]
+    #[case(" no ")]
+    #[case("")]
+    fn test_from_cow_should_match_no(#[case] attr_value: &str) {
         let actual = YesNo::from(std::borrow::Cow::Borrowed(attr_value));
         assert_eq!(YesNo::No, actual);
     }

@@ -1,29 +1,27 @@
 use crate::parser::context_node::ContextNode;
 use crate::parser::dependency_node::DependenciesNode;
 use crate::parser::parse_error::ParseError;
-use crate::parser::ts_bytes::TsBytes;
 use log::{debug, warn};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
-use std::borrow::Cow;
 
 /// Root node of the translation file.
 #[derive(Debug, Default, PartialEq)]
-pub struct TsNode<'a> {
+pub struct TsNode {
     /// Defines the version of the TS format, although unused by this tool.
-    pub version: Option<TsBytes<'a>>,
+    pub version: Option<String>,
     /// Source language on which this translation is based on.
-    pub source_language: Option<TsBytes<'a>>,
+    pub source_language: Option<String>,
     /// Language of this translation.
-    pub language: Option<TsBytes<'a>>,
+    pub language: Option<String>,
     /// Translations attached to a context
-    pub contexts: Vec<ContextNode<'a>>, // Context[0..*] or message[0..*] TODO: support that.
+    pub contexts: Vec<ContextNode>, // Context[0..*] or message[0..*] TODO: support that.
     /// Catalogs dependencies
     pub dependencies: Option<DependenciesNode>, // TODO: parse them
                                                 // TODO: support extra-something
 }
 
-impl<'a> TsNode<'a> {
+impl TsNode {
     pub fn from_reader(
         reader: &mut Reader<&[u8]>,
         element: &BytesStart,
@@ -38,22 +36,18 @@ impl<'a> TsNode<'a> {
             }
 
             match event {
-                Event::Start(ref e) => {
-                    match e.name().as_ref() {
-                        b"context" => {
-                            ContextNode::from_reader(reader, e).map(|n| contexts.push(n))?
-                        }
-                        _ => {
-                            warn!("TsNode: unknown start event: {:?}", event);
-                        }
+                Event::Start(ref e) => match e.name().as_ref() {
+                    "context" => ContextNode::from_reader(reader, e).map(|n| contexts.push(n))?,
+                    _ => {
+                        warn!("TsNode: unknown start event: {:?}", event);
                     }
-                }
-                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => break,
+                },
+                Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case("ts") => break,
                 _ => debug!("TsNode: unknown event: {:?}", event),
             }
         }
 
-        let mut node = TsNode::<'_> {
+        let mut node = TsNode {
             contexts,
             ..Default::default()
         };
@@ -67,9 +61,9 @@ impl<'a> TsNode<'a> {
             .attributes()
             .flatten()
             .for_each(|a| match a.key.as_ref() {
-                b"version" => self.version = Some(Cow::Owned(a.value.into_owned())),
-                b"sourcelanguage" => self.source_language = Some(Cow::Owned(a.value.into_owned())),
-                b"language" => self.language = Some(Cow::Owned(a.value.into_owned())),
+                "version" => self.version = Some(a.value.to_string().to_string()),
+                "sourcelanguage" => self.source_language = Some(a.value.to_string()),
+                "language" => self.language = Some(a.value.to_string()),
                 _ => debug!("Unknown attribute: {:?}", a.key),
             });
     }

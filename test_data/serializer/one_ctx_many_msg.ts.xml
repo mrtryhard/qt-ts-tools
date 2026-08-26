@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="de_DE" sourcelanguage="en_US">
+    <context>
+        <name>AllFieldsContext</name>
+        <message>
+            <source>First</source>
+            <translation>Erste</translation>
+        </message>
+        <message id="msg_id_2" numerus="yes">
+            <location filename="main.cpp" line="42"/>
+            <location filename="util.cpp" line="10"/>
+            <source>Second</source>
+            <oldsource>OldSecond</oldsource>
+            <comment>disambiguation comment</comment>
+            <oldcomment>old disambiguation comment</oldcomment>
+            <extracomment>developer comment</extracomment>
+            <translatorcomment>translator note</translatorcomment>
+            <translation type="unfinished">
+                <numerusform>Zweite</numerusform>
+                <numerusform>Zweiten</numerusform>
+            </translation>
+            <userdata>custom user data</userdata>
+        </message>
+        <message>
+            <source>Third</source>
+            <translation type="vanished">Dritte</translation>
+        </message>
+    </context>
+</TS>

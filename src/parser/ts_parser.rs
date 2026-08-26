@@ -5,19 +5,18 @@ use quick_xml::Reader;
 use quick_xml::events::Event;
 
 pub struct TsParser {}
-pub struct TsDocument<'a> {
-    pub root: TsNode<'a>,
+pub struct TsDocument {
+    pub root: TsNode,
 }
 
 impl TsParser {
-    pub fn from_buffer<'a>(buf: Vec<u8>) -> Result<TsDocument<'a>, ParseError> {
+    pub fn from_buffer<'a>(buf: Vec<u8>) -> Result<TsDocument, ParseError> {
         let mut reader = Reader::from_reader(buf.as_slice());
-        let mut ts_node: Result<TsNode<'_>, ParseError> = Err(ParseError::from("Not parsed."));
-        let mut inner_buf = Vec::new();
+        let mut ts_node: Result<TsNode, ParseError> = Err(ParseError::from("Not parsed."));
         reader.config_mut().expand_empty_elements = true;
 
         loop {
-            let event = reader.read_event_into(&mut inner_buf)?;
+            let event = reader.read_event()?;
 
             if let Event::Start(ref ev) = event {
                 debug!("TsParser: Found {:#?}", ev.name());
@@ -28,16 +27,14 @@ impl TsParser {
                     debug!("TsParser: EOF detected");
                     break;
                 }
-                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case(b"ts") => {
+                Event::Start(ref e) if e.name().as_ref().eq_ignore_ascii_case("ts") => {
                     ts_node = TsNode::from_reader(&mut reader, e);
                 }
                 _ => (), // TODO: Better handling here
             }
         }
 
-        Ok(TsDocument {
-            root: ts_node?,
-        })
+        Ok(TsDocument { root: ts_node? })
     }
 }
 
@@ -85,7 +82,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0].locations[0]
                     .filename
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -175,12 +172,12 @@ mod test_tsnode {
         #[rstest]
         #[case::nothing("", vec![])]
         #[case::empty("<numerusform></numerusform>", vec![NumerusFormNode::default()])] // TODO: confirm behaviour
-        #[case::with_text("<numerusform>%n text</numerusform>", vec![NumerusFormNode { text: TsBytes::from(b"%n text"), ..Default::default() }])]
-        #[case::with_text_with_bytes("<numerusform>text <byte value=\"xD\"/> test</numerusform>", vec![NumerusFormNode { text: TsBytes::from(b"text <byte value=\"xD\"/> test"), ..Default::default()}])]
-        #[case::with_many("<numerusform>text: %n</numerusform><numerusform>text single</numerusform>", vec![NumerusFormNode { text: TsBytes::from(b"text: %n"), ..Default::default() }, NumerusFormNode { text: TsBytes::from(b"text single"), ..Default::default() }])]
+        #[case::with_text("<numerusform>%n text</numerusform>", vec![NumerusFormNode { text: "%n text".to_string(), ..Default::default() }])]
+        #[case::with_text_with_bytes("<numerusform>text <byte value=\"xD\"/> test</numerusform>", vec![NumerusFormNode { text: "text <byte value=\"xD\"/> test".to_string(), ..Default::default()}])]
+        #[case::with_many("<numerusform>text: %n</numerusform><numerusform>text single</numerusform>", vec![NumerusFormNode { text: "text: %n".to_string(), ..Default::default() }, NumerusFormNode { text: "text single".to_string(), ..Default::default() }])]
         fn test_translation_node_numerusform(
             #[case] raw: &str,
-            #[case] expected_parsed: Vec<NumerusFormNode<'_>>,
+            #[case] expected_parsed: Vec<NumerusFormNode>,
         ) {
             init();
             let raw = format!(
@@ -216,9 +213,9 @@ mod test_tsnode {
         #[rstest]
         #[case::nothing("", vec![])]
         #[case::empty("<lengthvariant></lengthvariant>", vec![])] // TODO: confirm behaviour
-        #[case::with_text("<lengthvariant>text</lengthvariant>", vec![TsBytes::from(b"text")])]
-        //TODO: #[case::with_text_with_bytes("<lengthvariant>text <byte value=\"xD\"/> test</lengthvariant>", vec![TsBytes::from(b"text test")])]
-        #[case::with_many("<lengthvariant>text</lengthvariant><lengthvariant>text second</lengthvariant>", vec![TsBytes::from(b"text"), TsBytes::from(b"text second")])]
+        #[case::with_text("<lengthvariant>text</lengthvariant>", vec![TsBytes::from("text")])]
+        //TODO: #[case::with_text_with_bytes("<lengthvariant>text <byte value=\"xD\"/> test</lengthvariant>", vec![TsBytes::from("text test")])]
+        #[case::with_many("<lengthvariant>text</lengthvariant><lengthvariant>text second</lengthvariant>", vec![TsBytes::from("text"), TsBytes::from("text second")])]
         fn test_translation_node_lengthvariants(
             #[case] raw: &str,
             #[case] expected_parsed: Vec<TsBytes<'_>>,
@@ -312,10 +309,7 @@ mod test_tsnode {
             assert!(!node.contexts.is_empty());
             assert!(!node.contexts[0].messages.is_empty());
             assert_eq!(
-                node.contexts[0].messages[0]
-                    .id
-                    .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                node.contexts[0].messages[0].id.as_ref().map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -347,7 +341,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .source
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -382,7 +376,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .extra_comment
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -414,7 +408,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .old_source
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -446,7 +440,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .old_comment
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -481,7 +475,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .translator_comment
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -513,7 +507,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .userdata
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -545,7 +539,7 @@ mod test_tsnode {
                 node.contexts[0].messages[0]
                     .comment
                     .as_ref()
-                    .map(|s| str::from_utf8(s).expect("to parse")),
+                    .map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -568,10 +562,7 @@ mod test_tsnode {
             let node = parser.root;
             assert!(!node.contexts.is_empty());
             assert_eq!(
-                node.contexts[0]
-                    .encoding
-                    .as_ref()
-                    .map(|s| str::from_utf8(s).expect("valid utf8")),
+                node.contexts[0].encoding.as_ref().map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -588,10 +579,7 @@ mod test_tsnode {
             let node = parser.root;
             assert!(!node.contexts.is_empty());
             assert_eq!(
-                node.contexts[0]
-                    .name
-                    .as_ref()
-                    .map(|s| str::from_utf8(s).expect("valid utf8")),
+                node.contexts[0].name.as_ref().map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -608,10 +596,7 @@ mod test_tsnode {
             let node = parser.root;
             assert!(!node.contexts.is_empty());
             assert_eq!(
-                node.contexts[0]
-                    .comment
-                    .as_ref()
-                    .map(|s| str::from_utf8(s).expect("valid utf8")),
+                node.contexts[0].comment.as_ref().map(|s| s.as_ref()),
                 expected_parsed
             );
         }
@@ -627,12 +612,7 @@ mod test_tsnode {
             TsParser::from_buffer(raw.as_bytes().into()).unwrap_or_else(|_| panic!("{raw:?}"));
         let node = parser.root;
 
-        assert_eq!(
-            node.version
-                .as_ref()
-                .map(|s| str::from_utf8(s).expect("valid utf8")),
-            expected_parsed
-        );
+        assert_eq!(node.version.as_ref().map(|s| s.as_ref()), expected_parsed);
     }
 
     #[rstest]
@@ -647,9 +627,7 @@ mod test_tsnode {
         let node = parser.root;
 
         assert_eq!(
-            node.source_language
-                .as_ref()
-                .map(|s| str::from_utf8(s).expect("valid utf8")),
+            node.source_language.as_ref().map(|s| s.as_ref()),
             expected_parsed
         );
     }
@@ -665,11 +643,6 @@ mod test_tsnode {
             TsParser::from_buffer(raw.as_bytes().into()).unwrap_or_else(|_| panic!("{raw:?}"));
         let node = parser.root;
 
-        assert_eq!(
-            node.language
-                .as_ref()
-                .map(|s| str::from_utf8(s).expect("valid utf8")),
-            expected_parsed
-        );
+        assert_eq!(node.language.as_ref().map(|s| s.as_ref()), expected_parsed);
     }
 }

@@ -1,5 +1,4 @@
 use crate::parser::parse_error::ParseError;
-use crate::parser::ts_bytes::TsBytes;
 use log::{debug, info};
 use quick_xml::Reader;
 use quick_xml::events::BytesStart;
@@ -7,14 +6,14 @@ use std::cmp::Ordering;
 
 /// Location of a translation
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct LocationNode<'a> {
+pub struct LocationNode {
     /// File from which the translation source originates from.
-    pub filename: Option<TsBytes<'a>>,
+    pub filename: Option<String>,
     /// Line where the source of the translation message is located in the file.
     pub line: Option<i32>,
 }
 
-impl<'a> LocationNode<'a> {
+impl LocationNode {
     pub fn from_reader(
         _reader: &mut Reader<&[u8]>,
         element: &BytesStart,
@@ -22,27 +21,26 @@ impl<'a> LocationNode<'a> {
         let mut location_node = LocationNode::default();
         info!("LocationNode");
 
-        element.attributes().flatten().for_each(|a| {
-            match a.key.as_ref() {
-                b"filename" => location_node.filename = Some(TsBytes::Owned(a.value.into_owned())),
-                b"line" => {
-                    location_node.line = str::from_utf8(&a.value).ok().and_then(|s| s.parse().ok())
-                }
+        element
+            .attributes()
+            .flatten()
+            .for_each(|a| match a.key.as_ref() {
+                "filename" => location_node.filename = Some(a.value.to_string().to_string()),
+                "line" => location_node.line = a.value.parse().ok(),
                 _ => debug!("LocationNode: unknown attribute: {:?}", a.key),
-            }
-        });
+            });
 
         Ok(location_node)
     }
 }
 
-impl<'a> PartialOrd<Self> for LocationNode<'a> {
+impl PartialOrd<Self> for LocationNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> Ord for LocationNode<'a> {
+impl Ord for LocationNode {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.filename.cmp(&other.filename) {
             Ordering::Equal => self.line.cmp(&other.line),
@@ -58,7 +56,6 @@ impl<'a> Ord for LocationNode<'a> {
 #[cfg(test)]
 mod test_location_node_ord {
     use crate::parser::location_node::LocationNode;
-    use crate::parser::ts_bytes::TsBytes;
     use rstest::rstest;
     use std::cmp::Ordering;
 
@@ -76,12 +73,12 @@ mod test_location_node_ord {
         #[case] ordering: Ordering,
     ) {
         let left = LocationNode {
-            filename: Some(TsBytes::from(b"file")),
+            filename: Some("file".to_string()),
             line: left_line,
         };
 
         let right = LocationNode {
-            filename: Some(TsBytes::from(b"file")),
+            filename: Some("file".to_string()),
             line: right_line,
         };
         assert_eq!(left.cmp(&right), ordering);
@@ -89,32 +86,24 @@ mod test_location_node_ord {
 
     #[rstest]
     #[case::none_none(None, None, Ordering::Equal)]
-    #[case::none_some1(None, Some(TsBytes::from(b"file")), Ordering::Less)]
-    #[case::some_a_none(Some(TsBytes::from(b"a")), None, Ordering::Greater)]
-    #[case::some_a_some_a(Some(TsBytes::from(b"a")), Some(TsBytes::from(b"a")), Ordering::Equal)]
-    #[case::some_a_some_b(Some(TsBytes::from(b"a")), Some(TsBytes::from(b"b")), Ordering::Less)]
-    #[case::some_a_some_a(
-        Some(TsBytes::from(b"b")),
-        Some(TsBytes::from(b"a")),
-        Ordering::Greater
-    )]
-    #[case::some_a_some_a_capitalization(
-        Some(TsBytes::from(b"a")),
-        Some(TsBytes::from(b"A")),
-        Ordering::Greater
-    )]
+    #[case::none_some1(None, Some("file"), Ordering::Less)]
+    #[case::some_a_none(Some("a"), None, Ordering::Greater)]
+    #[case::some_a_some_a(Some("a"), Some("a"), Ordering::Equal)]
+    #[case::some_a_some_b(Some("a"), Some("b"), Ordering::Less)]
+    #[case::some_a_some_a(Some("b"), Some("a"), Ordering::Greater)]
+    #[case::some_a_some_a_capitalization(Some("a"), Some("A"), Ordering::Greater)]
     fn test_ord_diff_by_filename(
-        #[case] left_name: Option<TsBytes<'_>>,
-        #[case] right_name: Option<TsBytes<'_>>,
+        #[case] left_name: Option<&str>,
+        #[case] right_name: Option<&str>,
         #[case] ordering: Ordering,
     ) {
         let left = LocationNode {
-            filename: left_name,
+            filename: left_name.map(|s| s.to_string()),
             line: None,
         };
 
         let right = LocationNode {
-            filename: right_name,
+            filename: right_name.map(|s| s.to_string()),
             line: None,
         };
         assert_eq!(left.cmp(&right), ordering);

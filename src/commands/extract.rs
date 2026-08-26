@@ -32,7 +32,7 @@ pub struct ExtractArgs {
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.
-pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument<'_>, Box<dyn Error>> {
+pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument, Box<dyn Error>> {
     // TODO: extract file read logic, requires refactoring all commands args.
     std::fs::read(&extract_args.input_path)
         .map_err(|err| {
@@ -95,7 +95,7 @@ mod extract_test {
     use super::*;
     use crate::commands::test_utils::read_test_file;
 
-    fn get_expected_extracted(filename: &str) -> TsDocument<'_> {
+    fn get_expected_extracted(filename: &str) -> TsDocument {
         TsParser::from_buffer(read_test_file(filename).into_bytes())
             .expect("Should be reading test file")
     }

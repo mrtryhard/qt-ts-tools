@@ -14,14 +14,14 @@ pub enum TranslationType {
     Vanished,
 }
 
-impl<'a> From<Cow<'a, [u8]>> for TranslationType {
-    fn from(value: Cow<'a, [u8]>) -> Self {
+impl<'a> From<Cow<'a, str>> for TranslationType {
+    fn from(value: Cow<'a, str>) -> Self {
         let trimmed = value.trim_ascii();
-        if trimmed.eq_ignore_ascii_case(b"unfinished") {
+        if trimmed.eq_ignore_ascii_case("unfinished") {
             TranslationType::Unfinished
-        } else if trimmed.eq_ignore_ascii_case(b"obsolete") {
+        } else if trimmed.eq_ignore_ascii_case("obsolete") {
             TranslationType::Obsolete
-        } else if trimmed.eq_ignore_ascii_case(b"vanished") {
+        } else if trimmed.eq_ignore_ascii_case("vanished") {
             TranslationType::Vanished
         } else {
             TranslationType::Finished
@@ -35,12 +35,12 @@ mod test_translation_type {
     use rstest::rstest;
 
     #[rstest]
-    #[case(b"unFinIshed", TranslationType::Unfinished)]
-    #[case(b"fiNIshed", TranslationType::Finished)]
-    #[case(b"VAnishEd", TranslationType::Vanished)]
-    #[case(b"obsoLETE", TranslationType::Obsolete)]
+    #[case("unFinIshed", TranslationType::Unfinished)]
+    #[case("fiNIshed", TranslationType::Finished)]
+    #[case("VAnishEd", TranslationType::Vanished)]
+    #[case("obsoLETE", TranslationType::Obsolete)]
     fn from_cow_should_return_correct_value(
-        #[case] attr_value: &[u8],
+        #[case] attr_value: &str,
         #[case] expected: TranslationType,
     ) {
         let actual = TranslationType::from(std::borrow::Cow::Borrowed(attr_value));

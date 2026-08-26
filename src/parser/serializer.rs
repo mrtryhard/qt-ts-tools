@@ -4,15 +4,14 @@ use crate::parser::message_node::MessageNode;
 use crate::parser::numerus_form_node::NumerusFormNode;
 use crate::parser::translation_node::TranslationNode;
 use crate::parser::translation_type::TranslationType;
-use crate::parser::ts_bytes::TsBytes;
 use crate::parser::ts_node::TsNode;
 use crate::parser::ts_parser::TsDocument;
 use crate::parser::yesno::YesNo;
+use crate::tr;
 use quick_xml::Writer;
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use std::error::Error;
 use std::io::Write;
-use crate::tr;
 
 pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Result<(), String> {
     let mut inner_writer: Box<dyn Write> = match &output_path {
@@ -38,7 +37,7 @@ pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Resul
 }
 
 fn serialize(writer: &mut dyn Write, doc: &TsDocument) -> Result<(), Box<dyn Error>> {
-    let mut xml_writer = Writer::new_with_indent(writer, b' ', 2);
+    let mut xml_writer = Writer::new_with_indent(writer, b' ', 4);
     xml_writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
     xml_writer.write_event(Event::DocType(BytesText::from_escaped("TS")))?;
 
@@ -51,15 +50,15 @@ fn serialize_ts<W: Write>(writer: &mut Writer<W>, node: &TsNode) -> Result<(), B
     let mut ts = BytesStart::new("TS");
 
     if let Some(value) = &node.version {
-        ts.push_attribute((b"version".as_ref(), value.as_ref()));
+        ts.push_attribute(("version".as_ref(), value.as_ref()));
     }
 
     if let Some(value) = &node.language {
-        ts.push_attribute((b"language".as_ref(), value.as_ref()));
+        ts.push_attribute(("language".as_ref(), value.as_ref()));
     }
 
     if let Some(value) = &node.source_language {
-        ts.push_attribute((b"sourcelanguage".as_ref(), value.as_ref()));
+        ts.push_attribute(("sourcelanguage".as_ref(), value.as_ref()));
     }
 
     writer.write_event(Event::Start(ts))?;
@@ -80,7 +79,7 @@ fn serialize_context<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut context = BytesStart::new("context");
     if let Some(value) = &node.encoding {
-        context.push_attribute((b"encoding".as_ref(), value.as_ref()));
+        context.push_attribute(("encoding".as_ref(), value.as_ref()));
     }
     writer.write_event(Event::Start(context))?;
 
@@ -101,10 +100,10 @@ fn serialize_message<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut message = BytesStart::new("message");
     if let Some(value) = &node.id {
-        message.push_attribute((b"id".as_ref(), value.as_ref()));
+        message.push_attribute(("id".as_ref(), value.as_ref()));
     }
     if let Some(YesNo::Yes) = &node.numerus {
-        message.push_attribute((b"numerus".as_ref(), b"yes".as_ref()));
+        message.push_attribute(("numerus".as_ref(), "yes".as_ref()));
     }
     writer.write_event(Event::Start(message))?;
 
@@ -142,13 +141,11 @@ fn serialize_message<W: Write>(
 fn write_string_event<W: Write>(
     field_name: &str,
     writer: &mut Writer<W>,
-    opt_value: &Option<TsBytes>,
+    opt_value: &Option<String>,
 ) -> Result<(), Box<dyn Error>> {
     if let Some(value) = &opt_value {
         writer.write_event(Event::Start(BytesStart::new(field_name)))?;
-        writer.write_event(Event::Text(BytesText::from_escaped(std::str::from_utf8(
-            value.as_ref(),
-        )?)))?;
+        writer.write_event(Event::Text(BytesText::from_escaped(value)))?;
         writer.write_event(Event::End(BytesEnd::new(field_name)))?;
     }
     Ok(())
@@ -160,10 +157,10 @@ fn serialize_location<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut location = BytesStart::new("location");
     if let Some(value) = &node.filename {
-        location.push_attribute((b"filename".as_ref(), value.as_ref()));
+        location.push_attribute(("filename".as_ref(), value.as_ref()));
     }
     if let Some(value) = node.line {
-        location.push_attribute((b"line".as_ref(), value.to_string().as_bytes()));
+        location.push_attribute(("line".as_ref(), value.to_string().as_ref()));
     }
     writer.write_event(Event::Empty(location))?;
     Ok(())
@@ -181,17 +178,15 @@ fn serialize_translation<W: Write>(
             TranslationType::Obsolete => "obsolete",
             TranslationType::Vanished => "vanished",
         };
-        translation.push_attribute((b"type".as_ref(), type_str.as_bytes()));
+        translation.push_attribute(("type".as_ref(), type_str));
     }
     if let Some(YesNo::Yes) = &node.variants {
-        translation.push_attribute((b"variants".as_ref(), b"yes".as_ref()));
+        translation.push_attribute(("variants".as_ref(), "yes".as_ref()));
     }
     writer.write_event(Event::Start(translation))?;
 
     if let Some(value) = &node.translation_simple {
-        writer.write_event(Event::Text(BytesText::from_escaped(std::str::from_utf8(
-            value.as_ref(),
-        )?)))?;
+        writer.write_event(Event::Text(BytesText::from_escaped(value)))?;
     }
 
     for form in &node.numerus_forms {
@@ -200,9 +195,7 @@ fn serialize_translation<W: Write>(
 
     for variant in &node.length_variants {
         writer.write_event(Event::Start(BytesStart::new("lengthvariant")))?;
-        writer.write_event(Event::Text(BytesText::from_escaped(std::str::from_utf8(
-            variant.as_ref(),
-        )?)))?;
+        writer.write_event(Event::Text(BytesText::from_escaped(variant)))?;
         writer.write_event(Event::End(BytesEnd::new("lengthvariant")))?;
     }
 
@@ -217,12 +210,10 @@ fn serialize_numerus_form<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut form = BytesStart::new("numerusform");
     if let Some(YesNo::Yes) = &node.variants {
-        form.push_attribute((b"variants".as_ref(), b"yes".as_ref()));
+        form.push_attribute(("variants".as_ref(), "yes".as_ref()));
     }
     writer.write_event(Event::Start(form))?;
-    writer.write_event(Event::Text(BytesText::from_escaped(std::str::from_utf8(
-        node.text.as_ref(),
-    )?)))?;
+    writer.write_event(Event::Text(BytesText::from_escaped(node.text.clone())))?;
     writer.write_event(Event::End(BytesEnd::new("numerusform")))?;
     Ok(())
 }
@@ -231,34 +222,19 @@ fn serialize_numerus_form<W: Write>(
 mod tests {
     use super::*;
     use crate::parser::ts_parser::TsParser;
+    use rstest::rstest;
 
-    #[test]
-    fn test_serialization_roundtrip() {
-        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE TS>
-<TS version="2.1" language="fr_FR" sourcelanguage="en_US">
-  <context>
-    <name>MyContext</name>
-    <message>
-      <source>Hello</source>
-      <translation>Bonjour</translation>
-    </message>
-  </context>
-</TS>"#;
-
-        let doc = TsParser::from_buffer(xml.as_bytes().to_vec()).unwrap();
+    #[rstest]
+    #[case::basic("basic.ts.xml")]
+    #[case::one_ctx_many_msg("one_ctx_many_msg.ts.xml")]
+    fn test_serialization_should_be_symmetrical(#[case] basic: &str) {
+        let xml = std::fs::read_to_string(format!("test_data/serializer/{}", basic))
+            .expect("Test file not found");
+        let doc = TsParser::from_buffer(xml.as_bytes().to_vec()).expect("Parsing failed");
         let mut buffer = Vec::new();
-        serialize(&mut buffer, &doc).unwrap();
+        serialize(&mut buffer, &doc).expect("Serialization failed");
+        let serialized_xml = String::from_utf8(buffer).expect("Invalid utf8");
 
-        let serialized_xml = String::from_utf8(buffer).unwrap();
-
-        // Basic check to see if it's valid XML and contains key elements
-        assert!(
-            serialized_xml
-                .contains("<TS version=\"2.1\" language=\"fr_FR\" sourcelanguage=\"en_US\">")
-        );
-        assert!(serialized_xml.contains("<name>MyContext</name>"));
-        assert!(serialized_xml.contains("<source>Hello</source>"));
-        assert!(serialized_xml.contains("<translation>Bonjour</translation>"));
+        assert_eq!(serialized_xml, xml);
     }
 }
