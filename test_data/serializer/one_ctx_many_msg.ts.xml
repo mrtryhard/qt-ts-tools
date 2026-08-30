@@ -17,7 +17,7 @@
             <extracomment>developer comment</extracomment>
             <translatorcomment>translator note</translatorcomment>
             <translation type="unfinished">
-            <numerusform>Zweite</numerusform>
+                <numerusform>Zweite</numerusform>
                 <numerusform>Zweiten</numerusform>
             </translation>
             <userdata>custom user data</userdata>

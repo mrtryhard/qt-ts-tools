@@ -1,5 +1,6 @@
 use crate::parser::numerus_form_node::NumerusFormNode;
 use crate::parser::parse_error::ParseError;
+use crate::parser::text_node::text_node_from_reader_with_event;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::yesno::YesNo;
 use log::{debug, info, warn};
@@ -36,6 +37,8 @@ impl TranslationNode {
             LengthVariant,
             UserData,
         }
+        // Translation node is a bit special since it can either be a simple string or a node containing chilren.
+        let initial_offset = reader.buffer_position();
         let mut node = Self::default();
         let mut current_tag = Tag::None;
         info!("TranslationNode");
@@ -70,11 +73,18 @@ impl TranslationNode {
                         }
                     };
                 }
-                Event::Text(e) => {
+                Event::Text(ref e) => {
                     debug!("TranslationNode::{current_tag:?}: found text: {e:#?}");
                     let text = e.to_string();
                     match current_tag {
-                        Tag::None => node.translation_simple = Some(text),
+                        Tag::None => {
+                            if (e.as_ref().trim().len() == 0) {
+                                continue;
+                            }
+                            node.translation_simple =
+                                text_node_from_reader_with_event(reader, element, &event)?;
+                            break;
+                        }
                         Tag::LengthVariant => node.length_variants.push(text),
                         Tag::UserData => node.userdata = Some(text),
                         _ => {} // TODO: error message?
@@ -91,6 +101,7 @@ impl TranslationNode {
                         }
                     }
                 }
+                Event::Eof => break,
                 _ => debug!(
                     "TranslationNode::{current_tag:?}: unknown event: {:?}",
                     event
@@ -107,6 +118,7 @@ impl TranslationNode {
                 _ => debug!("TranslationNode: unknown attribute: {:?}", a.key),
             });
 
+        info!("TranslationNode: {node:#?}");
         Ok(node)
     }
 }

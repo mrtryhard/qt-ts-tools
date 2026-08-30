@@ -43,6 +43,7 @@ impl TsNode {
                     }
                 },
                 Event::End(ref e) if e.name().as_ref().eq_ignore_ascii_case("ts") => break,
+                Event::Eof => break,
                 _ => debug!("TsNode: unknown event: {:?}", event),
             }
         }

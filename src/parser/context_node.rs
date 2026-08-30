@@ -94,6 +94,7 @@ impl ContextNode {
                         _ => debug!("ContextNode::{current_tag:#?}: unknown closing field: {e:#?}"),
                     }
                 }
+                Event::Eof => break,
                 _ => debug!("ContextNode::{current_tag:#?}: unknown event: {event:?}"),
             }
         }

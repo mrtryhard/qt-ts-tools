@@ -1,5 +1,6 @@
 use crate::parser::location_node::LocationNode;
 use crate::parser::parse_error::ParseError;
+use crate::parser::text_node::text_node_from_reader;
 use crate::parser::translation_node::TranslationNode;
 use crate::parser::yesno::YesNo;
 use log::{debug, info, warn};
@@ -143,7 +144,10 @@ impl MessageNode {
                         }
                         "oldcomment" => Tag::OldComment,
                         "oldsource" => Tag::OldSource,
-                        "source" => Tag::Source,
+                        "source" => {
+                            node.source = text_node_from_reader(reader, e)?;
+                            Tag::None
+                        }
                         "translatorcomment" => Tag::TranslatorComment,
                         "translation" => {
                             node.translation = Some(TranslationNode::from_reader(reader, e)?);
@@ -190,6 +194,7 @@ impl MessageNode {
                         _ => debug!("MessageNode::{current_tag:?}: ending unknown field: {e:#?}"),
                     }
                 }
+                Event::Eof => break,
                 _ => debug!("MessageNode::{current_tag:?}: unknown event: {event:?}"),
             }
         }

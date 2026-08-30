@@ -224,12 +224,13 @@ fn serialize_numerus_form<W: Write>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::logging::initialize_logging;
     use crate::parser::ts_parser::TsParser;
-    use rstest::rstest;
+    use rstest::{fixture, rstest};
 
     #[rstest]
     #[case::basic("basic.ts.xml")]
-    // Incorrect output by quick-xml: extra spaces
+    #[case::embedded_tag("issue304_embedded_tag.ts.xml")]
     #[case::one_ctx_many_msg("one_ctx_many_msg.ts.xml")]
     #[case::many_ctx_many_msg("many_ctx_many_msgs_numerus.ts.xml")]
     fn test_serialization_should_be_symmetrical(#[case] basic: &str) {

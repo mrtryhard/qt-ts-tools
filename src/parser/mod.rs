@@ -11,6 +11,7 @@ pub mod location_node;
 pub mod message_node;
 pub mod numerus_form_node;
 pub mod serializer;
+mod text_node;
 pub mod translation_node;
 pub mod translation_type;
 pub mod ts_bytes;
