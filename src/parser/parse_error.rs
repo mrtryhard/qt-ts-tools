@@ -22,9 +22,7 @@ impl From<&str> for ParseError {
 
 impl From<String> for ParseError {
     fn from(value: String) -> Self {
-        ParseError {
-            err: value,
-        }
+        ParseError { err: value }
     }
 }
 

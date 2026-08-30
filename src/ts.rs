@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 use std::io::{BufWriter, Write};
 
+use crate::tr;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use crate::tr;
 
 // This file defines the schema matching (or trying to match?) Qt's XSD
 // Eventually when a proper Rust code generator exists it would be great to use that instead.

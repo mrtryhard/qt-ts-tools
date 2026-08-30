@@ -38,7 +38,7 @@ pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Resul
 
 fn serialize(writer: &mut dyn Write, doc: &TsDocument) -> Result<(), Box<dyn Error>> {
     let mut xml_writer = Writer::new_with_indent(writer, b' ', 4);
-    xml_writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+    xml_writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("utf-8"), None)))?;
     xml_writer.write_event(Event::DocType(BytesText::from_escaped("TS")))?;
 
     serialize_ts(&mut xml_writer, &doc.root)?;
@@ -209,12 +209,15 @@ fn serialize_numerus_form<W: Write>(
     node: &NumerusFormNode,
 ) -> Result<(), Box<dyn Error>> {
     let mut form = BytesStart::new("numerusform");
+
     if let Some(YesNo::Yes) = &node.variants {
         form.push_attribute(("variants".as_ref(), "yes".as_ref()));
     }
+
     writer.write_event(Event::Start(form))?;
     writer.write_event(Event::Text(BytesText::from_escaped(node.text.clone())))?;
     writer.write_event(Event::End(BytesEnd::new("numerusform")))?;
+
     Ok(())
 }
 
@@ -226,15 +229,17 @@ mod tests {
 
     #[rstest]
     #[case::basic("basic.ts.xml")]
+    // Incorrect output by quick-xml: extra spaces
     #[case::one_ctx_many_msg("one_ctx_many_msg.ts.xml")]
+    #[case::many_ctx_many_msg("many_ctx_many_msgs_numerus.ts.xml")]
     fn test_serialization_should_be_symmetrical(#[case] basic: &str) {
-        let xml = std::fs::read_to_string(format!("test_data/serializer/{}", basic))
+        let expected_xml = std::fs::read_to_string(format!("test_data/serializer/{}", basic))
             .expect("Test file not found");
-        let doc = TsParser::from_buffer(xml.as_bytes().to_vec()).expect("Parsing failed");
+        let doc = TsParser::from_buffer(expected_xml.as_bytes().to_vec()).expect("Parsing failed");
         let mut buffer = Vec::new();
         serialize(&mut buffer, &doc).expect("Serialization failed");
         let serialized_xml = String::from_utf8(buffer).expect("Invalid utf8");
 
-        assert_eq!(serialized_xml, xml);
+        assert_eq!(serialized_xml, expected_xml);
     }
 }
