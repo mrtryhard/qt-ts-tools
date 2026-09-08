@@ -14,7 +14,6 @@ pub mod serializer;
 mod text_node;
 pub mod translation_node;
 pub mod translation_type;
-pub mod ts_bytes;
 pub mod ts_node;
 pub mod ts_parser;
 pub mod yesno;

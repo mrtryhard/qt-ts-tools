@@ -18,13 +18,13 @@ pub struct ContextNode {
     pub encoding: Option<String>,
 }
 
-impl<'a> PartialOrd<Self> for ContextNode {
+impl PartialOrd<Self> for ContextNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> Ord for ContextNode {
+impl Ord for ContextNode {
     fn cmp(&self, other: &Self) -> Ordering {
         // Contexts are generally module or classes names; let's assume they don't need any special collation treatment.
         self.name.cmp(&other.name)

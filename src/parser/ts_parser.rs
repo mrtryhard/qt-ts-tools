@@ -10,7 +10,7 @@ pub struct TsDocument {
 }
 
 impl TsParser {
-    pub fn from_buffer<'a>(buf: Vec<u8>) -> Result<TsDocument, ParseError> {
+    pub fn from_buffer(buf: Vec<u8>) -> Result<TsDocument, ParseError> {
         let mut reader = Reader::from_reader(buf.as_slice());
         let mut ts_node: Result<TsNode, ParseError> = Err(ParseError::from("Not parsed."));
         reader.config_mut().expand_empty_elements = true;
@@ -123,7 +123,6 @@ mod test_tsnode {
     mod test_translation_node {
         use crate::parser::numerus_form_node::NumerusFormNode;
         use crate::parser::translation_type::TranslationType;
-        use crate::parser::ts_bytes::TsBytes;
         use crate::parser::ts_parser::TsParser;
         use crate::parser::ts_parser::test_tsnode::init;
         use rstest::rstest;
@@ -213,12 +212,12 @@ mod test_tsnode {
         #[rstest]
         #[case::nothing("", vec![])]
         #[case::empty("<lengthvariant></lengthvariant>", vec![])] // TODO: confirm behaviour
-        #[case::with_text("<lengthvariant>text</lengthvariant>", vec![TsBytes::from("text")])]
+        #[case::with_text("<lengthvariant>text</lengthvariant>", vec!["text"])]
         //TODO: #[case::with_text_with_bytes("<lengthvariant>text <byte value=\"xD\"/> test</lengthvariant>", vec![TsBytes::from("text test")])]
-        #[case::with_many("<lengthvariant>text</lengthvariant><lengthvariant>text second</lengthvariant>", vec![TsBytes::from("text"), TsBytes::from("text second")])]
+        #[case::with_many("<lengthvariant>text</lengthvariant><lengthvariant>text second</lengthvariant>", vec!["text", "text second"])]
         fn test_translation_node_lengthvariants(
             #[case] raw: &str,
-            #[case] expected_parsed: Vec<TsBytes<'_>>,
+            #[case] expected_parsed: Vec<&str>,
         ) {
             init();
             let raw = format!(

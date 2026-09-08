@@ -37,8 +37,6 @@ impl TranslationNode {
             LengthVariant,
             UserData,
         }
-        // Translation node is a bit special since it can either be a simple string or a node containing chilren.
-        let initial_offset = reader.buffer_position();
         let mut node = Self::default();
         let mut current_tag = Tag::None;
         info!("TranslationNode");
@@ -78,7 +76,7 @@ impl TranslationNode {
                     let text = e.to_string();
                     match current_tag {
                         Tag::None => {
-                            if (e.as_ref().trim().len() == 0) {
+                            if e.as_ref().trim().is_empty() {
                                 continue;
                             }
                             node.translation_simple =

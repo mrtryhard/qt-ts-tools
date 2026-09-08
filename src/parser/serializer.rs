@@ -50,15 +50,15 @@ fn serialize_ts<W: Write>(writer: &mut Writer<W>, node: &TsNode) -> Result<(), B
     let mut ts = BytesStart::new("TS");
 
     if let Some(value) = &node.version {
-        ts.push_attribute(("version".as_ref(), value.as_ref()));
+        ts.push_attribute(("version", value.as_ref()));
     }
 
     if let Some(value) = &node.language {
-        ts.push_attribute(("language".as_ref(), value.as_ref()));
+        ts.push_attribute(("language", value.as_ref()));
     }
 
     if let Some(value) = &node.source_language {
-        ts.push_attribute(("sourcelanguage".as_ref(), value.as_ref()));
+        ts.push_attribute(("sourcelanguage", value.as_ref()));
     }
 
     writer.write_event(Event::Start(ts))?;
@@ -79,7 +79,7 @@ fn serialize_context<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut context = BytesStart::new("context");
     if let Some(value) = &node.encoding {
-        context.push_attribute(("encoding".as_ref(), value.as_ref()));
+        context.push_attribute(("encoding", value.as_ref()));
     }
     writer.write_event(Event::Start(context))?;
 
@@ -100,10 +100,10 @@ fn serialize_message<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut message = BytesStart::new("message");
     if let Some(value) = &node.id {
-        message.push_attribute(("id".as_ref(), value.as_ref()));
+        message.push_attribute(("id", value.as_ref()));
     }
     if let Some(YesNo::Yes) = &node.numerus {
-        message.push_attribute(("numerus".as_ref(), "yes".as_ref()));
+        message.push_attribute(("numerus", "yes"));
     }
     writer.write_event(Event::Start(message))?;
 
@@ -157,10 +157,10 @@ fn serialize_location<W: Write>(
 ) -> Result<(), Box<dyn Error>> {
     let mut location = BytesStart::new("location");
     if let Some(value) = &node.filename {
-        location.push_attribute(("filename".as_ref(), value.as_ref()));
+        location.push_attribute(("filename", value.as_ref()));
     }
     if let Some(value) = node.line {
-        location.push_attribute(("line".as_ref(), value.to_string().as_ref()));
+        location.push_attribute(("line", value.to_string().as_ref()));
     }
     writer.write_event(Event::Empty(location))?;
     Ok(())
@@ -178,10 +178,10 @@ fn serialize_translation<W: Write>(
             TranslationType::Obsolete => "obsolete",
             TranslationType::Vanished => "vanished",
         };
-        translation.push_attribute(("type".as_ref(), type_str));
+        translation.push_attribute(("type", type_str));
     }
     if let Some(YesNo::Yes) = &node.variants {
-        translation.push_attribute(("variants".as_ref(), "yes".as_ref()));
+        translation.push_attribute(("variants", "yes"));
     }
     writer.write_event(Event::Start(translation))?;
 
@@ -211,7 +211,7 @@ fn serialize_numerus_form<W: Write>(
     let mut form = BytesStart::new("numerusform");
 
     if let Some(YesNo::Yes) = &node.variants {
-        form.push_attribute(("variants".as_ref(), "yes".as_ref()));
+        form.push_attribute(("variants", "yes"));
     }
 
     writer.write_event(Event::Start(form))?;
@@ -224,9 +224,8 @@ fn serialize_numerus_form<W: Write>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::logging::initialize_logging;
     use crate::parser::ts_parser::TsParser;
-    use rstest::{fixture, rstest};
+    use rstest::rstest;
 
     #[rstest]
     #[case::basic("basic.ts.xml")]

@@ -27,10 +27,8 @@ pub fn text_node_from_reader_with_event(
 
                 match e.name().as_ref() {
                     "byte" => {
-                        if let Ok(attr) = e.try_get_attribute("value") {
-                            attr.map(|kv| {
-                                text.push(format!("<byte value=\"{}\"", kv.value));
-                            });
+                        if let Ok(Some(kv)) = e.try_get_attribute("value") {
+                            text.push(format!("<byte value=\"{}\"", kv.value));
                         };
                     }
                     _ => {
