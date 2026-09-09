@@ -3,11 +3,14 @@ use std::io::Write;
 use std::ops::AddAssign;
 use std::string::ToString;
 
+use crate::parser::message_node::MessageNode;
+use crate::parser::parse_error::ParseError;
+use crate::parser::translation_type::TranslationType;
+use crate::parser::ts_node::TsNode;
+use crate::parser::ts_parser::TsParser;
+use crate::tr;
 use clap::{ArgAction, Args};
 use log::debug;
-
-use crate::tr;
-use crate::ts::{MessageNode, TSNode, TranslationType};
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
@@ -16,45 +19,39 @@ pub struct StatArgs {
     #[arg(help = tr!("cli-stat-input"), help_heading = tr!("cli-headers-arguments"))]
     pub input_path: String,
     /// If set to true, will prepend a list of all unique file paths found.
-    #[arg(short, long, help = tr!("cli-stat-verbose"), help_heading = tr!("cli-headers-options"), action = ArgAction::SetTrue)]
+    #[arg(short, long, help = tr!("cli-stat-verbose"), help_heading = tr!("cli-headers-options"), action = ArgAction::SetTrue
+    )]
     pub verbose: bool,
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-stat-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options")
+    )]
     pub help: Option<bool>,
 }
 
 /// Aggregates the stats for provided file and arguments.
 pub fn stat_main(args: &StatArgs) -> Result<(), String> {
-    match quick_xml::Reader::from_file(&args.input_path) {
-        Ok(file) => {
-            let nodes: Result<TSNode, _> = quick_xml::de::from_reader(file.into_inner());
-            match nodes {
-                Ok(ts_node) => {
-                    let total_stats = stats_ts_node(&ts_node);
-                    let output = generate_message_for_stats(total_stats, args.verbose);
+    let doc = std::fs::read(&args.input_path)
+        .map_err(|err| {
+            ParseError::from(tr!(
+                "error-open-or-parse",
+                file = args.input_path.as_str(),
+                error = err.to_string()
+            ))
+        })
+        .and_then(TsParser::from_buffer)
+        .map_err(|err| err.to_string())?;
 
-                    match &args.output_path {
-                        None => {
-                            println!("{output}");
-                            Ok(())
-                        }
-                        Some(output_path) => write_to_output(output_path, output),
-                    }
-                }
-                Err(e) => Err(tr!(
-                    "error-ts-file-parse",
-                    file = args.input_path.as_str(),
-                    error = e.to_string()
-                )),
-            }
+    let total_stats = stats_ts_node(&doc.root);
+    let output = generate_message_for_stats(total_stats, args.verbose);
+
+    match &args.output_path {
+        None => {
+            println!("{output}");
+            Ok(())
         }
-        Err(e) => Err(tr!(
-            "error-open-or-parse",
-            file = args.input_path.as_str(),
-            error = e.to_string()
-        )),
+        Some(output_path) => write_to_output(output_path, output),
     }
 }
 
@@ -163,7 +160,7 @@ fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
     buf
 }
 
-fn stats_ts_node(ts_node: &TSNode) -> TotalStats {
+fn stats_ts_node(ts_node: &TsNode) -> TotalStats {
     let mut stats = TotalStats {
         total_contexts: ts_node.contexts.len(),
         ..TotalStats::default()
@@ -277,13 +274,10 @@ mod stats_tests {
 
     #[test]
     fn test_stats_aggregate() {
-        let data_nostats: TSNode = {
-            let reader_stats = quick_xml::Reader::from_file("./test_data/example_stats.xml")
-                .expect("Test file is readable");
-            quick_xml::de::from_reader(reader_stats.into_inner()).expect("Parsable")
-        };
+        let base_ts_data = std::fs::read("./test_data/example_stats.xml").expect("File to exist");
+        let doc = TsParser::from_buffer(base_ts_data).expect("Parsable");
 
-        let stats = stats_ts_node(&data_nostats);
+        let stats = stats_ts_node(&doc.root);
 
         // Per file: a translation count is the number of location for a translation for a file.
         // Total: simply the number of time a translation appear in a message

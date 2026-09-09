@@ -70,7 +70,7 @@ pub fn initialize_locale() -> Box<dyn Localizer> {
     let localizer = Box::from(DefaultLocalizer::new(current_loader(), &Localizations));
     let requested_languages = current_lang();
 
-    debug!("Using languages {:?}", &requested_languages);
+    debug!("Using languages {:?}", requested_languages);
 
     if let Err(error) = localizer.select(&[requested_languages]) {
         eprintln!("Error while loading languages for library_fluent {error}");

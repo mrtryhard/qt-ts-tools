@@ -1,6 +1,6 @@
 use clap::{ArgAction, Parser, Subcommand};
 
-use crate::commands::extract::{ExtractArgs, extract_main};
+use crate::commands::extract::{ExtractArgs, extract};
 use crate::commands::merge::{MergeArgs, merge_main};
 use crate::commands::release::{ReleaseArgs, release_main};
 use crate::commands::shell_completion::{ShellCompletionArgs, shell_completion_main};
@@ -8,6 +8,7 @@ use crate::commands::sort::{SortArgs, sort_main};
 use crate::commands::stat::{StatArgs, stat_main};
 use crate::commands::strip::{StripArgs, strip_main};
 use crate::locale::tr;
+use crate::parser::serializer::write_to_output;
 
 #[derive(Parser)]
 #[command(author,
@@ -50,7 +51,9 @@ pub fn get_cli_result() -> Result<(), String> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Extract(args) => extract_main(&args),
+        Commands::Extract(args) => extract(&args)
+            .map(|data| write_to_output(&args.output_path, &data))
+            .map_err(|e| e.to_string())?,
         Commands::Merge(args) => merge_main(&args),
         Commands::Release(args) => release_main(&args),
         Commands::Sort(args) => sort_main(&args),

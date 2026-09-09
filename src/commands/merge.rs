@@ -4,8 +4,10 @@ use clap::{ArgAction, Args};
 use log::debug;
 
 use crate::locale::tr;
-use crate::ts;
-use crate::ts::{MessageNode, TSNode};
+use crate::parser::message_node::MessageNode;
+use crate::parser::parse_error::ParseError;
+use crate::parser::serializer::write_to_output;
+use crate::parser::ts_parser::{TsDocument, TsParser};
 
 /// Merges two translation file contexts and messages into a single output.
 #[derive(Args)]
@@ -51,7 +53,7 @@ pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
 
     let result = merge_ts_nodes(left.unwrap(), right.unwrap(), args.keep_translation);
 
-    ts::write_to_output(&args.output_path, &result)
+    write_to_output(&args.output_path, &result)
 }
 
 /// MessageNode that can be `eq(...)`.
@@ -83,7 +85,7 @@ impl Hash for EquatableMessageNode {
     }
 }
 
-fn merge_ts_nodes(mut left: TSNode, right: TSNode, keep_translation: bool) -> TSNode {
+fn merge_ts_nodes(mut left: TsDocument, right: TsDocument, keep_translation: bool) -> TsDocument {
     if keep_translation {
         debug!(
             "--keep_translation flag is active, the following nodes will NOT be updated from the right-side file: translation, comment, oldcomment, oldsource, encoding"
@@ -94,42 +96,47 @@ fn merge_ts_nodes(mut left: TSNode, right: TSNode, keep_translation: bool) -> TS
     left
 }
 
-fn merge_contexts(left: &mut TSNode, right: TSNode, keep_translation: bool) {
-    right.contexts.into_iter().for_each(|mut right_context| {
-        let left_context_opt = left
-            .contexts
-            .iter_mut()
-            .find(|left_context| left_context.name == right_context.name);
+fn merge_contexts(left: &mut TsDocument, right: TsDocument, keep_translation: bool) {
+    right
+        .root
+        .contexts
+        .into_iter()
+        .for_each(|mut right_context| {
+            let left_context_opt = left
+                .root
+                .contexts
+                .iter_mut()
+                .find(|left_context| left_context.name == right_context.name);
 
-        if let Some(left_context) = left_context_opt {
-            debug!(
-                "Found context '{}' matching in left and right files.",
-                left_context.name
-            );
-            debug!(
-                "Left context has {} messages, Right context has {} messages.",
-                left_context.messages.len(),
-                right_context.messages.len()
-            );
+            if let Some(left_context) = left_context_opt {
+                debug!(
+                    "Found context '{:?}' matching in left and right files.",
+                    left_context.name
+                );
+                debug!(
+                    "Left context has {} messages, Right context has {} messages.",
+                    left_context.messages.len(),
+                    right_context.messages.len()
+                );
 
-            if !keep_translation {
-                left_context.comment = right_context.comment;
-                left_context.encoding = right_context.encoding;
+                if !keep_translation {
+                    left_context.comment = right_context.comment;
+                    left_context.encoding = right_context.encoding;
+                }
+
+                left_context.messages = merge_messages(
+                    &mut left_context.messages,
+                    &mut right_context.messages,
+                    keep_translation,
+                );
+            } else {
+                debug!(
+                    "No matching context with name '{:?}' in left file.",
+                    right_context.name
+                );
+                left.root.contexts.push(right_context);
             }
-
-            left_context.messages = merge_messages(
-                &mut left_context.messages,
-                &mut right_context.messages,
-                keep_translation,
-            );
-        } else {
-            debug!(
-                "No matching context with name '{}' in left file.",
-                right_context.name
-            );
-            left.contexts.push(right_context);
-        }
-    });
+        });
 }
 
 /// Merges two messages collections
@@ -231,17 +238,16 @@ fn merge_messages(
         .collect()
 }
 
-fn load_file(path: &String) -> Result<TSNode, String> {
-    match quick_xml::Reader::from_file(path) {
-        Ok(reader) => {
-            let nodes: Result<TSNode, _> = quick_xml::de::from_reader(reader.into_inner());
-            match nodes {
-                Ok(nodes) => Ok(nodes),
-                Err(err) => Err(err.to_string()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+fn load_file(path: &String) -> Result<TsDocument, ParseError> {
+    std::fs::read(path)
+        .map_err(|e| {
+            ParseError::from(tr!(
+                "error-open-or-parse",
+                file = path,
+                error = e.to_string()
+            ))
+        })
+        .and_then(TsParser::from_buffer)
 }
 
 #[cfg(test)]
@@ -259,7 +265,7 @@ mod merge_test {
 
         let result = merge_ts_nodes(left, right, false);
 
-        assert_eq!(result, expected_result);
+        assert_eq!(result.root, expected_result.root);
     }
 
     #[test]
@@ -274,6 +280,6 @@ mod merge_test {
 
         let result = merge_ts_nodes(left, right, true);
 
-        assert_eq!(result, expected_result);
+        assert_eq!(result.root, expected_result.root);
     }
 }

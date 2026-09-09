@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-- Fixed an issue where translation variable would not be substituted correctly for stat. [#305](https://github.com/mrtryhard/qt-ts-tools/issues/305)
+- Fixed an issue where unescaped XML inside translation or source fields would cause panic. [#304](https://github.com/mrtryhard/qt-ts-tools/issues/304)
+- Fixed an issue where translation node's variable would not be substituted correctly for stat. [#305](https://github.com/mrtryhard/qt-ts-tools/issues/305)
 - Fixed an issue where releasing an unexisting file would cause panic. [306](https://github.com/mrtryhard/qt-ts-tools/issues/306)
 
 ## [1.0.0] 2026-02-18

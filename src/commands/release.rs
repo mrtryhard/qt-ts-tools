@@ -6,11 +6,14 @@ use std::{
 use clap::{ArgAction, Args};
 use log::debug;
 
-use crate::{
-    commands::hash::ElfHasher,
-    tr,
-    ts::{ContextNode, MessageNode, TSNode, TranslationType, YesNo},
-};
+use crate::parser::context_node::ContextNode;
+use crate::parser::message_node::MessageNode;
+use crate::parser::parse_error::ParseError;
+use crate::parser::translation_type::TranslationType;
+use crate::parser::ts_node::TsNode;
+use crate::parser::ts_parser::{TsDocument, TsParser};
+use crate::parser::yesno::YesNo;
+use crate::{commands::hash::ElfHasher, tr};
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
@@ -21,27 +24,26 @@ pub struct ReleaseArgs {
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-release-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options")
+    )]
     pub help: Option<bool>,
 }
 
 pub fn release_main(args: &ReleaseArgs) -> Result<(), String> {
-    let data: TSNode = quick_xml::Reader::from_file(&args.input)
-        .map_err(|e| e.to_string())
-        .and_then(|reader| {
-            quick_xml::de::from_reader(reader.into_inner()).map_err(|e| e.to_string())
-        })
-        .map_err(|e| {
-            tr!(
-                "error-ts-file-parse",
+    let doc = std::fs::read(&args.input)
+        .map_err(|err| {
+            ParseError::from(tr!(
+                "error-open-or-parse",
                 file = args.input.as_str(),
-                error = e.to_string()
-            )
-        })?;
+                error = err.to_string()
+            ))
+        })
+        .and_then(TsParser::from_buffer)
+        .map_err(|err| err.to_string())?;
 
     let mut writer = Cursor::new(Vec::<u8>::new());
 
-    compile_to_buffer(&mut writer, &data)
+    compile_to_buffer(&mut writer, &doc)
         .and_then(|_| write_output(&args.output_path, &writer.into_inner()))
 }
 
@@ -213,7 +215,7 @@ fn write_hashes<W: Write>(
     write_block(writer, BlockTag::Hashes, &buffer)
 }
 
-fn write_lang<W: Write>(writer: &mut W, data: &TSNode) -> Result<usize, std::io::Error> {
+fn write_lang<W: Write>(writer: &mut W, data: &TsNode) -> Result<usize, std::io::Error> {
     debug!("Writing QM file language");
 
     match data.language.as_ref() {
@@ -255,7 +257,7 @@ fn cmp_numerus(msg_left: &&MessageNode, msg_right: &&MessageNode) -> Ordering {
     }
 }
 
-fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
+fn produce_messages(data: &TsNode) -> Result<Vec<HashAndMessage>, String> {
     let mut serialized: Vec<HashAndMessage> = vec![];
 
     // View on context nodes in order to sort them without affecting the original collection
@@ -302,7 +304,13 @@ fn produce_messages(data: &TSNode) -> Result<Vec<HashAndMessage>, String> {
                     None => Err(std::io::Error::other("Could not find source for message !")),
                 }
             })
-            .and_then(|_| write_block(&mut buffer, MessageTag::Context, context.name.as_bytes()))
+            .and_then(|_| {
+                write_block(
+                    &mut buffer,
+                    MessageTag::Context,
+                    context.name.as_ref().unwrap_or(&String::new()).as_bytes(),
+                )
+            })
             .and_then(|_| buffer.write(&[MessageTag::End as u8]))
             .map_or_else(|e| Err(e.to_string()), |_| Ok(Vec::<HashAndMessage>::new()))?;
 
@@ -505,14 +513,14 @@ fn numerus_rule(lang: &str) -> Vec<u8> {
     }
 }
 
-fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), String> {
-    let msgs = produce_messages(data)?;
+fn compile_to_buffer<W: Write>(writer: &mut W, doc: &TsDocument) -> Result<(), String> {
+    let msgs = produce_messages(&doc.root)?;
     let msg_block: Vec<u8> = msgs.iter().flat_map(|hm| &hm.msg).copied().collect();
-    let lang = numerus_rule(data.language.as_ref().unwrap_or(&String::new()));
+    let lang = numerus_rule(doc.root.language.as_ref().unwrap_or(&String::new()));
 
     writer
         .write(&QM_HEADER)
-        .and_then(|_| write_lang(writer, data))
+        .and_then(|_| write_lang(writer, &doc.root))
         .and_then(|_| write_hashes(writer, &msgs))
         .and_then(|_| writer.write(&[BlockTag::Messages as u8]))
         .and_then(|_| writer.write(&(msg_block.len() as u32).to_be_bytes()))
@@ -527,6 +535,7 @@ fn compile_to_buffer<W: Write>(writer: &mut W, data: &TSNode) -> Result<(), Stri
 mod release_tests {
     use rstest::{fixture, rstest};
 
+    use crate::parser::ts_parser::TsParser;
     use crate::{commands::release::compile_to_buffer, logging::initialize_logging};
 
     #[fixture]
@@ -545,9 +554,8 @@ mod release_tests {
     #[case::with_numerus("many_ctx_many_msgs_numerus")]
     fn compile_ts_to_qm(#[case] case: &str, #[allow(unused)] logs: ()) {
         let expected_data = std::fs::read(format!("./test_data/{case}.qm")).expect("File to exist");
-        let base_ts_data =
-            quick_xml::Reader::from_file(format!("./test_data/{case}.ts")).expect("File to exist");
-        let ts_node = quick_xml::de::from_reader(base_ts_data.into_inner()).expect("Parsable");
+        let base_ts_data = std::fs::read(format!("./test_data/{case}.ts")).expect("File to exist");
+        let ts_node = TsParser::from_buffer(base_ts_data).expect("Parsable");
 
         let mut writer = std::io::Cursor::new(Vec::<u8>::new());
 
