@@ -275,7 +275,7 @@ mod stats_tests {
     #[test]
     fn test_stats_aggregate() {
         let base_ts_data = std::fs::read("./test_data/example_stats.xml").expect("File to exist");
-        let mut doc = TsParser::from_buffer(base_ts_data).expect("Parsable");
+        let doc = TsParser::from_buffer(base_ts_data).expect("Parsable");
 
         let stats = stats_ts_node(&doc.root);
 

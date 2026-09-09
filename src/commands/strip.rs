@@ -2,8 +2,10 @@ use clap::{ArgAction, Args};
 use log::debug;
 
 use crate::locale::tr;
-use crate::ts;
-use crate::ts::{TSNode, TranslationType};
+use crate::parser::parse_error::ParseError;
+use crate::parser::serializer::write_to_output;
+use crate::parser::translation_type::TranslationType;
+use crate::parser::ts_parser::{TsDocument, TsParser};
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
 pub enum TranslationTypeArg {
@@ -39,38 +41,30 @@ pub struct StripArgs {
 }
 
 pub fn strip_main(args: &StripArgs) -> Result<(), String> {
-    match quick_xml::Reader::from_file(&args.input_path) {
-        Ok(file) => {
-            let nodes: Result<TSNode, _> = quick_xml::de::from_reader(file.into_inner());
-            match nodes {
-                Ok(mut ts_node) => {
-                    let s: Vec<TranslationType> = args
-                        .translation_type
-                        .iter()
-                        .map(|arg| arg.clone().into())
-                        .collect();
+    let mut doc = std::fs::read(&args.input_path)
+        .map_err(|err| {
+            ParseError::from(tr!(
+                "error-open-or-parse",
+                file = args.input_path.as_str(),
+                error = err.to_string()
+            ))
+        })
+        .and_then(TsParser::from_buffer)
+        .map_err(|err| err.to_string())?;
 
-                    strip_nodes(&mut ts_node, &s);
-                    ts::write_to_output(&args.output_path, &ts_node)
-                }
-                Err(e) => Err(tr!(
-                    "error-ts-file-parse",
-                    file = args.input_path.as_str(),
-                    error = e.to_string()
-                )),
-            }
-        }
-        Err(e) => Err(tr!(
-            "error-open-or-parse",
-            file = args.input_path.as_str(),
-            error = e.to_string()
-        )),
-    }
+    let s: Vec<TranslationType> = args
+        .translation_type
+        .iter()
+        .map(|arg| arg.clone().into())
+        .collect();
+
+    strip_nodes(&mut doc, &s);
+    write_to_output(&args.output_path, &doc)
 }
 
-fn strip_nodes(nodes: &mut TSNode, translation_type_filter: &[TranslationType]) {
+fn strip_nodes(doc: &mut TsDocument, translation_type_filter: &[TranslationType]) {
     let mut count = 0;
-    nodes.contexts.iter_mut().for_each(|context| {
+    doc.root.contexts.iter_mut().for_each(|context| {
         context.messages.iter_mut().for_each(|message| {
             if let Some(translation) = &mut message.translation.as_ref()
                 && let Some(translation_type) = translation.translation_type.clone()
@@ -91,23 +85,24 @@ fn strip_nodes(nodes: &mut TSNode, translation_type_filter: &[TranslationType]) 
 
 #[cfg(test)]
 mod strip_test {
+    use std::io::BufWriter;
+    use crate::parser::serializer::serialize;
     use super::*;
 
     #[test]
     fn test_strip() {
-        let reader_unstripped = quick_xml::Reader::from_file("./test_data/example_strip.xml")
-            .expect("Couldn't open example_strip test file");
-        let reader_stripped =
-            quick_xml::Reader::from_file("./test_data/example_strip_stripped.xml")
-                .expect("Couldn't open example_strip_stripped test file");
-        let mut data: TSNode =
-            quick_xml::de::from_reader(reader_unstripped.into_inner()).expect("Parsable");
-        let data_stripped: TSNode =
-            quick_xml::de::from_reader(reader_stripped.into_inner()).expect("Parsable");
+        let stripped = std::fs::read_to_string("./test_data/example_strip_stripped.xml")
+            .expect("Couldn't open example_strip_stripped test file");
+        let base_ts_data = std::fs::read("./test_data/example_strip.xml").expect("File to exist");
+        let mut to_strip = TsParser::from_buffer(base_ts_data).expect("Parsable");
 
         let types = vec![TranslationType::Obsolete];
-        strip_nodes(&mut data, &types);
+        strip_nodes(&mut to_strip, &types);
+        let mut buf = BufWriter::new(Vec::<u8>::new());
+        serialize(&mut buf, &to_strip).expect("Sorted data can be serialized");
+        let stripped_result = String::from_utf8(buf.into_inner().expect("Sorted data is utf-8"))
+            .expect("Sorted data is utf-8");
 
-        assert_eq!(data, data_stripped);
+        assert_eq!(stripped, stripped_result);
     }
 }

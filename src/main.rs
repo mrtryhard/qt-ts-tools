@@ -9,7 +9,6 @@ mod commands;
 mod locale;
 mod logging;
 mod parser;
-mod ts;
 
 fn main() {
     initialize_locale();
