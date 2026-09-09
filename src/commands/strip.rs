@@ -85,9 +85,9 @@ fn strip_nodes(doc: &mut TsDocument, translation_type_filter: &[TranslationType]
 
 #[cfg(test)]
 mod strip_test {
-    use std::io::BufWriter;
-    use crate::parser::serializer::serialize;
     use super::*;
+    use crate::parser::serializer::serialize;
+    use std::io::BufWriter;
 
     #[test]
     fn test_strip() {

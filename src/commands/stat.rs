@@ -3,14 +3,14 @@ use std::io::Write;
 use std::ops::AddAssign;
 use std::string::ToString;
 
-use crate::parser::ts_parser::TsParser;
-use crate::tr;
-use clap::{ArgAction, Args};
-use log::debug;
 use crate::parser::message_node::MessageNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_node::TsNode;
+use crate::parser::ts_parser::TsParser;
+use crate::tr;
+use clap::{ArgAction, Args};
+use log::debug;
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]

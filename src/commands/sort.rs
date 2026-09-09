@@ -59,9 +59,9 @@ fn sort_document(ts_node: &mut TsDocument) {
 #[cfg(test)]
 mod sort_test {
     use super::*;
+    use crate::logging::initialize_logging;
     use crate::parser::serializer::serialize;
     use std::io::BufWriter;
-    use crate::logging::initialize_logging;
 
     #[test]
     fn test_sort_ts_node() {
@@ -77,7 +77,7 @@ mod sort_test {
         serialize(&mut buf, &sorted).expect("Sorted data can be serialized");
         let sorted_string = String::from_utf8(buf.into_inner().expect("Sorted data is utf-8"))
             .expect("Sorted data is utf-8");
-        
+
         assert_eq!(expected_sorted, sorted_string);
     }
 }
