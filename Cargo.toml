@@ -16,7 +16,7 @@ clap_complete_nushell = "4.6.0"
 clap_complete_command = "0.6.1"
 env_logger = {  version = "0.11.10", default-features = false, features = ["humantime"] }
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
-i18n-embed-fl = "0.10.0"
+i18n-embed-fl = "0.10.1"
 log = "0.4.29"
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 rust-embed = "8.11.0"
