@@ -9,8 +9,8 @@
         </message>
         <message>
             <source>vztnewsletter</source>
-            <comment>Navigation part</comment>
             <translation>vztnewsletter2</translation>
+            <comment>Navigation part</comment>
         </message>
         <message numerus="yes">
             <source>%1 takes at most %n argument(s). %2 is therefore invalid.</source>

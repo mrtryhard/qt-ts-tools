@@ -3,9 +3,9 @@
 <TS version="2.1" language="fr_FR" sourcelanguage="en">
     <context>
         <message>
-            <location filename="test.cpp" line="245"/>
             <source>source contains <byte value="xD"/> some text.</source>
             <translation>source contenant <byte value="xD"/> un texte.</translation>
+            <location filename="test.cpp" line="245"/>
         </message>
     </context>
 </TS>

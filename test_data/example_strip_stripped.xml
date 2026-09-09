@@ -4,57 +4,57 @@
     <context>
         <name>tst_QKeySequence</name>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="369"/>
             <source>Shift+K</source>
+            <location filename="tst_qkeysequence.cpp" line="369"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="370"/>
             <source>Ctrl+K</source>
+            <location filename="tst_qkeysequence.cpp" line="370"/>
         </message>
         <message>
+            <source>Alt+K</source>
             <location filename="tst_qkeysequence.cpp" line="150"/>
             <location filename="tst_qkeysequence.cpp" line="371"/>
-            <source>Alt+K</source>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="391"/>
             <source>Shift++</source>
             <translation>Umschalt++</translation>
+            <location filename="tst_qkeysequence.cpp" line="391"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="392"/>
             <source>Ctrl++</source>
             <translation>Strg++</translation>
+            <location filename="tst_qkeysequence.cpp" line="392"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="393"/>
             <source>Alt++</source>
             <translation>Alt++</translation>
+            <location filename="tst_qkeysequence.cpp" line="393"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="394"/>
             <source>Meta++</source>
             <translation>Meta++</translation>
+            <location filename="tst_qkeysequence.cpp" line="394"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="401"/>
             <source>Shift+,, Shift++</source>
             <translation>Umschalt+,, Umschalt++</translation>
+            <location filename="tst_qkeysequence.cpp" line="401"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="402"/>
             <source>Shift+,, Ctrl++</source>
             <translation>Umschalt+,, Strg++</translation>
+            <location filename="tst_qkeysequence.cpp" line="402"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="403"/>
             <source>Shift+,, Alt++</source>
             <translation>Umschalt+,, Alt++</translation>
+            <location filename="tst_qkeysequence.cpp" line="403"/>
         </message>
         <message>
-            <location filename="tst_qkeysequence.cpp" line="404"/>
             <source>Shift+,, Meta++</source>
             <translation>Umschalt+,, Meta++</translation>
+            <location filename="tst_qkeysequence.cpp" line="404"/>
         </message>
     </context>
 </TS>

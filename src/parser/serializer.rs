@@ -134,11 +134,16 @@ fn serialize_message<W: Write>(
     writer.write_event(Event::Start(message))?;
     newline(writer)?;
 
+    write_string_event("source", writer, &node.source, level + 1)?;
+
+    if let Some(translation) = &node.translation {
+        serialize_translation(writer, translation, level + 1)?;
+    }
+
     for location in &node.locations {
         serialize_location(writer, location, level + 1)?;
     }
 
-    write_string_event("source", writer, &node.source, level + 1)?;
     write_string_event("oldsource", writer, &node.old_source, level + 1)?;
     write_string_event("comment", writer, &node.comment, level + 1)?;
     write_string_event("oldcomment", writer, &node.old_comment, level + 1)?;
@@ -149,10 +154,6 @@ fn serialize_message<W: Write>(
         &node.translator_comment,
         level + 1,
     )?;
-
-    if let Some(translation) = &node.translation {
-        serialize_translation(writer, translation, level + 1)?;
-    }
 
     write_string_event("userdata", writer, &node.userdata, level + 1)?;
     write_string_event(

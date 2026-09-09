@@ -8,18 +8,18 @@
             <translation>Erste</translation>
         </message>
         <message id="msg_id_2" numerus="yes">
+            <source>Second</source>
+            <translation type="unfinished">
+                <numerusform>Zweite</numerusform>
+                <numerusform>Zweiten</numerusform>
+            </translation>
             <location filename="main.cpp" line="42"/>
             <location filename="util.cpp" line="10"/>
-            <source>Second</source>
             <oldsource>OldSecond</oldsource>
             <comment>disambiguation comment</comment>
             <oldcomment>old disambiguation comment</oldcomment>
             <extracomment>developer comment</extracomment>
             <translatorcomment>translator note</translatorcomment>
-            <translation type="unfinished">
-                <numerusform>Zweite</numerusform>
-                <numerusform>Zweiten</numerusform>
-            </translation>
             <userdata>custom user data</userdata>
         </message>
         <message>
