@@ -5,7 +5,7 @@ repository = "https://github.com/mrtryhard/qt-ts-tools"
 keywords = ["qt", "translation", "windows", "linux"]
 homepage = "https://github.com/mrtryhard/qt-ts-tools"
 license = "Apache-2.0"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 description = "Small command line utility to manipulate Qt's translation files with diverse operations."
 
@@ -20,7 +20,6 @@ i18n-embed-fl = "0.10.0"
 log = "0.4.29"
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 rust-embed = "8.11.0"
-serde = { version = "1.0.228", features = ["derive"] }
 sys-locale = "0.3.2"
 
 [dev-dependencies]

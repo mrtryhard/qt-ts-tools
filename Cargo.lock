@@ -617,7 +617,7 @@ dependencies = [
 
 [[package]]
 name = "qt-ts-tools"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "clap",
  "clap_complete",
@@ -630,7 +630,6 @@ dependencies = [
  "quick-xml",
  "rstest",
  "rust-embed",
- "serde",
  "sys-locale",
 ]
 
