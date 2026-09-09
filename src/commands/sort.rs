@@ -77,19 +77,7 @@ mod sort_test {
         serialize(&mut buf, &sorted).expect("Sorted data can be serialized");
         let sorted_string = String::from_utf8(buf.into_inner().expect("Sorted data is utf-8"))
             .expect("Sorted data is utf-8");
-
-        println!("{}", sorted_string);
-        println!("{}", expected_sorted);
-        assert_eq!(
-            "",
-            sorted.root.contexts[1].messages[2]
-                .translation
-                .as_ref()
-                .unwrap()
-                .translation_simple
-                .as_ref()
-                .unwrap()
-        );
+        
         assert_eq!(expected_sorted, sorted_string);
     }
 }

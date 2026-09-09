@@ -222,7 +222,13 @@ fn serialize_translation<W: Write>(
     node: &TranslationNode,
     level: usize,
 ) -> Result<(), Box<dyn Error>> {
+    let do_indent = node.translation_simple.is_none()
+        && (!node.numerus_forms.is_empty()
+            || !node.length_variants.is_empty()
+            || node.userdata.is_some());
+
     indent(writer, level)?;
+
     let mut translation = BytesStart::new("translation");
     if let Some(t_type) = &node.translation_type {
         let type_str = match t_type {
@@ -236,8 +242,10 @@ fn serialize_translation<W: Write>(
     if let Some(YesNo::Yes) = &node.variants {
         translation.push_attribute(("variants", "yes"));
     }
+
     writer.write_event(Event::Start(translation))?;
-    if node.translation_simple.is_none() {
+
+    if do_indent {
         newline(writer)?;
     }
 
@@ -259,7 +267,7 @@ fn serialize_translation<W: Write>(
 
     write_string_event("userdata", writer, &node.userdata, level + 1)?;
 
-    if node.translation_simple.is_none() {
+    if do_indent {
         indent(writer, level)?;
     }
 
