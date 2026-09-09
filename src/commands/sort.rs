@@ -1,7 +1,9 @@
 use clap::{ArgAction, Args};
 
-use crate::ts::TSNode;
-use crate::{tr, ts};
+use crate::parser::parse_error::ParseError;
+use crate::parser::serializer::write_to_output;
+use crate::parser::ts_parser::{TsDocument, TsParser};
+use crate::tr;
 
 #[derive(Args)]
 #[command(disable_help_flag = true)]
@@ -12,7 +14,8 @@ pub struct SortArgs {
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-sort-output"), help_heading = tr!("cli-headers-options"))]
     pub output_path: Option<String>,
-    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
+    #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options")
+    )]
     pub help: Option<bool>,
 }
 
@@ -23,35 +26,26 @@ pub struct SortArgs {
 /// ## Windows notes
 /// Writing non-UTF-8 characters or non-valid UTF-8 characters to `stdout` may result in an error.
 pub fn sort_main(args: &SortArgs) -> Result<(), String> {
-    match quick_xml::Reader::from_file(&args.input_path) {
-        Ok(file) => {
-            let nodes: Result<TSNode, _> = quick_xml::de::from_reader(file.into_inner());
-            match nodes {
-                Ok(mut ts_node) => {
-                    sort_ts_node(&mut ts_node);
-                    ts::write_to_output(&args.output_path, &ts_node)
-                }
-                Err(e) => Err(tr!(
-                    "error-ts-file-parse",
-                    file = args.input_path.as_str(),
-                    error = e.to_string()
-                )),
-            }
-        }
-        Err(e) => Err(tr!(
-            "error-open-or-parse",
-            file = args.input_path.as_str(),
-            error = e.to_string()
-        )),
-    }
+    let mut doc = std::fs::read(&args.input_path)
+        .map_err(|err| {
+            ParseError::from(tr!(
+                "error-open-or-parse",
+                file = args.input_path.as_str(),
+                error = err.to_string()
+            ))
+        })
+        .and_then(TsParser::from_buffer)
+        .map_err(|err| err.to_string())?;
+    sort_document(&mut doc);
+    write_to_output(&args.output_path, &doc)
 }
 
 /// Sorts the TS document with the following rules:
 /// 1. Context comes before no-context messages.
 /// 2. Context are ordered by name.
 /// 3. Messages are ordered by filename then by line.
-fn sort_ts_node(ts_node: &mut TSNode) {
-    let contexts = &mut ts_node.contexts;
+fn sort_document(ts_node: &mut TsDocument) {
+    let contexts = &mut ts_node.root.contexts;
     contexts.sort();
     contexts.iter_mut().for_each(|context| {
         context.messages.sort();
@@ -64,24 +58,38 @@ fn sort_ts_node(ts_node: &mut TSNode) {
 
 #[cfg(test)]
 mod sort_test {
-    use crate::commands::test_utils::{node_to_formatted_string, read_test_file};
-
     use super::*;
+    use crate::parser::serializer::serialize;
+    use std::io::BufWriter;
+    use crate::logging::initialize_logging;
 
     #[test]
     fn test_sort_ts_node() {
-        let expected_sorted = read_test_file("example_sort_sorted.xml");
+        initialize_logging();
+        let expected_sorted =
+            std::fs::read_to_string("./test_data/example_sort_sorted.xml").expect("File to exist");
+        let base_ts_data = std::fs::read("./test_data/example_sort.xml").expect("File to exist");
+        let mut sorted = TsParser::from_buffer(base_ts_data).expect("Parsable");
 
-        let mut data_nosort: TSNode = {
-            let reader_nosort = quick_xml::Reader::from_file("./test_data/example_sort.xml")
-                .expect("Test file is readable");
-            quick_xml::de::from_reader(reader_nosort.into_inner()).expect("Parsable")
-        };
+        sort_document(&mut sorted);
 
-        sort_ts_node(&mut data_nosort);
+        let mut buf = BufWriter::new(Vec::<u8>::new());
+        serialize(&mut buf, &sorted).expect("Sorted data can be serialized");
+        let sorted_string = String::from_utf8(buf.into_inner().expect("Sorted data is utf-8"))
+            .expect("Sorted data is utf-8");
 
-        let sorted = node_to_formatted_string(&data_nosort);
-
-        assert_eq!(expected_sorted, sorted);
+        println!("{}", sorted_string);
+        println!("{}", expected_sorted);
+        assert_eq!(
+            "",
+            sorted.root.contexts[1].messages[2]
+                .translation
+                .as_ref()
+                .unwrap()
+                .translation_simple
+                .as_ref()
+                .unwrap()
+        );
+        assert_eq!(expected_sorted, sorted_string);
     }
 }

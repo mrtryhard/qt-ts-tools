@@ -13,6 +13,8 @@ use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use std::error::Error;
 use std::io::Write;
 
+const INDENT_MULTIPLE: usize = 4;
+
 pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Result<(), String> {
     let mut inner_writer: Box<dyn Write> = match &output_path {
         None => Box::new(std::io::stdout().lock()),
@@ -36,17 +38,31 @@ pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Resul
     serialize(&mut inner_writer, node).map_err(|e| e.to_string())
 }
 
-fn serialize(writer: &mut dyn Write, doc: &TsDocument) -> Result<(), Box<dyn Error>> {
-    let mut xml_writer = Writer::new_with_indent(writer, b' ', 4);
+pub fn serialize(writer: &mut dyn Write, doc: &TsDocument) -> Result<(), Box<dyn Error>> {
+    let mut xml_writer = Writer::new(writer);
     xml_writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("utf-8"), None)))?;
+    newline(&mut xml_writer)?;
     xml_writer.write_event(Event::DocType(BytesText::from_escaped("TS")))?;
-
+    newline(&mut xml_writer)?;
     serialize_ts(&mut xml_writer, &doc.root)?;
 
     Ok(())
 }
 
+fn newline<W: Write>(writer: &mut Writer<W>) -> Result<(), Box<dyn Error>> {
+    writer.write_event(Event::Text(BytesText::from_escaped("\n")))?;
+    Ok(())
+}
+
+fn indent<W: Write>(writer: &mut Writer<W>, level: usize) -> Result<(), Box<dyn Error>> {
+    writer.write_event(Event::Text(BytesText::from_escaped(
+        " ".repeat(level * INDENT_MULTIPLE),
+    )))?;
+    Ok(())
+}
+
 fn serialize_ts<W: Write>(writer: &mut Writer<W>, node: &TsNode) -> Result<(), Box<dyn Error>> {
+    let level = 1;
     let mut ts = BytesStart::new("TS");
 
     if let Some(value) = &node.version {
@@ -62,9 +78,10 @@ fn serialize_ts<W: Write>(writer: &mut Writer<W>, node: &TsNode) -> Result<(), B
     }
 
     writer.write_event(Event::Start(ts))?;
+    newline(writer)?;
 
     for context in &node.contexts {
-        serialize_context(writer, context)?;
+        serialize_context(writer, context, level)?;
     }
 
     // TODO: dependencies if needed
@@ -76,27 +93,35 @@ fn serialize_ts<W: Write>(writer: &mut Writer<W>, node: &TsNode) -> Result<(), B
 fn serialize_context<W: Write>(
     writer: &mut Writer<W>,
     node: &ContextNode,
+    level: usize,
 ) -> Result<(), Box<dyn Error>> {
     let mut context = BytesStart::new("context");
+
     if let Some(value) = &node.encoding {
         context.push_attribute(("encoding", value.as_ref()));
     }
-    writer.write_event(Event::Start(context))?;
 
-    write_string_event("name", writer, &node.name)?;
-    write_string_event("comment", writer, &node.comment)?;
+    indent(writer, level)?;
+    writer.write_event(Event::Start(context))?;
+    newline(writer)?;
+
+    write_string_event("name", writer, &node.name, level + 1)?;
+    write_string_event("comment", writer, &node.comment, level + 1)?;
 
     for message in &node.messages {
-        serialize_message(writer, message)?;
+        serialize_message(writer, message, level + 1)?;
     }
 
+    indent(writer, level)?;
     writer.write_event(Event::End(BytesEnd::new("context")))?;
+    newline(writer)?;
     Ok(())
 }
 
 fn serialize_message<W: Write>(
     writer: &mut Writer<W>,
     node: &MessageNode,
+    level: usize,
 ) -> Result<(), Box<dyn Error>> {
     let mut message = BytesStart::new("message");
     if let Some(value) = &node.id {
@@ -105,36 +130,56 @@ fn serialize_message<W: Write>(
     if let Some(YesNo::Yes) = &node.numerus {
         message.push_attribute(("numerus", "yes"));
     }
+    indent(writer, level)?;
     writer.write_event(Event::Start(message))?;
+    newline(writer)?;
 
     for location in &node.locations {
-        serialize_location(writer, location)?;
+        serialize_location(writer, location, level + 1)?;
     }
 
-    write_string_event("source", writer, &node.source)?;
-    write_string_event("oldsource", writer, &node.old_source)?;
-    write_string_event("comment", writer, &node.comment)?;
-    write_string_event("oldcomment", writer, &node.old_comment)?;
-    write_string_event("extracomment", writer, &node.extra_comment)?;
-    write_string_event("translatorcomment", writer, &node.translator_comment)?;
+    write_string_event("source", writer, &node.source, level + 1)?;
+    write_string_event("oldsource", writer, &node.old_source, level + 1)?;
+    write_string_event("comment", writer, &node.comment, level + 1)?;
+    write_string_event("oldcomment", writer, &node.old_comment, level + 1)?;
+    write_string_event("extracomment", writer, &node.extra_comment, level + 1)?;
+    write_string_event(
+        "translatorcomment",
+        writer,
+        &node.translator_comment,
+        level + 1,
+    )?;
 
     if let Some(translation) = &node.translation {
-        serialize_translation(writer, translation)?;
+        serialize_translation(writer, translation, level + 1)?;
     }
 
-    write_string_event("userdata", writer, &node.userdata)?;
-    write_string_event("extra-po-msgid-plural", writer, &node.po_msg_id_plural)?;
+    write_string_event("userdata", writer, &node.userdata, level + 1)?;
+    write_string_event(
+        "extra-po-msgid-plural",
+        writer,
+        &node.po_msg_id_plural,
+        level + 1,
+    )?;
     write_string_event(
         "extra-po-oldmsgid-plural",
         writer,
         &node.po_old_msg_id_plural,
+        level + 1,
     )?;
-    write_string_event("extra-loc-flags", writer, &node.loc_flags)?;
-    write_string_event("extra-loc-layout_id", writer, &node.loc_layout_id)?;
-    write_string_event("extra-loc-feature", writer, &node.loc_feature)?;
-    write_string_event("extra-loc-blank", writer, &node.loc_blank)?;
+    write_string_event("extra-loc-flags", writer, &node.loc_flags, level + 1)?;
+    write_string_event(
+        "extra-loc-layout_id",
+        writer,
+        &node.loc_layout_id,
+        level + 1,
+    )?;
+    write_string_event("extra-loc-feature", writer, &node.loc_feature, level + 1)?;
+    write_string_event("extra-loc-blank", writer, &node.loc_blank, level + 1)?;
 
+    indent(writer, level)?;
     writer.write_event(Event::End(BytesEnd::new("message")))?;
+    newline(writer)?;
     Ok(())
 }
 
@@ -142,11 +187,14 @@ fn write_string_event<W: Write>(
     field_name: &str,
     writer: &mut Writer<W>,
     opt_value: &Option<String>,
+    indent_size: usize,
 ) -> Result<(), Box<dyn Error>> {
     if let Some(value) = &opt_value {
+        indent(writer, indent_size)?;
         writer.write_event(Event::Start(BytesStart::new(field_name)))?;
         writer.write_event(Event::Text(BytesText::from_escaped(value)))?;
         writer.write_event(Event::End(BytesEnd::new(field_name)))?;
+        newline(writer)?;
     }
     Ok(())
 }
@@ -154,7 +202,9 @@ fn write_string_event<W: Write>(
 fn serialize_location<W: Write>(
     writer: &mut Writer<W>,
     node: &LocationNode,
+    level: usize,
 ) -> Result<(), Box<dyn Error>> {
+    indent(writer, level)?;
     let mut location = BytesStart::new("location");
     if let Some(value) = &node.filename {
         location.push_attribute(("filename", value.as_ref()));
@@ -163,13 +213,16 @@ fn serialize_location<W: Write>(
         location.push_attribute(("line", value.to_string().as_ref()));
     }
     writer.write_event(Event::Empty(location))?;
+    newline(writer)?;
     Ok(())
 }
 
 fn serialize_translation<W: Write>(
     writer: &mut Writer<W>,
     node: &TranslationNode,
+    level: usize,
 ) -> Result<(), Box<dyn Error>> {
+    indent(writer, level)?;
     let mut translation = BytesStart::new("translation");
     if let Some(t_type) = &node.translation_type {
         let type_str = match t_type {
@@ -184,30 +237,43 @@ fn serialize_translation<W: Write>(
         translation.push_attribute(("variants", "yes"));
     }
     writer.write_event(Event::Start(translation))?;
+    if node.translation_simple.is_none() {
+        newline(writer)?;
+    }
 
     if let Some(value) = &node.translation_simple {
         writer.write_event(Event::Text(BytesText::from_escaped(value)))?;
     }
 
     for form in &node.numerus_forms {
-        serialize_numerus_form(writer, form)?;
+        serialize_numerus_form(writer, form, level + 1)?;
     }
 
     for variant in &node.length_variants {
+        indent(writer, level + 1)?;
         writer.write_event(Event::Start(BytesStart::new("lengthvariant")))?;
         writer.write_event(Event::Text(BytesText::from_escaped(variant)))?;
         writer.write_event(Event::End(BytesEnd::new("lengthvariant")))?;
+        newline(writer)?;
     }
 
-    write_string_event("userdata", writer, &node.userdata)?;
+    write_string_event("userdata", writer, &node.userdata, level + 1)?;
+
+    if node.translation_simple.is_none() {
+        indent(writer, level)?;
+    }
+
     writer.write_event(Event::End(BytesEnd::new("translation")))?;
+    newline(writer)?;
     Ok(())
 }
 
 fn serialize_numerus_form<W: Write>(
     writer: &mut Writer<W>,
     node: &NumerusFormNode,
+    level: usize,
 ) -> Result<(), Box<dyn Error>> {
+    indent(writer, level)?;
     let mut form = BytesStart::new("numerusform");
 
     if let Some(YesNo::Yes) = &node.variants {
@@ -217,7 +283,7 @@ fn serialize_numerus_form<W: Write>(
     writer.write_event(Event::Start(form))?;
     writer.write_event(Event::Text(BytesText::from_escaped(node.text.clone())))?;
     writer.write_event(Event::End(BytesEnd::new("numerusform")))?;
-
+    newline(writer)?;
     Ok(())
 }
 
