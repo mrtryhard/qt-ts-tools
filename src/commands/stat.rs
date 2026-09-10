@@ -271,11 +271,12 @@ fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
 #[cfg(test)]
 mod stats_tests {
     use super::*;
+    use crate::commands::test_utils::test_file_content_bytes;
 
     #[test]
     fn test_stats_aggregate() {
-        let base_ts_data = std::fs::read("./test_data/example_stats.xml").expect("File to exist");
-        let doc = TsParser::from_buffer(base_ts_data).expect("Parsable");
+        let input = test_file_content_bytes("example_stats.xml");
+        let doc = TsParser::from_buffer(input).expect("Parsable");
 
         let stats = stats_ts_node(&doc.root);
 

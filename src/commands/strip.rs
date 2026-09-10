@@ -86,23 +86,19 @@ fn strip_nodes(doc: &mut TsDocument, translation_type_filter: &[TranslationType]
 #[cfg(test)]
 mod strip_test {
     use super::*;
-    use crate::parser::serializer::serialize;
-    use std::io::BufWriter;
+    use crate::commands::test_utils::{
+        serialize_to_string, test_file_content_as_string, test_file_content_bytes,
+    };
 
     #[test]
     fn test_strip() {
-        let stripped = std::fs::read_to_string("./test_data/example_strip_stripped.xml")
-            .expect("Couldn't open example_strip_stripped test file");
-        let base_ts_data = std::fs::read("./test_data/example_strip.xml").expect("File to exist");
-        let mut to_strip = TsParser::from_buffer(base_ts_data).expect("Parsable");
+        let expected = test_file_content_as_string("example_strip_stripped.xml");
+        let input = test_file_content_bytes("example_strip.xml");
+        let mut doc = TsParser::from_buffer(input).expect("Parsable");
 
         let types = vec![TranslationType::Obsolete];
-        strip_nodes(&mut to_strip, &types);
-        let mut buf = BufWriter::new(Vec::<u8>::new());
-        serialize(&mut buf, &to_strip).expect("Sorted data can be serialized");
-        let stripped_result = String::from_utf8(buf.into_inner().expect("Sorted data is utf-8"))
-            .expect("Sorted data is utf-8");
+        strip_nodes(&mut doc, &types);
 
-        assert_eq!(stripped, stripped_result);
+        assert_eq!(expected, serialize_to_string(&doc));
     }
 }

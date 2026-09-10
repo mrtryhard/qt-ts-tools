@@ -93,10 +93,10 @@ fn retain_ts_node(mut doc: TsDocument, wanted_types: Vec<TranslationType>) -> Ts
 #[cfg(test)]
 mod extract_test {
     use super::*;
-    use crate::commands::test_utils::read_test_file;
+    use crate::commands::test_utils::test_file_content_as_string;
 
     fn get_expected_extracted(filename: &str) -> TsDocument {
-        TsParser::from_buffer(read_test_file(filename).into_bytes())
+        TsParser::from_buffer(test_file_content_as_string(filename).into_bytes())
             .expect("Should be reading test file")
     }
 

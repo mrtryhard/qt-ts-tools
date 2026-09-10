@@ -59,25 +59,20 @@ fn sort_document(ts_node: &mut TsDocument) {
 #[cfg(test)]
 mod sort_test {
     use super::*;
+    use crate::commands::test_utils::{
+        serialize_to_string, test_file_content_as_string, test_file_content_bytes,
+    };
     use crate::logging::initialize_logging;
-    use crate::parser::serializer::serialize;
-    use std::io::BufWriter;
 
     #[test]
     fn test_sort_ts_node() {
         initialize_logging();
-        let expected_sorted =
-            std::fs::read_to_string("./test_data/example_sort_sorted.xml").expect("File to exist");
-        let base_ts_data = std::fs::read("./test_data/example_sort.xml").expect("File to exist");
-        let mut sorted = TsParser::from_buffer(base_ts_data).expect("Parsable");
+        let expected = test_file_content_as_string("example_sort_sorted.xml");
+        let input = test_file_content_bytes("example_sort.xml");
+        let mut doc = TsParser::from_buffer(input).expect("Parsable");
 
-        sort_document(&mut sorted);
+        sort_document(&mut doc);
 
-        let mut buf = BufWriter::new(Vec::<u8>::new());
-        serialize(&mut buf, &sorted).expect("Sorted data can be serialized");
-        let sorted_string = String::from_utf8(buf.into_inner().expect("Sorted data is utf-8"))
-            .expect("Sorted data is utf-8");
-
-        assert_eq!(expected_sorted, sorted_string);
+        assert_eq!(expected, serialize_to_string(&doc));
     }
 }

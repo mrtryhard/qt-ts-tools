@@ -555,11 +555,11 @@ mod release_tests {
     fn compile_ts_to_qm(#[case] case: &str, #[allow(unused)] logs: ()) {
         let expected_data = std::fs::read(format!("./test_data/{case}.qm")).expect("File to exist");
         let base_ts_data = std::fs::read(format!("./test_data/{case}.ts")).expect("File to exist");
-        let ts_node = TsParser::from_buffer(base_ts_data).expect("Parsable");
+        let doc = TsParser::from_buffer(base_ts_data).expect("Parsable");
 
         let mut writer = std::io::Cursor::new(Vec::<u8>::new());
 
-        let result = compile_to_buffer(&mut writer, &ts_node);
+        let result = compile_to_buffer(&mut writer, &doc);
 
         assert_eq!(result, Ok(()));
         assert_eq!(writer.into_inner(), expected_data);
