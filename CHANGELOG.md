@@ -4,13 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.x.y] unreleased
+## [1.1.0] 2026-09-10
+This release is the [Twenty second](https://github.com/mrtryhard/qt-ts-tools/milestone/22) milestone.
+It comes with important changes and fixes. This is a quality-of-life release. 
 
 ### Fixed
 
 - Fixed an issue where unescaped XML inside translation or source fields would cause panic. [#304](https://github.com/mrtryhard/qt-ts-tools/issues/304)
 - Fixed an issue where translation node's variable would not be substituted correctly for stat. [#305](https://github.com/mrtryhard/qt-ts-tools/issues/305)
 - Fixed an issue where releasing an unexisting file would cause panic. [306](https://github.com/mrtryhard/qt-ts-tools/issues/306)
+
+### Changed
+
+- Upgraded `clap` to version `4.6.1`
+- Upgraded `clap_complete` to version `4.6.5`
+- Upgraded `clap_complete_nushell` to version `4.6.0` 
+- Upgraded `env_logger` to version `0.11.10`
+- Upgraded `i18n-embed-fl` to version `0.10.1` 
+- Upgraded `quick-xml` to version `0.42.0` 
+- Removed direct dependency on `serde` 
 
 ## [1.0.0] 2026-02-18
 This release is the [Twenty first](https://github.com/mrtryhard/qt-ts-tools/milestone/21) milestone.
