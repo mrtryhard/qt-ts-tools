@@ -6,14 +6,12 @@ use std::path::PathBuf;
 #[cfg(test)]
 pub fn test_file_content_as_string(filename: &str) -> String {
     std::fs::read_to_string(PathBuf::new().join("./test_data").join(filename))
-        .map(|s| s.replace('\r', ""))
         .expect("Data file is readable")
 }
 
 #[cfg(test)]
 pub fn test_file_content_bytes(filename: &str) -> Vec<u8> {
     std::fs::read_to_string(PathBuf::new().join("./test_data").join(filename))
-        .map(|s| s.replace('\r', ""))
         .map(|s| s.into_bytes())
         .expect("Data file is readable")
 }
