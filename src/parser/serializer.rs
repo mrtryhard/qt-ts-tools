@@ -14,6 +14,11 @@ use std::error::Error;
 use std::io::Write;
 
 const INDENT_MULTIPLE: usize = 4;
+const NEWLINE: &str = if cfg!(target_os = "windows") {
+    "\r\n"
+} else {
+    "\n"
+};
 
 pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Result<(), String> {
     let mut inner_writer: Box<dyn Write> = match &output_path {
@@ -50,7 +55,7 @@ pub fn serialize(writer: &mut dyn Write, doc: &TsDocument) -> Result<(), Box<dyn
 }
 
 fn newline<W: Write>(writer: &mut Writer<W>) -> Result<(), Box<dyn Error>> {
-    writer.write_event(Event::Text(BytesText::from_escaped("\n")))?;
+    writer.write_event(Event::Text(BytesText::from_escaped(NEWLINE)))?;
     Ok(())
 }
 
