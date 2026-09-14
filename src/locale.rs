@@ -48,7 +48,7 @@ pub fn current_loader() -> &'static FluentLanguageLoader {
 ///
 /// ### Example
 ///
-/// ```rust
+/// ```text
 /// tr!("simple-text-id"); // No arguments
 /// tr!("text-id", name = value, name2 = value2); // With 2 arguments
 /// ```

@@ -7,7 +7,7 @@ use crate::parser::message_node::MessageNode;
 use crate::parser::parse_error::ParseError;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_node::TsNode;
-use crate::parser::ts_parser::TsParser;
+use crate::parser::ts_parser::{TsDocument, TsParser};
 use crate::tr;
 use clap::{ArgAction, Args};
 use log::debug;
@@ -43,8 +43,7 @@ pub fn stat_main(args: &StatArgs) -> Result<(), String> {
         .and_then(TsParser::from_buffer)
         .map_err(|err| err.to_string())?;
 
-    let total_stats = stats_ts_node(&doc.root);
-    let output = generate_message_for_stats(total_stats, args.verbose);
+    let output = stat_document(&doc, args.verbose);
 
     match &args.output_path {
         None => {
@@ -158,6 +157,11 @@ fn generate_message_for_stats(stats: TotalStats, verbose: bool) -> String {
     ));
 
     buf
+}
+
+/// Computes the statistics of a translation document and formats them as a report.
+pub fn stat_document(doc: &TsDocument, verbose: bool) -> String {
+    generate_message_for_stats(stats_ts_node(&doc.root), verbose)
 }
 
 fn stats_ts_node(ts_node: &TsNode) -> TotalStats {

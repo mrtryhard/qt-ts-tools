@@ -80,7 +80,7 @@ fn translation_is_wanted(
 }
 
 /// Keep only the desired translation type from the node (if it matches one in `wanted_types`).
-fn retain_ts_node(mut doc: TsDocument, wanted_types: Vec<TranslationType>) -> TsDocument {
+pub fn retain_ts_node(mut doc: TsDocument, wanted_types: Vec<TranslationType>) -> TsDocument {
     doc.root.contexts.retain_mut(|context| {
         context
             .messages

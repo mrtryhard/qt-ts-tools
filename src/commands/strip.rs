@@ -62,7 +62,7 @@ pub fn strip_main(args: &StripArgs) -> Result<(), String> {
     write_to_output(&args.output_path, &doc)
 }
 
-fn strip_nodes(doc: &mut TsDocument, translation_type_filter: &[TranslationType]) {
+pub fn strip_nodes(doc: &mut TsDocument, translation_type_filter: &[TranslationType]) {
     let mut count = 0;
     doc.root.contexts.iter_mut().for_each(|context| {
         context.messages.iter_mut().for_each(|message| {

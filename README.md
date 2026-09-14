@@ -1,5 +1,5 @@
 # qt-ts-tools
-![Build](https://github.com/mrtryhard/qt-ts-tools/actions/workflows/rust.yml/badge.svg) ![Build](https://github.com/mrtryhard/qt-ts-tools/actions/workflows/security.yml/badge.svg)
+![Build](https://github.com/mrtryhard/qt-ts-tools/actions/workflows/rust.yml/badge.svg) ![Build](https://github.com/mrtryhard/qt-ts-tools/actions/workflows/security.yml/badge.svg) [![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/mrtryhard/qt-ts-tools?utm_source=badge)
 
 This repository contains suite of tools for manipulating [Qt Framework](https://www.qt.io/product)'s [translation files](https://wiki.qt.io/QtInternationalization), contained in a single executable.
 

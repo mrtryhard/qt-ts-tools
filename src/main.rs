@@ -1,14 +1,8 @@
-use crate::cli::get_cli_result;
-use crate::locale::initialize_locale;
-use crate::logging::initialize_logging;
 use i18n_embed::LanguageLoader;
 use log::*;
-
-mod cli;
-mod commands;
-mod locale;
-mod logging;
-mod parser;
+use qt_ts_tools::cli::get_cli_result;
+use qt_ts_tools::locale::{self, initialize_locale};
+use qt_ts_tools::logging::initialize_logging;
 
 fn main() {
     initialize_locale();

@@ -44,7 +44,7 @@ pub fn sort_main(args: &SortArgs) -> Result<(), String> {
 /// 1. Context comes before no-context messages.
 /// 2. Context are ordered by name.
 /// 3. Messages are ordered by filename then by line.
-fn sort_document(ts_node: &mut TsDocument) {
+pub fn sort_document(ts_node: &mut TsDocument) {
     let contexts = &mut ts_node.root.contexts;
     contexts.sort();
     contexts.iter_mut().for_each(|context| {

@@ -23,7 +23,12 @@ rust-embed = "8.11.0"
 sys-locale = "0.3.2"
 
 [dev-dependencies]
+divan = { version = "5.0.1", package = "codspeed-divan-compat" }
 rstest = "0.26.1"
+
+[[bench]]
+name = "translation_pipeline"
+harness = false
 
 [profile.release]
 codegen-units = 1

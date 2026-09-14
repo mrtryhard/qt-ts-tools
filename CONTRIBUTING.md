@@ -63,6 +63,25 @@ Please identify what problem this new feature would solve. Make sure it aligns w
 If you have a detailed idea of the user interactions, or any relevant details, please explain them as well. 
 The cleared the request, the easier to make it go through.
 
+# Benchmarks
+
+Performance is tracked continuously with [CodSpeed](https://codspeed.io). The benchmarks live in
+`benches/translation_pipeline.rs` and cover parsing, serializing and every transformation command
+(sort, strip, extract, merge, stat, release).
+
+Running them locally:
+
+```shell
+# Quick local run, with the regular divan output
+cargo bench
+
+# Same measurement as the CI, requires `cargo install cargo-codspeed` and the CodSpeed CLI
+cargo codspeed build
+codspeed run --mode simulation -- cargo codspeed run
+```
+
+Every pull request runs the benchmarks and reports the performance impact of the change.
+
 # Code review process
 
 For patch submission please go through the pull request mechanism on Github. Makes sure the contribution contains:

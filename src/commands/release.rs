@@ -513,7 +513,7 @@ fn numerus_rule(lang: &str) -> Vec<u8> {
     }
 }
 
-fn compile_to_buffer<W: Write>(writer: &mut W, doc: &TsDocument) -> Result<(), String> {
+pub fn compile_to_buffer<W: Write>(writer: &mut W, doc: &TsDocument) -> Result<(), String> {
     let msgs = produce_messages(&doc.root)?;
     let msg_block: Vec<u8> = msgs.iter().flat_map(|hm| &hm.msg).copied().collect();
     let lang = numerus_rule(doc.root.language.as_ref().unwrap_or(&String::new()));
