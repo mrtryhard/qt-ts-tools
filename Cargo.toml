@@ -23,7 +23,7 @@ rust-embed = "8.11.0"
 sys-locale = "0.3.2"
 
 [dev-dependencies]
-rstest = "0.26.1"
+rstest = "0.27.0"
 
 [profile.release]
 codegen-units = 1
