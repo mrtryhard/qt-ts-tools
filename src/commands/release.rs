@@ -1,14 +1,13 @@
+use clap::{ArgAction, Args};
+use log::debug;
+use std::path::PathBuf;
 use std::{
     cmp::Ordering,
     io::{BufWriter, Cursor, Write},
 };
 
-use clap::{ArgAction, Args};
-use log::debug;
-
 use crate::parser::context_node::ContextNode;
 use crate::parser::message_node::MessageNode;
-use crate::parser::parse_error::ParseError;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_node::TsNode;
 use crate::parser::ts_parser::{TsDocument, TsParser};
@@ -20,26 +19,17 @@ use crate::{commands::hash::ElfHasher, tr};
 pub struct ReleaseArgs {
     /// File to release
     #[arg(help = tr!("cli-release-input"), help_heading = tr!("cli-headers-arguments"))]
-    pub input: String,
-    /// If specified, will produce output in a file at designated location instead of stdout.
+    pub input: PathBuf,
+    /// If specified, will produce output in a file at a designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-release-output"), help_heading = tr!("cli-headers-options"))]
-    pub output_path: Option<String>,
+    pub output_path: Option<PathBuf>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options")
     )]
     pub help: Option<bool>,
 }
 
 pub fn release_main(args: &ReleaseArgs) -> Result<(), String> {
-    let doc = std::fs::read(&args.input)
-        .map_err(|err| {
-            ParseError::from(tr!(
-                "error-open-or-parse",
-                file = args.input.as_str(),
-                error = err.to_string()
-            ))
-        })
-        .and_then(TsParser::from_buffer)
-        .map_err(|err| err.to_string())?;
+    let doc = TsParser::from_file(&args.input).map_err(|err| err.to_string())?;
 
     let mut writer = Cursor::new(Vec::<u8>::new());
 
@@ -47,7 +37,7 @@ pub fn release_main(args: &ReleaseArgs) -> Result<(), String> {
         .and_then(|_| write_output(&args.output_path, &writer.into_inner()))
 }
 
-fn write_output(output: &Option<String>, data: &[u8]) -> Result<(), String> {
+fn write_output(output: &Option<PathBuf>, data: &[u8]) -> Result<(), String> {
     let mut buf: BufWriter<Box<dyn Write>> = match output {
         None => BufWriter::new(Box::new(std::io::stdout().lock())),
         Some(path) => match std::fs::File::options()
@@ -60,7 +50,7 @@ fn write_output(output: &Option<String>, data: &[u8]) -> Result<(), String> {
             Err(e) => {
                 return Err(tr!(
                     "error-write-output-open",
-                    output_path = path,
+                    output_path = path.to_str(),
                     error = e.to_string()
                 ));
             }

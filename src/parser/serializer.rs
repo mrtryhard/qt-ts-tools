@@ -12,6 +12,7 @@ use quick_xml::Writer;
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use std::error::Error;
 use std::io::Write;
+use std::path::PathBuf;
 
 const INDENT_MULTIPLE: usize = 4;
 const NEWLINE: &str = if cfg!(target_os = "windows") {
@@ -20,7 +21,7 @@ const NEWLINE: &str = if cfg!(target_os = "windows") {
     "\n"
 };
 
-pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Result<(), String> {
+pub fn write_to_output(output_path: &Option<PathBuf>, node: &TsDocument) -> Result<(), String> {
     let mut inner_writer: Box<dyn Write> = match &output_path {
         None => Box::new(std::io::stdout().lock()),
         Some(output_path) => match std::fs::File::options()
@@ -33,7 +34,7 @@ pub fn write_to_output(output_path: &Option<String>, node: &TsDocument) -> Resul
             Err(e) => {
                 return Err(tr!(
                     "error-write-output-open",
-                    output_path = output_path,
+                    output_path = output_path.to_str(),
                     error = e.to_string()
                 ));
             }

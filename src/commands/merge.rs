@@ -1,11 +1,10 @@
-use std::hash::{Hash, Hasher};
-
 use clap::{ArgAction, Args};
 use log::debug;
+use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 
 use crate::locale::tr;
 use crate::parser::message_node::MessageNode;
-use crate::parser::parse_error::ParseError;
 use crate::parser::serializer::write_to_output;
 use crate::parser::ts_parser::{TsDocument, TsParser};
 
@@ -15,16 +14,16 @@ use crate::parser::ts_parser::{TsDocument, TsParser};
 pub struct MergeArgs {
     /// File to receive the merge
     #[arg(help = tr!("cli-merge-input-left"), help_heading = tr!("cli-headers-arguments"))]
-    pub input_left: String,
+    pub input_left: PathBuf,
     /// File to include changes from
     #[arg(help = tr!("cli-merge-input-right"), help_heading = tr!("cli-headers-arguments"))]
-    pub input_right: String,
+    pub input_right: PathBuf,
     /// When true, do not update the translation value.
     #[arg(help = tr!("cli-merge-keep-translation"), help_heading = tr!("cli-headers-arguments"), action = ArgAction::SetTrue)]
     pub keep_translation: bool,
-    /// If specified, will produce output in a file at designated location instead of stdout.
+    /// If specified, will produce output in a file at a designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-merge-output"), help_heading = tr!("cli-headers-options"))]
-    pub output_path: Option<String>,
+    pub output_path: Option<PathBuf>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
@@ -32,26 +31,10 @@ pub struct MergeArgs {
 // This works by depending on cmp looking up only source and location on messages nodes
 // and on context by comparing the names only
 pub fn merge_main(args: &MergeArgs) -> Result<(), String> {
-    let left = load_file(&args.input_left);
-    let right = load_file(&args.input_right);
+    let left = TsParser::from_file(&args.input_left).map_err(|e| e.to_string())?;
+    let right = TsParser::from_file(&args.input_right).map_err(|e| e.to_string())?;
 
-    if let Err(e) = left {
-        return Err(tr!(
-            "error-open-or-parse",
-            file = args.input_left.as_str(),
-            error = e.to_string()
-        ));
-    }
-
-    if let Err(e) = right {
-        return Err(tr!(
-            "error-open-or-parse",
-            file = args.input_right.as_str(),
-            error = e.to_string()
-        ));
-    }
-
-    let result = merge_ts_nodes(left.unwrap(), right.unwrap(), args.keep_translation);
+    let result = merge_ts_nodes(left, right, args.keep_translation);
 
     write_to_output(&args.output_path, &result)
 }
@@ -238,29 +221,17 @@ fn merge_messages(
         .collect()
 }
 
-fn load_file(path: &String) -> Result<TsDocument, ParseError> {
-    std::fs::read(path)
-        .map_err(|e| {
-            ParseError::from(tr!(
-                "error-open-or-parse",
-                file = path,
-                error = e.to_string()
-            ))
-        })
-        .and_then(TsParser::from_buffer)
-}
-
 #[cfg(test)]
 mod merge_test {
     use super::*;
 
     #[test]
     fn test_merge_two_files() {
-        let left = load_file(&"./test_data/example_merge_left.xml".to_string())
+        let left = TsParser::from_file("./test_data/example_merge_left.xml")
             .expect("Test data could not be loaded for left file.");
-        let right = load_file(&"./test_data/example_merge_right.xml".to_string())
+        let right = TsParser::from_file("./test_data/example_merge_right.xml")
             .expect("Test data could not be loaded for right file.");
-        let expected_result = load_file(&"./test_data/example_merge_result.xml".to_string())
+        let expected_result = TsParser::from_file("./test_data/example_merge_result.xml")
             .expect("Test data could not be loaded for right file.");
 
         let result = merge_ts_nodes(left, right, false);
@@ -270,12 +241,12 @@ mod merge_test {
 
     #[test]
     fn test_merge_two_files_keep_translations() {
-        let left = load_file(&"./test_data/example_merge_keep_translation_left.xml".to_string())
+        let left = TsParser::from_file("./test_data/example_merge_keep_translation_left.xml")
             .expect("Test data could not be loaded for left file.");
-        let right = load_file(&"./test_data/example_merge_keep_translation_right.xml".to_string())
+        let right = TsParser::from_file("./test_data/example_merge_keep_translation_right.xml")
             .expect("Test data could not be loaded for right file.");
         let expected_result =
-            load_file(&"./test_data/example_merge_keep_translation_result.xml".to_string())
+            TsParser::from_file("./test_data/example_merge_keep_translation_result.xml")
                 .expect("Test data could not be loaded for right file.");
 
         let result = merge_ts_nodes(left, right, true);

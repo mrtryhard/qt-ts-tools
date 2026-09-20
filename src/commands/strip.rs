@@ -1,8 +1,8 @@
 use clap::{ArgAction, Args};
 use log::debug;
+use std::path::PathBuf;
 
 use crate::locale::tr;
-use crate::parser::parse_error::ParseError;
 use crate::parser::serializer::write_to_output;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_parser::{TsDocument, TsParser};
@@ -29,28 +29,19 @@ impl From<TranslationTypeArg> for TranslationType {
 pub struct StripArgs {
     /// File path to sort translations from.
     #[arg(help = tr!("cli-strip-input"), help_heading = tr!("cli-headers-arguments"))]
-    pub input_path: String,
+    pub input: PathBuf,
     /// Translation type list to strip from input.
     #[arg(short('t'), long, value_enum, num_args = 1.., help = tr!("cli-strip-translation-type"), help_heading = tr!("cli-headers-arguments"))]
     pub translation_type: Vec<TranslationTypeArg>,
     /// If specified, will produce output in a file at designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-strip-output"), help_heading = tr!("cli-headers-options"))]
-    pub output_path: Option<String>,
+    pub output_path: Option<PathBuf>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
 
 pub fn strip_main(args: &StripArgs) -> Result<(), String> {
-    let mut doc = std::fs::read(&args.input_path)
-        .map_err(|err| {
-            ParseError::from(tr!(
-                "error-open-or-parse",
-                file = args.input_path.as_str(),
-                error = err.to_string()
-            ))
-        })
-        .and_then(TsParser::from_buffer)
-        .map_err(|err| err.to_string())?;
+    let mut doc = TsParser::from_file(&args.input).map_err(|err| err.to_string())?;
 
     let s: Vec<TranslationType> = args
         .translation_type
