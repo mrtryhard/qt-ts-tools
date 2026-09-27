@@ -3,6 +3,7 @@ use crate::parser::ts_node::TsNode;
 use log::debug;
 use quick_xml::Reader;
 use quick_xml::events::Event;
+use std::path::Path;
 
 pub struct TsParser {}
 pub struct TsDocument {
@@ -10,6 +11,12 @@ pub struct TsDocument {
 }
 
 impl TsParser {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<TsDocument, ParseError> {
+        std::fs::read(&path)
+            .map_err(|err| ParseError::from(err.to_string()))
+            .and_then(Self::from_buffer)
+    }
+
     pub fn from_buffer(buf: Vec<u8>) -> Result<TsDocument, ParseError> {
         let mut reader = Reader::from_reader(buf.as_slice());
         let mut ts_node: Result<TsNode, ParseError> = Err(ParseError::from("Not parsed."));

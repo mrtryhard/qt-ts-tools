@@ -1,6 +1,6 @@
 use clap::{ArgAction, Args};
+use std::path::PathBuf;
 
-use crate::parser::parse_error::ParseError;
 use crate::parser::serializer::write_to_output;
 use crate::parser::ts_parser::{TsDocument, TsParser};
 use crate::tr;
@@ -10,10 +10,10 @@ use crate::tr;
 pub struct SortArgs {
     /// File path to sort translations from.
     #[arg(help = tr!("cli-sort-input"), help_heading = tr!("cli-headers-arguments"))]
-    pub input_path: String,
-    /// If specified, will produce output in a file at designated location instead of stdout.
+    pub input: PathBuf,
+    /// If specified, will produce output in a file at a designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-sort-output"), help_heading = tr!("cli-headers-options"))]
-    pub output_path: Option<String>,
+    pub output_path: Option<PathBuf>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options")
     )]
     pub help: Option<bool>,
@@ -21,28 +21,20 @@ pub struct SortArgs {
 
 /// Sorts an input TS file by context, then by messages.
 /// It will output the result to the output file if specified.
-/// Otherwise will output in stdout.
+/// Otherwise, will output in stdout.
 ///
 /// ## Windows notes
 /// Writing non-UTF-8 characters or non-valid UTF-8 characters to `stdout` may result in an error.
 pub fn sort_main(args: &SortArgs) -> Result<(), String> {
-    let mut doc = std::fs::read(&args.input_path)
-        .map_err(|err| {
-            ParseError::from(tr!(
-                "error-open-or-parse",
-                file = args.input_path.as_str(),
-                error = err.to_string()
-            ))
-        })
-        .and_then(TsParser::from_buffer)
-        .map_err(|err| err.to_string())?;
+    let mut doc = TsParser::from_file(&args.input).map_err(|err| err.to_string())?;
+
     sort_document(&mut doc);
     write_to_output(&args.output_path, &doc)
 }
 
 /// Sorts the TS document with the following rules:
-/// 1. Context comes before no-context messages.
-/// 2. Context are ordered by name.
+/// 1. Contexts come before no-context messages.
+/// 2. Contexts are ordered by name.
 /// 3. Messages are ordered by filename then by line.
 fn sort_document(ts_node: &mut TsDocument) {
     let contexts = &mut ts_node.root.contexts;

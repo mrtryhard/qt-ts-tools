@@ -1,4 +1,3 @@
-use crate::parser::parse_error::ParseError;
 use crate::parser::translation_node::TranslationNode;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_parser::{TsDocument, TsParser};
@@ -6,6 +5,7 @@ use crate::tr;
 use clap::{ArgAction, Args};
 use log::debug;
 use std::error::Error;
+use std::path::PathBuf;
 
 #[derive(clap::ValueEnum, PartialEq, Debug, Clone)]
 pub enum TranslationTypeArg {
@@ -14,35 +14,26 @@ pub enum TranslationTypeArg {
     Vanished,
 }
 
-/// Extracts a translation type messages and contexts from the input translation file.
+/// Extracts messages and contexts from the file that satisfies the targeted translation type.
 #[derive(Args)]
 #[command(disable_help_flag = true)]
 pub struct ExtractArgs {
     /// File path to extract translations from.
     #[arg(help = tr!("cli-extract-input"), help_heading = tr!("cli-headers-arguments"))]
-    pub input_path: String,
+    pub input: PathBuf,
     /// Translation type list to extract into a single, valid translation output.
     #[arg(short('t'), long, value_enum, num_args = 1.., help = tr!("cli-extract-translation-type"), help_heading = tr!("cli-headers-arguments"))]
     pub translation_type: Vec<TranslationTypeArg>,
-    /// If specified, will produce output in a file at designated location instead of stdout.
+    /// If specified, will produce output in a file at a designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-extract-output"), help_heading = tr!("cli-headers-options"))]
-    pub output_path: Option<String>,
+    pub output_path: Option<PathBuf>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options"))]
     pub help: Option<bool>,
 }
 
 /// Filters the translation file to keep only the messages containing unfinished translations.
 pub fn extract(extract_args: &ExtractArgs) -> Result<TsDocument, Box<dyn Error>> {
-    // TODO: extract file read logic, requires refactoring all commands args.
-    std::fs::read(&extract_args.input_path)
-        .map_err(|err| {
-            ParseError::from(tr!(
-                "error-open-or-parse",
-                file = extract_args.input_path.as_str(),
-                error = err.to_string()
-            ))
-        })
-        .and_then(TsParser::from_buffer)
+    TsParser::from_file(&extract_args.input)
         .map(|doc| {
             let types = extract_args
                 .translation_type
@@ -104,7 +95,7 @@ mod extract_test {
     fn test_extract_ts_node() {
         let expected_extracted = get_expected_extracted("example_extract_extracted.xml");
         let args = ExtractArgs {
-            input_path: "./test_data/example_extract.xml".to_string(),
+            input: "./test_data/example_extract.xml".into(),
             translation_type: vec![TranslationTypeArg::Obsolete],
             output_path: None, // ignore, we no longer write to file
             help: None,

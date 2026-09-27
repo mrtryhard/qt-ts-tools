@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::io::Write;
 use std::ops::AddAssign;
+use std::path::PathBuf;
 use std::string::ToString;
 
 use crate::parser::message_node::MessageNode;
-use crate::parser::parse_error::ParseError;
 use crate::parser::translation_type::TranslationType;
 use crate::parser::ts_node::TsNode;
 use crate::parser::ts_parser::TsParser;
@@ -17,31 +17,22 @@ use log::debug;
 pub struct StatArgs {
     /// File path to sort translations from.
     #[arg(help = tr!("cli-stat-input"), help_heading = tr!("cli-headers-arguments"))]
-    pub input_path: String,
+    pub input: PathBuf,
     /// If set to true, will prepend a list of all unique file paths found.
     #[arg(short, long, help = tr!("cli-stat-verbose"), help_heading = tr!("cli-headers-options"), action = ArgAction::SetTrue
     )]
     pub verbose: bool,
-    /// If specified, will produce output in a file at designated location instead of stdout.
+    /// If specified, will produce output in a file at a designated location instead of stdout.
     #[arg(short, long, help = tr!("cli-stat-output"), help_heading = tr!("cli-headers-options"))]
-    pub output_path: Option<String>,
+    pub output_path: Option<PathBuf>,
     #[arg(short, long, action = ArgAction::Help, help = tr!("cli-help"), help_heading = tr!("cli-headers-options")
     )]
     pub help: Option<bool>,
 }
 
-/// Aggregates the stats for provided file and arguments.
+/// Aggregates the stats for the provided file and arguments.
 pub fn stat_main(args: &StatArgs) -> Result<(), String> {
-    let doc = std::fs::read(&args.input_path)
-        .map_err(|err| {
-            ParseError::from(tr!(
-                "error-open-or-parse",
-                file = args.input_path.as_str(),
-                error = err.to_string()
-            ))
-        })
-        .and_then(TsParser::from_buffer)
-        .map_err(|err| err.to_string())?;
+    let doc = TsParser::from_file(&args.input).map_err(|err| err.to_string())?;
 
     let total_stats = stats_ts_node(&doc.root);
     let output = generate_message_for_stats(total_stats, args.verbose);
@@ -62,7 +53,7 @@ struct FileStats {
     pub vanished_translations: usize,
     pub obsolete_translations: usize,
     pub finished_translation: usize,
-    /// For files, total_translations corresponds to number of time that file was
+    /// For files, total_translations corresponds to how many times that file was
     /// mentioned as a location.
     pub total_translations: usize,
 }
@@ -237,8 +228,8 @@ fn stats_for_messages<'a>(
 /// Writes the output TS file to the specified output (file or stdout).
 /// This writer will auto indent/pretty print. It will always expand empty nodes, e.g.
 /// `<name></name>` instead of `<name/>`.
-fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
-    debug!("Writing {} characters to '{output_path}'", output.len());
+fn write_to_output(output_path: &PathBuf, output: String) -> Result<(), String> {
+    debug!("Writing {} characters to '{output_path:?}'", output.len());
 
     match std::fs::File::options()
         .create(true)
@@ -255,14 +246,14 @@ fn write_to_output(output_path: &String, output: String) -> Result<(), String> {
                 debug!("Failed to write to output_path: {err:?}");
                 Err(tr!(
                     "error-write-output",
-                    output_path = output_path,
+                    output_path = output_path.to_str(),
                     error = err.to_string()
                 ))
             }
         },
         Err(e) => Err(tr!(
             "error-write-output-open",
-            output_path = output_path,
+            output_path = output_path.to_str(),
             error = e.to_string()
         )),
     }
